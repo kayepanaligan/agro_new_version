@@ -39,8 +39,9 @@ type SortField = 'last_name' | 'first_name' | 'rsbsa_number' | 'created_at';
 type SortOrder = 'asc' | 'desc';
 
 export default function Farmers() {
-    const { farmers, commodities, varieties, organizations, programs } = usePage<{
+    const { farmers, categories, commodities, varieties, organizations, programs } = usePage<{
         farmers: Farmer[];
+        categories: any[];
         commodities: Commodity[];
         varieties: Variety[];
         organizations: Organization[];
@@ -666,6 +667,9 @@ export default function Farmers() {
                             setFormData={setFormData} 
                             mode="create"
                             existingFarms={[]}
+                            categories={categories}
+                            commodities={commodities}
+                            varieties={varieties}
                         />
                     </div>
                     <DialogFooter>
@@ -694,6 +698,9 @@ export default function Farmers() {
                             setFormData={setFormData} 
                             mode="edit"
                             existingFarms={selectedFarmer?.farms || []}
+                            categories={categories}
+                            commodities={commodities}
+                            varieties={varieties}
                         />
                     </div>
                     <DialogFooter>

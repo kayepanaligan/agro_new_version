@@ -1,0 +1,552 @@
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem, type DamageCategory, type DamageType } from '@/types';
+import { Head, router } from '@inertiajs/react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Plus, Search, Trash2, Image as ImageIcon } from 'lucide-react';
+import { useState, useMemo } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Damage Types',
+        href: '/admin/damage-types',
+    },
+];
+
+interface DamageTypesProps {
+    damageTypes: DamageType[];
+    damageCategories: DamageCategory[];
+}
+
+export default function DamageTypes({ damageTypes, damageCategories }: DamageTypesProps) {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortField, setSortField] = useState<'damage_type_name' | 'damage_category_name' | 'created_at'>('damage_type_name');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [filterCategory, setFilterCategory] = useState<string>('all');
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedType, setSelectedType] = useState<DamageType | null>(null);
+    const [formData, setFormData] = useState({
+        damage_type_name: '',
+        damage_category_id: '',
+        damage_type_description: '',
+        image: null as File | null,
+        is_ai_generated: false,
+    });
+
+    const filteredTypes = useMemo(() => {
+        let result = [...damageTypes];
+
+        // Search filter
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(
+                (type) =>
+                    type.damage_type_name.toLowerCase().includes(term) ||
+                    type.damage_type_description?.toLowerCase().includes(term) ||
+                    type.damage_category?.damage_category_name.toLowerCase().includes(term),
+            );
+        }
+
+        // Category filter
+        if (filterCategory !== 'all') {
+            result = result.filter((type) => type.damage_category_id.toString() === filterCategory);
+        }
+
+        // Sort
+        result.sort((a, b) => {
+            let comparison = 0;
+            
+            switch (sortField) {
+                case 'damage_type_name':
+                    comparison = a.damage_type_name.localeCompare(b.damage_type_name);
+                    break;
+                case 'damage_category_name':
+                    comparison = (a.damage_category?.damage_category_name || '').localeCompare(b.damage_category?.damage_category_name || '');
+                    break;
+                case 'created_at':
+                    comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                    break;
+            }
+            
+            return sortOrder === 'asc' ? comparison : -comparison;
+        });
+
+        return result;
+    }, [damageTypes, searchTerm, filterCategory, sortField, sortOrder]);
+
+    const handleSort = (field: typeof sortField) => {
+        if (sortField === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortOrder('asc');
+        }
+    };
+
+    const openCreateModal = () => {
+        setFormData({
+            damage_type_name: '',
+            damage_category_id: '',
+            damage_type_description: '',
+            image: null,
+            is_ai_generated: false,
+        });
+        setIsCreateModalOpen(true);
+    };
+
+    const openEditModal = (type: DamageType) => {
+        setSelectedType(type);
+        setFormData({
+            damage_type_name: type.damage_type_name,
+            damage_category_id: type.damage_category_id.toString(),
+            damage_type_description: type.damage_type_description || '',
+            image: null,
+            is_ai_generated: type.is_ai_generated,
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const openDeleteModal = (type: DamageType) => {
+        setSelectedType(type);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleCreate = () => {
+        const data = new FormData();
+        data.append('damage_type_name', formData.damage_type_name);
+        data.append('damage_category_id', formData.damage_category_id);
+        data.append('damage_type_description', formData.damage_type_description);
+        data.append('is_ai_generated', formData.is_ai_generated.toString());
+        if (formData.image) {
+            data.append('image', formData.image);
+        }
+
+        router.post('/admin/damage-types', data, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsCreateModalOpen(false);
+                setFormData({
+                    damage_type_name: '',
+                    damage_category_id: '',
+                    damage_type_description: '',
+                    image: null,
+                    is_ai_generated: false,
+                });
+            },
+        });
+    };
+
+    const handleUpdate = () => {
+        if (!selectedType) return;
+        
+        const data = new FormData();
+        data.append('damage_type_name', formData.damage_type_name);
+        data.append('damage_category_id', formData.damage_category_id);
+        data.append('damage_type_description', formData.damage_type_description);
+        data.append('is_ai_generated', formData.is_ai_generated.toString());
+        if (formData.image) {
+            data.append('image', formData.image);
+        }
+
+        router.post(`/admin/damage-types/${selectedType.damage_type_id}?_method=PUT`, data, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsEditModalOpen(false);
+                setSelectedType(null);
+                setFormData({
+                    damage_type_name: '',
+                    damage_category_id: '',
+                    damage_type_description: '',
+                    image: null,
+                    is_ai_generated: false,
+                });
+            },
+        });
+    };
+
+    const handleDelete = () => {
+        if (!selectedType) return;
+
+        router.delete(`/admin/damage-types/${selectedType.damage_type_id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsDeleteModalOpen(false);
+                setSelectedType(null);
+            },
+        });
+    };
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Damage Types" />
+            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+                {/* Header */}
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-2xl font-bold">Damage Types</h1>
+                                <p className="text-muted-foreground">Manage specific damage types with images</p>
+                            </div>
+                            <Button onClick={openCreateModal}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Damage Type
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Filters */}
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div className="flex items-center gap-2 flex-1">
+                                <div className="relative flex-1 max-w-sm">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search damage types..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+                                
+                                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                                    <SelectTrigger className="w-[200px]">
+                                        <SelectValue placeholder="Filter by category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Categories</SelectItem>
+                                        {damageCategories.map((category) => (
+                                            <SelectItem key={category.damage_category_id} value={category.damage_category_id.toString()}>
+                                                {category.damage_category_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                {(searchTerm || filterCategory !== 'all') && (
+                                    <Button variant="ghost" size="sm" onClick={() => { setSearchTerm(''); setFilterCategory('all'); }}>
+                                        Clear Filters
+                                    </Button>
+                                )}
+                            </div>
+
+                            <div className="text-sm text-muted-foreground">
+                                {filteredTypes.length} damage type{filteredTypes.length !== 1 ? 's' : ''} found
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Table */}
+                <Card>
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>ID</TableHead>
+                                        <TableHead>Image</TableHead>
+                                        <TableHead>
+                                            <Button variant="ghost" onClick={() => handleSort('damage_type_name')} className="-ml-4">
+                                                Damage Type Name
+                                                <ArrowUpDown className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button variant="ghost" onClick={() => handleSort('damage_category_name')} className="-ml-4">
+                                                Category
+                                                <ArrowUpDown className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead>AI Generated</TableHead>
+                                        <TableHead className="w-[70px]">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredTypes.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="h-24 text-center">
+                                                No damage types found.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredTypes.map((type) => (
+                                            <TableRow key={type.damage_type_id}>
+                                                <TableCell className="font-medium">{type.damage_type_id}</TableCell>
+                                                <TableCell>
+                                                    {type.image_path ? (
+                                                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md border">
+                                                            <img 
+                                                                src={`/storage/${type.image_path}`} 
+                                                                alt={type.damage_type_name}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
+                                                            <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="font-medium">{type.damage_type_name}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">
+                                                        {type.damage_category?.damage_category_name || '-'}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="max-w-[200px] truncate">
+                                                    {type.damage_type_description || '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {type.is_ai_generated ? (
+                                                        <Badge variant="default">Yes</Badge>
+                                                    ) : (
+                                                        <Badge variant="secondary">No</Badge>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem onClick={() => openEditModal(type)}>
+                                                                <Pencil className="mr-2 h-4 w-4" />
+                                                                <span>Edit</span>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem 
+                                                                onClick={() => openDeleteModal(type)}
+                                                                className="text-red-600 focus:text-red-600"
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                <span>Delete</span>
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Create Modal */}
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Create Damage Type</DialogTitle>
+                        <DialogDescription>
+                            Add a new damage type. Fill in the details below.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="damage_type_name">Damage Type Name</Label>
+                            <Input
+                                id="damage_type_name"
+                                value={formData.damage_type_name}
+                                onChange={(e) => setFormData({ ...formData, damage_type_name: e.target.value })}
+                                placeholder="Enter damage type name"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="damage_category_id">Damage Category</Label>
+                            <Select 
+                                value={formData.damage_category_id} 
+                                onValueChange={(value) => setFormData({ ...formData, damage_category_id: value })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {damageCategories.map((category) => (
+                                        <SelectItem key={category.damage_category_id} value={category.damage_category_id.toString()}>
+                                            {category.damage_category_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="damage_type_description">Description</Label>
+                            <Textarea
+                                id="damage_type_description"
+                                value={formData.damage_type_description}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, damage_type_description: e.target.value })}
+                                placeholder="Enter description (optional)"
+                                rows={4}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="image">Image (Optional)</Label>
+                            <Input
+                                id="image"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
+                            />
+                            <p className="text-xs text-muted-foreground">Supported formats: JPEG, PNG, GIF. Max size: 2MB</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="is_ai_generated"
+                                checked={formData.is_ai_generated}
+                                onCheckedChange={(checked) => setFormData({ ...formData, is_ai_generated: checked as boolean })}
+                            />
+                            <Label htmlFor="is_ai_generated">AI Generated Image</Label>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleCreate}>
+                            Create Damage Type
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Modal */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Damage Type</DialogTitle>
+                        <DialogDescription>
+                            Update damage type information.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit_damage_type_name">Damage Type Name</Label>
+                            <Input
+                                id="edit_damage_type_name"
+                                value={formData.damage_type_name}
+                                onChange={(e) => setFormData({ ...formData, damage_type_name: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit_damage_category_id">Damage Category</Label>
+                            <Select 
+                                value={formData.damage_category_id} 
+                                onValueChange={(value) => setFormData({ ...formData, damage_category_id: value })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {damageCategories.map((category) => (
+                                        <SelectItem key={category.damage_category_id} value={category.damage_category_id.toString()}>
+                                            {category.damage_category_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit_damage_type_description">Description</Label>
+                            <Textarea
+                                id="edit_damage_type_description"
+                                value={formData.damage_type_description}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, damage_type_description: e.target.value })}
+                                rows={4}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit_image">Update Image (Optional)</Label>
+                            {selectedType?.image_path && !formData.image && (
+                                <div className="mb-2">
+                                    <img 
+                                        src={`/storage/${selectedType.image_path}`} 
+                                        alt={selectedType.damage_type_name}
+                                        className="h-20 w-20 rounded-md object-cover"
+                                    />
+                                </div>
+                            )}
+                            <Input
+                                id="edit_image"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
+                            />
+                            <p className="text-xs text-muted-foreground">Leave empty to keep current image</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="edit_is_ai_generated"
+                                checked={formData.is_ai_generated}
+                                onCheckedChange={(checked) => setFormData({ ...formData, is_ai_generated: checked as boolean })}
+                            />
+                            <Label htmlFor="edit_is_ai_generated">AI Generated Image</Label>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUpdate}>
+                            Update Damage Type
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Damage Type</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete "{selectedType?.damage_type_name}"? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete}>
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </AppLayout>
+    );
+}

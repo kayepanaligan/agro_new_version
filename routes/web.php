@@ -60,6 +60,18 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/organizations', [App\Http\Controllers\Admin\OrganizationController::class, 'store'])->name('admin.organizations.store');
         Route::put('/organizations/{organization}', [App\Http\Controllers\Admin\OrganizationController::class, 'update'])->name('admin.organizations.update');
         Route::delete('/organizations/{organization}', [App\Http\Controllers\Admin\OrganizationController::class, 'destroy'])->name('admin.organizations.destroy');
+
+        // Damage Category Routes
+        Route::get('/damage-categories', [App\Http\Controllers\Admin\DamageCategoryController::class, 'index'])->name('admin.damage-categories');
+        Route::post('/damage-categories', [App\Http\Controllers\Admin\DamageCategoryController::class, 'store'])->name('admin.damage-categories.store');
+        Route::put('/damage-categories/{damageCategory}', [App\Http\Controllers\Admin\DamageCategoryController::class, 'update'])->name('admin.damage-categories.update');
+        Route::delete('/damage-categories/{damageCategory}', [App\Http\Controllers\Admin\DamageCategoryController::class, 'destroy'])->name('admin.damage-categories.destroy');
+
+        // Damage Type Routes
+        Route::get('/damage-types', [App\Http\Controllers\Admin\DamageTypeController::class, 'index'])->name('admin.damage-types');
+        Route::post('/damage-types', [App\Http\Controllers\Admin\DamageTypeController::class, 'store'])->name('admin.damage-types.store');
+        Route::put('/damage-types/{damageType}', [App\Http\Controllers\Admin\DamageTypeController::class, 'update'])->name('admin.damage-types.update');
+        Route::delete('/damage-types/{damageType}', [App\Http\Controllers\Admin\DamageTypeController::class, 'destroy'])->name('admin.damage-types.destroy');
     });
 
     // Super Admin Routes

@@ -127,16 +127,21 @@ export default function FarmsIndex({ farms }: FarmsProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Farms" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">Farms</h1>
-                        <p className="text-muted-foreground">Manage farm profiles and land parcels</p>
-                    </div>
-                    <Button onClick={() => router.visit('/admin/farmers/create')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Farm
-                    </Button>
-                </div>
+                {/* Header */}
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-2xl font-bold">Farms</h1>
+                                <p className="text-muted-foreground">Manage farm profiles and land parcels</p>
+                            </div>
+                            <Button onClick={() => router.visit('/admin/farmers/create')}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Farm
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Filters */}
                 <Card>
@@ -183,84 +188,88 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                 </Card>
 
                 {/* Table */}
-                <div className="rounded-md border bg-card shadow-sm">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>ID</TableHead>
-                                <TableHead>
-                                    <Button variant="ghost" onClick={() => handleSort('farm_name')} className="-ml-4">
-                                        Farm Name
-                                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                                    </Button>
-                                </TableHead>
-                                <TableHead>
-                                    <Button variant="ghost" onClick={() => handleSort('farmer_name')} className="-ml-4">
-                                        Farmer
-                                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                                    </Button>
-                                </TableHead>
-                                <TableHead>
-                                    <Button variant="ghost" onClick={() => handleSort('parcel_count')} className="-ml-4">
-                                        Parcels
-                                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                                    </Button>
-                                </TableHead>
-                                <TableHead>RSBSA Number</TableHead>
-                                <TableHead>Created At</TableHead>
-                                <TableHead className="w-[70px]">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedFarms.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center">
-                                        No farms found.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                paginatedFarms.map((farm) => (
-                                    <TableRow 
-                                        key={farm.id} 
-                                        className="cursor-pointer hover:bg-muted/50"
-                                        onClick={() => router.visit(`/admin/farms/${farm.id}`)}
-                                    >
-                                        <TableCell className="font-medium">{farm.id}</TableCell>
-                                        <TableCell className="font-medium">{farm.farm_name}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                                                    {farm.farmer.first_name[0]}{farm.farmer.last_name[0]}
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium">
-                                                        {farm.farmer.first_name} {farm.farmer.last_name}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">
-                                                {farm.farm_parcels_count || 0} parcel{(farm.farm_parcels_count || 0) !== 1 ? 's' : ''}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            {farm.farmer.rsbsa_number || 'Not assigned'}
-                                        </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">
-                                            {new Date(farm.created_at).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="sm" asChild>
-                                                <Link href={`/admin/farms/${farm.id}`}>View</Link>
+                <Card>
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>ID</TableHead>
+                                        <TableHead>
+                                            <Button variant="ghost" onClick={() => handleSort('farm_name')} className="-ml-4">
+                                                Farm Name
+                                                <ArrowUpDown className="ml-2 h-4 w-4" />
                                             </Button>
-                                        </TableCell>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button variant="ghost" onClick={() => handleSort('farmer_name')} className="-ml-4">
+                                                Farmer
+                                                <ArrowUpDown className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button variant="ghost" onClick={() => handleSort('parcel_count')} className="-ml-4">
+                                                Parcels
+                                                <ArrowUpDown className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>RSBSA Number</TableHead>
+                                        <TableHead>Created At</TableHead>
+                                        <TableHead className="w-[70px]">Actions</TableHead>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                                </TableHeader>
+                                <TableBody>
+                                    {paginatedFarms.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="h-24 text-center">
+                                                No farms found.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        paginatedFarms.map((farm) => (
+                                            <TableRow 
+                                                key={farm.id} 
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() => router.visit(`/admin/farms/${farm.id}`)}
+                                            >
+                                                <TableCell className="font-medium">{farm.id}</TableCell>
+                                                <TableCell className="font-medium">{farm.farm_name}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                                                            {farm.farmer.first_name[0]}{farm.farmer.last_name[0]}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-medium">
+                                                                {farm.farmer.first_name} {farm.farmer.last_name}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">
+                                                        {farm.farm_parcels_count || 0} parcel{(farm.farm_parcels_count || 0) !== 1 ? 's' : ''}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {farm.farmer.rsbsa_number || 'Not assigned'}
+                                                </TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">
+                                                    {new Date(farm.created_at).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <Link href={`/admin/farms/${farm.id}`}>View</Link>
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Pagination */}
                 {farms.last_page > 1 && (

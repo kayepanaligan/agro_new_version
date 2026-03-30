@@ -48,13 +48,15 @@ class FarmerController extends Controller
             ->orderBy('first_name', 'asc')
             ->get();
 
-        $commodities = Commodity::orderBy('name', 'asc')->get(['id', 'name']);
+        $commodities = Commodity::orderBy('name', 'asc')->get(['id', 'name', 'category_id']);
         $varieties = Variety::orderBy('name', 'asc')->get(['id', 'name', 'commodity_id']);
+        $categories = Category::orderBy('name', 'asc')->get(['id', 'name']);
         $organizations = Organization::orderBy('name', 'asc')->get(['id', 'name', 'type']);
         $programs = Program::orderBy('program_name', 'asc')->get(['id', 'program_name']);
 
         return Inertia::render('admin/farmers', [
             'farmers' => $farmers,
+            'categories' => $categories,
             'commodities' => $commodities,
             'varieties' => $varieties,
             'organizations' => $organizations,

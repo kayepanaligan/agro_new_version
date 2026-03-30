@@ -359,6 +359,28 @@ export interface FarmerOrganizationMembership {
     program?: Program | null;
 }
 
+// Damage Management Types
+export interface DamageCategory {
+    damage_category_id: number;
+    damage_category_name: string;
+    damage_category_description?: string | null;
+    damage_types_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface DamageType {
+    damage_type_id: number;
+    damage_type_name: string;
+    damage_category_id: number;
+    damage_type_description?: string | null;
+    image_path?: string | null;
+    is_ai_generated: boolean;
+    created_at: string;
+    updated_at: string;
+    damage_category?: DamageCategory | null;
+}
+
 export function getFullName(user: User): string {
     const parts = [user.first_name, user.middle_name, user.last_name].filter(Boolean);
     return parts.join(' ');

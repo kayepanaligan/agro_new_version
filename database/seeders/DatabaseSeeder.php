@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             ProgramSeeder::class,
             OrganizationSeeder::class,
             FarmerSeeder::class,
+            DamageCategorySeeder::class,
+            DamageTypeSeeder::class,
         ]);
 
         // User::factory(10)->create();

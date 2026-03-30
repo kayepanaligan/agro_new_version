@@ -1,4 +1,4 @@
-import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { NavFooter } from '@/components/nav-footer';
@@ -80,6 +80,22 @@ export function AppSidebar() {
                     title: 'Programs',
                     url: '/admin/programs',
                     icon: GraduationCap,
+                },
+            ],
+        });
+
+        navGroups.push({
+            title: 'Damage Management',
+            items: [
+                {
+                    title: 'Damage Categories',
+                    url: '/admin/damage-categories',
+                    icon: AlertTriangle,
+                },
+                {
+                    title: 'Damage Types',
+                    url: '/admin/damage-types',
+                    icon: AlertTriangle,
                 },
             ],
         });
