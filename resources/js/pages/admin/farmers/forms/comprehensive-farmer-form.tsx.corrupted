@@ -17,7 +17,7 @@ interface FarmerFormProps {
     existingFarms?: Farm[]; // Existing farms for selection
 }
 
-export default function ComprehensiveFarmerForm({ formData, setFormData, errors, mode = 'create', existingFarms = [] }: FarmerFormProps) {
+export function ComprehensiveFarmerForm({ formData, setFormData, errors, mode = 'create', existingFarms = [] }: FarmerFormProps) {
     // Auto-calculate household members
     const maleCount = parseInt(formData.no_male_household_members?.toString()) || 0;
     const femaleCount = parseInt(formData.no_female_household_members?.toString()) || 0;
@@ -515,90 +515,146 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             </Button>
                         </div>
                     )}
-
-                    {/* Farm Creation Card */}
-                    {showFarmCreation && !farmCreated && (
-                        <Card className="border-2 bg-muted/30">
-                            <CardHeader>
-                                <CardTitle className="text-base">Create New Farm</CardTitle>
-                                <CardDescription>Enter farm details below</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                            <Card className="border-2 bg-muted/30">
+                                <CardHeader>
+                                    <CardTitle className="text-base">Create New Farm</CardTitle>
+                                    <CardDescription>Enter farm details below</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="farm_name">Farm Name *</Label>
+                                            <Input 
+                                                id="farm_name" 
+                                                value={formData.farm_name || ''} 
+                                                onChange={(e) => setFormData({ ...formData, farm_name: e.target.value })} 
+                                                placeholder="Enter farm name"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={() => {
+                                                if (formData.farm_name && formData.farm_name.trim() !== '') {
+                                                    setFarmCreated(true);
+                                                    // Farm will be saved when the main form is submitted
+                                                } else {
+                                                    alert('Please enter a farm name');
+                                                }
+                                            }}
+                                            disabled={!formData.farm_name || formData.farm_name.trim() === ''}
+                                        >
+                                            Save Farm
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setShowNewFarmCard(false);
+                                                setFormData({ ...formData, farm_name: '', existing_farm_id: '' });
+                                            }}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ) : existingFarms && existingFarms.length > 0 && !farmCreated ? (
+                            <>
                                 <div className="grid gap-2 md:grid-cols-2">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="farm_name">Farm Name *</Label>
-                                        <Input 
-                                            id="farm_name" 
-                                            value={formData.farm_name || ''} 
-                                            onChange={(e) => setFormData({ ...formData, farm_name: e.target.value })} 
-                                            placeholder="Enter farm name"
-                                        />
+                                        <Label htmlFor="existing_farm">Choose Existing Farm</Label>
+                                        <Select 
+                                            value={formData.existing_farm_id || ''} 
+                                            onValueChange={(value) => {
+                                                const selectedFarm = existingFarms.find(f => f.id.toString() === value);
+                                                setFormData({ 
+                                                    ...formData, 
+                                                    existing_farm_id: value,
+                                                    farm_name: selectedFarm ? selectedFarm.farm_name : formData.farm_name
+                                                });
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a farm" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">Create New Farm Instead</SelectItem>
+                                                {existingFarms.map((farm) => (
+                                                    <SelectItem key={farm.id} value={farm.id.toString()}>
+                                                        {farm.farm_name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Select an existing farm to add parcels to it
+                                        </p>
                                     </div>
                                 </div>
                                 
-                                <div className="flex gap-2">
+                                {!formData.existing_farm_id && (
                                     <Button
                                         type="button"
-                                        size="sm"
-                                        onClick={() => {
-                                            if (formData.farm_name && formData.farm_name.trim() !== '') {
-                                                setFarmCreated(true);
-                                                setShowFarmCreation(false);
-                                            } else {
-                                                alert('Please enter a farm name');
-                                            }
-                                        }}
-                                        disabled={!formData.farm_name || formData.farm_name.trim() === ''}
+                                        variant="outline"
+                                        onClick={() => setShowNewFarmCard(true)}
+                                        className="w-full"
                                     >
-                                        Save Farm
+                                        + Create New Farm
                                     </Button>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            setShowFarmCreation(false);
-                                            setFormData({ ...formData, farm_name: '', existing_farm_id: '' });
-                                        }}
-                                    >
-                                        Cancel
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* After Farm Created */}
-                    {farmCreated && (
-                        <Card className="border-2 border-green-500 bg-green-50 dark:bg-green-900/20">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-white">
-                                            ✓
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-green-800 dark:text-green-200">
-                                                Farm Created Successfully!
-                                            </p>
-                                            <p className="text-sm text-green-600 dark:text-green-300">
-                                                {formData.farm_name}
+                                )}
+                            </>
+                        ) : (
+                            /* Show farm creation or confirmation */
+                            <div className="space-y-4">
+                                {farmCreated ? (
+                                    <Card className="border-2 border-green-500 bg-green-50 dark:bg-green-900/20">
+                                        <CardContent className="pt-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-white">
+                                                        ✓
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-green-800 dark:text-green-200">
+                                                            Farm Created Successfully!
+                                                        </p>
+                                                        <p className="text-sm text-green-600 dark:text-green-300">
+                                                            {formData.farm_name}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Badge variant="outline" className="bg-green-100 dark:bg-green-800">
+                                                    Ready for Parcels
+                                                </Badge>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="farm_name">Farm Name *</Label>
+                                            <Input 
+                                                id="farm_name" 
+                                                value={formData.farm_name || ''} 
+                                                onChange={(e) => setFormData({ ...formData, farm_name: e.target.value })} 
+                                                placeholder="Enter farm name"
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                No existing farms found. Create a new farm to continue.
                                             </p>
                                         </div>
                                     </div>
-                                    <Badge variant="outline" className="bg-green-100 dark:bg-green-800">
-                                        Ready for Parcels
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </CardContent>
-            </Card>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
-            {/* Farm Parcels - Only show if farm exists */}
-            <Card>
-                <CardContent>
+                    {/* Farm Parcels - Only show if farm exists */}
                     {formData.farm_name && formData.farm_name.trim() !== '' ? (
                         <div className="space-y-4">
                             <div className="flex items-center justify-between border-b pb-2">

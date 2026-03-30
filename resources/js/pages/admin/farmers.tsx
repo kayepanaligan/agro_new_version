@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ComprehensiveFarmerForm } from './farmers/forms/comprehensive-farmer-form';
+import ComprehensiveFarmerForm from './farmers/forms/comprehensive-farmer-form';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

@@ -17,7 +17,7 @@ interface FarmerFormProps {
     existingFarms?: Farm[]; // Existing farms for selection
 }
 
-export default function ComprehensiveFarmerForm({ formData, setFormData, errors, mode = 'create', existingFarms = [] }: FarmerFormProps) {
+export function ComprehensiveFarmerForm({ formData, setFormData, errors, mode = 'create', existingFarms = [] }: FarmerFormProps) {
     // Auto-calculate household members
     const maleCount = parseInt(formData.no_male_household_members?.toString()) || 0;
     const femaleCount = parseInt(formData.no_female_household_members?.toString()) || 0;
@@ -594,11 +594,10 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                         </Card>
                     )}
                 </CardContent>
-            </Card>
 
-            {/* Farm Parcels - Only show if farm exists */}
-            <Card>
-                <CardContent>
+                    </div>
+
+                    {/* Farm Parcels - Only show if farm exists */}
                     {formData.farm_name && formData.farm_name.trim() !== '' ? (
                         <div className="space-y-4">
                             <div className="flex items-center justify-between border-b pb-2">
