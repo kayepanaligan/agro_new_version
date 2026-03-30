@@ -1,0 +1,964 @@
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Award } from 'lucide-react';
+import React from 'react';
+import { type Farm } from '@/types';
+
+interface FarmerFormProps {
+    formData: any;
+    setFormData: (data: any) => void;
+    errors?: any;
+    mode?: 'create' | 'edit';
+    existingFarms?: Farm[]; // Existing farms for selection
+}
+
+export function ComprehensiveFarmerForm({ formData, setFormData, errors, mode = 'create', existingFarms = [] }: FarmerFormProps) {
+    // Auto-calculate household members
+    const maleCount = parseInt(formData.no_male_household_members?.toString()) || 0;
+    const femaleCount = parseInt(formData.no_female_household_members?.toString()) || 0;
+    
+    // Update living members when male/female counts change
+    React.useEffect(() => {
+        const total = maleCount + femaleCount;
+        if (formData.no_living_household_members !== total) {
+            setFormData({ ...formData, no_living_household_members: total });
+        }
+    }, [maleCount, femaleCount]);
+
+    // Check if civil status is single to disable spouse fields
+    const isSingle = formData.civil_status === 'single';
+
+    // State for farm creation step
+    const [showFarmCreation, setShowFarmCreation] = React.useState(false);
+    const [farmCreated, setFarmCreated] = React.useState(false);
+    const [showNewFarmCard, setShowNewFarmCard] = React.useState(false);
+    const [showFarmSelection, setShowFarmSelection] = React.useState(false);
+
+    return (
+        <div className="space-y-6">
+            {/* Enrollment Information */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Enrollment Information</CardTitle>
+                    <CardDescription>Registration details</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="enrollment_type">Enrollment Type</Label>
+                        <Select 
+                            value={formData.enrollment_type || 'new'} 
+                            onValueChange={(value) => setFormData({ ...formData, enrollment_type: value as 'new' | 'updating' })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="new">New Registration</SelectItem>
+                                <SelectItem value="updating">Updating (With Previous Record)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {formData.enrollment_type === 'updating' && (
+                        <div className="grid gap-2">
+                            <Label>Last Updated</Label>
+                            <Input type="datetime-local" value={formData.enrollment_updated_at || ''} readOnly disabled />
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Personal Information */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Personal Information</CardTitle>
+                    <CardDescription>Basic farmer details</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-2">
+                        <Label htmlFor="first_name">First Name <span className="text-red-500">*</span></Label>
+                        <Input id="first_name" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} />
+                        {errors?.first_name && <p className="text-xs text-red-500">{errors.first_name}</p>}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="middle_name">Middle Name</Label>
+                        <Input id="middle_name" value={formData.middle_name} onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="last_name">Surname <span className="text-red-500">*</span></Label>
+                        <Input id="last_name" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} />
+                        {errors?.last_name && <p className="text-xs text-red-500">{errors.last_name}</p>}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="extension_name">Extension Name</Label>
+                        <Input id="extension_name" value={formData.extension_name} onChange={(e) => setFormData({ ...formData, extension_name: e.target.value })} placeholder="Jr., Sr., III" />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="sex">Sex <span className="text-red-500">*</span></Label>
+                        <Select value={formData.sex} onValueChange={(value) => setFormData({ ...formData, sex: value })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Male">Male</SelectItem>
+                                <SelectItem value="Female">Female</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="birthdate">Date of Birth</Label>
+                        <Input id="birthdate" type="date" value={formData.birthdate} onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="civil_status">Civil Status</Label>
+                        <Select 
+                            value={formData.civil_status || undefined} 
+                            onValueChange={(value) => setFormData({ ...formData, civil_status: value })}
+                        >
+                            <SelectTrigger><SelectValue placeholder="Select civil status" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="single">Single</SelectItem>
+                                <SelectItem value="married">Married</SelectItem>
+                                <SelectItem value="widowed">Widowed</SelectItem>
+                                <SelectItem value="separated">Separated</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="religion">Religion</Label>
+                        <Select 
+                            value={formData.religion || undefined} 
+                            onValueChange={(value) => setFormData({ ...formData, religion: value })}
+                        >
+                            <SelectTrigger><SelectValue placeholder="Select religion" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="christianity">Christianity</SelectItem>
+                                <SelectItem value="islam">Islam</SelectItem>
+                                <SelectItem value="others">Others</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Address Information */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Address Information</CardTitle>
+                    <CardDescription>Complete residential address</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                    <div className="grid gap-2 md:col-span-2">
+                        <Label htmlFor="house_lot_bldg_no_purok">House/Lot/Building No. or Purok</Label>
+                        <Input id="house_lot_bldg_no_purok" value={formData.house_lot_bldg_no_purok} onChange={(e) => setFormData({ ...formData, house_lot_bldg_no_purok: e.target.value })} />
+                    </div>
+                    <div className="grid gap-2 md:col-span-2">
+                        <Label htmlFor="street_sitio_subdv">Street/Sitio/Subdivision</Label>
+                        <Input id="street_sitio_subdv" value={formData.street_sitio_subdv} onChange={(e) => setFormData({ ...formData, street_sitio_subdv: e.target.value })} />
+                    </div>
+                    <div className="grid gap-2 md:grid-cols-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="barangay">Barangay</Label>
+                            <Input id="barangay" value={formData.barangay} onChange={(e) => setFormData({ ...formData, barangay: e.target.value })} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="municipality_city">Municipality/City</Label>
+                            <Input id="municipality_city" value={formData.municipality_city} onChange={(e) => setFormData({ ...formData, municipality_city: e.target.value })} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="province">Province</Label>
+                            <Input id="province" value={formData.province} onChange={(e) => setFormData({ ...formData, province: e.target.value })} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="region">Region</Label>
+                            <Input id="region" value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Contact Information */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Contact Information</CardTitle>
+                    <CardDescription>Phone numbers and contact details</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-2">
+                        <Label htmlFor="contact_number">Mobile Number</Label>
+                        <Input id="contact_number" value={formData.contact_number} onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })} placeholder="09XXXXXXXXX" />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="landline_number">Landline Number</Label>
+                        <Input id="landline_number" value={formData.landline_number} onChange={(e) => setFormData({ ...formData, landline_number: e.target.value })} placeholder="(XX) XXX-XXXX" />
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Spouse Information */}
+            <Card className={isSingle ? 'opacity-50 pointer-events-none' : ''}>
+                <CardHeader>
+                    <CardTitle>Spouse Information {isSingle && '(Not applicable for Single)'}</CardTitle>
+                    <CardDescription>If married, provide spouse details</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="spouse_first_name">First Name</Label>
+                        <Input 
+                            id="spouse_first_name" 
+                            value={formData.spouse_first_name} 
+                            onChange={(e) => setFormData({ ...formData, spouse_first_name: e.target.value })} 
+                            disabled={isSingle}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="spouse_middle_name">Middle Name</Label>
+                        <Input 
+                            id="spouse_middle_name" 
+                            value={formData.spouse_middle_name} 
+                            onChange={(e) => setFormData({ ...formData, spouse_middle_name: e.target.value })} 
+                            disabled={isSingle}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="spouse_surname">Surname</Label>
+                        <Input 
+                            id="spouse_surname" 
+                            value={formData.spouse_surname} 
+                            onChange={(e) => setFormData({ ...formData, spouse_surname: e.target.value })} 
+                            disabled={isSingle}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="spouse_extension_name">Extension Name</Label>
+                        <Input 
+                            id="spouse_extension_name" 
+                            value={formData.spouse_extension_name} 
+                            onChange={(e) => setFormData({ ...formData, spouse_extension_name: e.target.value })} 
+                            disabled={isSingle}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Household Information */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Household Information</CardTitle>
+                    <CardDescription>Family composition and members</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="is_household_head"
+                            checked={formData.is_household_head || false}
+                            onCheckedChange={(checked: boolean) => setFormData({ ...formData, is_household_head: checked })}
+                        />
+                        <Label htmlFor="is_household_head">Is Household Head</Label>
+                    </div>
+                    
+                    {!formData.is_household_head && (
+                        <div className="grid gap-4 md:grid-cols-4 border-t pt-4">
+                            <div className="grid gap-2">
+                                <Label>Household Head First Name</Label>
+                                <Input value={formData.household_head_first_name} onChange={(e) => setFormData({ ...formData, household_head_first_name: e.target.value })} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Household Head Middle Name</Label>
+                                <Input value={formData.household_head_middle_name} onChange={(e) => setFormData({ ...formData, household_head_middle_name: e.target.value })} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Household Head Surname</Label>
+                                <Input value={formData.household_head_surname} onChange={(e) => setFormData({ ...formData, household_head_surname: e.target.value })} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Relationship to Head</Label>
+                                <Input value={formData.relationship_to_household_head} onChange={(e) => setFormData({ ...formData, relationship_to_household_head: e.target.value })} placeholder="e.g., Son, Daughter" />
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid gap-4 md:grid-cols-3 border-t pt-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="no_living_household_members">No. of Living Members (Auto-calculated)</Label>
+                            <Input 
+                                id="no_living_household_members" 
+                                type="number" 
+                                min="0" 
+                                value={formData.no_living_household_members} 
+                                readOnly
+                                disabled
+                                className="bg-muted"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="no_male_household_members">No. of Male Members</Label>
+                            <Input 
+                                id="no_male_household_members" 
+                                type="number" 
+                                min="0" 
+                                value={formData.no_male_household_members} 
+                                onChange={(e) => setFormData({ ...formData, no_male_household_members: parseInt(e.target.value) || 0 })} 
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="no_female_household_members">No. of Female Members</Label>
+                            <Input 
+                                id="no_female_household_members" 
+                                type="number" 
+                                min="0" 
+                                value={formData.no_female_household_members} 
+                                onChange={(e) => setFormData({ ...formData, no_female_household_members: parseInt(e.target.value) || 0 })} 
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Education & Special Fields */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Education & Special Fields</CardTitle>
+                    <CardDescription>Educational background and special categories</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="highest_formal_education">Highest Formal Education</Label>
+                        <Select 
+                            value={formData.highest_formal_education || undefined} 
+                            onValueChange={(value) => setFormData({ ...formData, highest_formal_education: value })}
+                        >
+                            <SelectTrigger><SelectValue placeholder="Select education level" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                <SelectItem value="pre_school">Pre-School</SelectItem>
+                                <SelectItem value="elementary">Elementary</SelectItem>
+                                <SelectItem value="high_school_non_k12">High School (Non K-12)</SelectItem>
+                                <SelectItem value="junior_hs_k12">Junior High School (K-12)</SelectItem>
+                                <SelectItem value="senior_hs_k12">Senior High School (K-12)</SelectItem>
+                                <SelectItem value="college">College</SelectItem>
+                                <SelectItem value="vocational">Vocational</SelectItem>
+                                <SelectItem value="post_graduate">Post-Graduate</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3 border-t pt-4">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="is_pwd" checked={formData.is_pwd || false} onCheckedChange={(checked: boolean) => setFormData({ ...formData, is_pwd: checked })} />
+                            <Label htmlFor="is_pwd">PWD</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="is_4ps_beneficiary" checked={formData.is_4ps_beneficiary || false} onCheckedChange={(checked: boolean) => setFormData({ ...formData, is_4ps_beneficiary: checked })} />
+                            <Label htmlFor="is_4ps_beneficiary">4Ps Beneficiary</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="is_ip" checked={formData.is_ip || false} onCheckedChange={(checked: boolean) => setFormData({ ...formData, is_ip: checked })} />
+                            <Label htmlFor="is_ip">Indigenous Person (IP)</Label>
+                        </div>
+                    </div>
+                    
+                    {formData.is_ip && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="ip_specify">Specify IP Group</Label>
+                            <Input id="ip_specify" value={formData.ip_specify} onChange={(e) => setFormData({ ...formData, ip_specify: e.target.value })} />
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Government ID */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Government ID</CardTitle>
+                    <CardDescription>Valid government identification (multiple IDs allowed)</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                    {/* Multiple Government IDs */}
+                    <div className="space-y-4">
+                        {formData.government_ids?.map((id: any, index: number) => (
+                            <div key={index} className="p-4 border rounded-lg space-y-3 relative">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold">ID #{index + 1}</h4>
+                                    {formData.government_ids.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newIds = formData.government_ids.filter((_: any, i: number) => i !== index);
+                                                setFormData({ ...formData, government_ids: newIds });
+                                            }}
+                                            className="text-red-600 hover:text-red-800 text-sm"
+                                        >
+                                            Remove
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="grid gap-2 md:grid-cols-3">
+                                    <div className="grid gap-2">
+                                        <Label>ID Type</Label>
+                                        <Select 
+                                            value={id.id_type || undefined} 
+                                            onValueChange={(value) => {
+                                                const newIds = [...formData.government_ids];
+                                                newIds[index].id_type = value;
+                                                setFormData({ ...formData, government_ids: newIds });
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select ID type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="philsys">PhilSys (National ID)</SelectItem>
+                                                <SelectItem value="umid">UMID</SelectItem>
+                                                <SelectItem value="drivers_license">Driver's License</SelectItem>
+                                                <SelectItem value="passport">Passport</SelectItem>
+                                                <SelectItem value="voters_id">Voter's ID</SelectItem>
+                                                <SelectItem value="sss">SSS ID</SelectItem>
+                                                <SelectItem value="pagibig">Pag-IBIG ID</SelectItem>
+                                                <SelectItem value="philhealth">PhilHealth ID</SelectItem>
+                                                <SelectItem value="senior_citizen">Senior Citizen ID</SelectItem>
+                                                <SelectItem value="pwd_id">PWD ID</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label>ID Number</Label>
+                                        <Input 
+                                            value={id.id_number || ''} 
+                                            onChange={(e) => {
+                                                const newIds = [...formData.government_ids];
+                                                newIds[index].id_number = e.target.value;
+                                                setFormData({ ...formData, government_ids: newIds });
+                                            }} 
+                                            placeholder="Enter ID number"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Upload ID File (Image/PDF)</Label>
+                                    <Input 
+                                        type="file" 
+                                        accept="image/*,.pdf"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const newIds = [...formData.government_ids];
+                                                newIds[index].file = file;
+                                                newIds[index].file_name = file.name;
+                                                setFormData({ ...formData, government_ids: newIds });
+                                            }
+                                        }}
+                                    />
+                                    {id.file_name && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Selected: {id.file_name}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        
+                        {/* Add Another ID Button */}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                const newIds = [...(formData.government_ids || []), { id_type: '', id_number: '', file: null, file_name: '' }];
+                                setFormData({ ...formData, government_ids: newIds });
+                            }}
+                            className="w-full"
+                        >
+                            + Add Another Government ID
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Farm Profile */}
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Farm Profile</CardTitle>
+                            <CardDescription>
+                                {farmCreated 
+                                    ? "Select a farm to add land parcels"
+                                    : "Create a farm first, then add land parcels to it"
+                                }
+                            </CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="grid gap-6">
+                    {/* Initial State - Show only Add Farm button */}
+                    {!showFarmCreation && !farmCreated && (
+                        <div className="text-center py-8">
+                            <div className="mb-4">
+                                <Award className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+                            </div>
+                            <h4 className="text-lg font-semibold mb-2">No Farms Yet</h4>
+                            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                                {existingFarms && existingFarms.length > 0
+                                    ? "You have existing farms. Create a new farm or select an existing one to add parcels."
+                                    : "Create your first farm to get started with adding land parcels."
+                                }
+                            </p>
+                            <Button
+                                type="button"
+                                onClick={() => setShowFarmCreation(true)}
+                                className="gap-2"
+                            >
+                                + Add New Farm
+                            </Button>
+                        </div>
+                    )}
+                            <Card className="border-2 bg-muted/30">
+                                <CardHeader>
+                                    <CardTitle className="text-base">Create New Farm</CardTitle>
+                                    <CardDescription>Enter farm details below</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="farm_name">Farm Name *</Label>
+                                            <Input 
+                                                id="farm_name" 
+                                                value={formData.farm_name || ''} 
+                                                onChange={(e) => setFormData({ ...formData, farm_name: e.target.value })} 
+                                                placeholder="Enter farm name"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={() => {
+                                                if (formData.farm_name && formData.farm_name.trim() !== '') {
+                                                    setFarmCreated(true);
+                                                    // Farm will be saved when the main form is submitted
+                                                } else {
+                                                    alert('Please enter a farm name');
+                                                }
+                                            }}
+                                            disabled={!formData.farm_name || formData.farm_name.trim() === ''}
+                                        >
+                                            Save Farm
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setShowNewFarmCard(false);
+                                                setFormData({ ...formData, farm_name: '', existing_farm_id: '' });
+                                            }}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ) : existingFarms && existingFarms.length > 0 && !farmCreated ? (
+                            <>
+                                <div className="grid gap-2 md:grid-cols-2">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="existing_farm">Choose Existing Farm</Label>
+                                        <Select 
+                                            value={formData.existing_farm_id || ''} 
+                                            onValueChange={(value) => {
+                                                const selectedFarm = existingFarms.find(f => f.id.toString() === value);
+                                                setFormData({ 
+                                                    ...formData, 
+                                                    existing_farm_id: value,
+                                                    farm_name: selectedFarm ? selectedFarm.farm_name : formData.farm_name
+                                                });
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a farm" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">Create New Farm Instead</SelectItem>
+                                                {existingFarms.map((farm) => (
+                                                    <SelectItem key={farm.id} value={farm.id.toString()}>
+                                                        {farm.farm_name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Select an existing farm to add parcels to it
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                {!formData.existing_farm_id && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setShowNewFarmCard(true)}
+                                        className="w-full"
+                                    >
+                                        + Create New Farm
+                                    </Button>
+                                )}
+                            </>
+                        ) : (
+                            /* Show farm creation or confirmation */
+                            <div className="space-y-4">
+                                {farmCreated ? (
+                                    <Card className="border-2 border-green-500 bg-green-50 dark:bg-green-900/20">
+                                        <CardContent className="pt-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-white">
+                                                        ✓
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-green-800 dark:text-green-200">
+                                                            Farm Created Successfully!
+                                                        </p>
+                                                        <p className="text-sm text-green-600 dark:text-green-300">
+                                                            {formData.farm_name}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Badge variant="outline" className="bg-green-100 dark:bg-green-800">
+                                                    Ready for Parcels
+                                                </Badge>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="farm_name">Farm Name *</Label>
+                                            <Input 
+                                                id="farm_name" 
+                                                value={formData.farm_name || ''} 
+                                                onChange={(e) => setFormData({ ...formData, farm_name: e.target.value })} 
+                                                placeholder="Enter farm name"
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                No existing farms found. Create a new farm to continue.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Farm Parcels - Only show if farm exists */}
+                    {formData.farm_name && formData.farm_name.trim() !== '' ? (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between border-b pb-2">
+                                <h4 className="text-sm font-semibold">Farm Parcels</h4>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        const newParcels = [...(formData.farm_parcels || []), {
+                                            parcel_number: '',
+                                            barangay: '',
+                                            city_municipality: '',
+                                            total_farm_area: '',
+                                            within_ancestral_domain: false,
+                                            ownership_document_type: '',
+                                            ownership_document_number: '',
+                                            agrarian_reform_beneficiary: false,
+                                            ownership_type: '',
+                                            landowner_name: '',
+                                            landowner_contact: '',
+                                            parcel_size: '',
+                                            livestock_count: 0,
+                                            farm_type: '',
+                                            is_organic_practitioner: false,
+                                            remarks: '',
+                                        }];
+                                        setFormData({ ...formData, farm_parcels: newParcels });
+                                    }}
+                                >
+                                    + Add Farm Parcel
+                                </Button>
+                            </div>
+
+                        {formData.farm_parcels?.map((parcel: any, index: number) => (
+                            <div key={index} className="p-4 border rounded-lg space-y-4 relative bg-muted/30">
+                                <div className="flex items-center justify-between">
+                                    <h5 className="font-medium">Parcel #{index + 1}</h5>
+                                    {formData.farm_parcels.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newParcels = formData.farm_parcels.filter((_: any, i: number) => i !== index);
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }}
+                                            className="text-red-600 hover:text-red-800 text-sm"
+                                        >
+                                            Remove Parcel
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    <div className="grid gap-2">
+                                        <Label>Parcel Number</Label>
+                                        <Input 
+                                            value={parcel.parcel_number || ''} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].parcel_number = e.target.value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                            placeholder="Parcel 1"
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Barangay</Label>
+                                        <Input 
+                                            value={parcel.barangay || ''} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].barangay = e.target.value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>City/Municipality</Label>
+                                        <Input 
+                                            value={parcel.city_municipality || ''} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].city_municipality = e.target.value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    <div className="grid gap-2">
+                                        <Label>Total Farm Area (hectares)</Label>
+                                        <Input 
+                                            type="number" 
+                                            step="0.01"
+                                            value={parcel.total_farm_area || ''} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].total_farm_area = e.target.value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Parcel Size (hectares)</Label>
+                                        <Input 
+                                            type="number" 
+                                            step="0.01"
+                                            value={parcel.parcel_size || ''} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].parcel_size = e.target.value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Livestock Count</Label>
+                                        <Input 
+                                            type="number" 
+                                            value={parcel.livestock_count || 0} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].livestock_count = parseInt(e.target.value) || 0;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    <div className="grid gap-2">
+                                        <Label>Farm Type</Label>
+                                        <Select 
+                                            value={parcel.farm_type || undefined} 
+                                            onValueChange={(value) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].farm_type = value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select farm type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="irrigated">Irrigated</SelectItem>
+                                                <SelectItem value="rainfed_upland">Rainfed Upland</SelectItem>
+                                                <SelectItem value="rainfed_lowland">Rainfed Lowland</SelectItem>
+                                                <SelectItem value="not_applicable">Not Applicable</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Ownership Type</Label>
+                                        <Select 
+                                            value={parcel.ownership_type || undefined} 
+                                            onValueChange={(value) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].ownership_type = value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select ownership" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="registered_owner">Registered Owner</SelectItem>
+                                                <SelectItem value="tenant">Tenant</SelectItem>
+                                                <SelectItem value="lessee">Lessee</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Landowner Name</Label>
+                                        <Input 
+                                            value={parcel.landowner_name || ''} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].landowner_name = e.target.value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                            placeholder="If not owner"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="grid gap-2">
+                                        <Label>Ownership Document Type</Label>
+                                        <Input 
+                                            value={parcel.ownership_document_type || ''} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].ownership_document_type = e.target.value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Ownership Document Number</Label>
+                                        <Input 
+                                            value={parcel.ownership_document_number || ''} 
+                                            onChange={(e) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].ownership_document_number = e.target.value;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox 
+                                            id={`within_ancestral_domain_${index}`} 
+                                            checked={parcel.within_ancestral_domain || false} 
+                                            onCheckedChange={(checked: boolean) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].within_ancestral_domain = checked;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                        <Label htmlFor={`within_ancestral_domain_${index}`}>Within Ancestral Domain</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox 
+                                            id={`agrarian_reform_${index}`} 
+                                            checked={parcel.agrarian_reform_beneficiary || false} 
+                                            onCheckedChange={(checked: boolean) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].agrarian_reform_beneficiary = checked;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                        <Label htmlFor={`agrarian_reform_${index}`}>Agrarian Reform Beneficiary</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox 
+                                            id={`is_organic_${index}`} 
+                                            checked={parcel.is_organic_practitioner || false} 
+                                            onCheckedChange={(checked: boolean) => {
+                                                const newParcels = [...formData.farm_parcels];
+                                                newParcels[index].is_organic_practitioner = checked;
+                                                setFormData({ ...formData, farm_parcels: newParcels });
+                                            }} 
+                                        />
+                                        <Label htmlFor={`is_organic_${index}`}>Organic Practitioner</Label>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label>Remarks</Label>
+                                    <Input 
+                                        value={parcel.remarks || ''} 
+                                        onChange={(e) => {
+                                            const newParcels = [...formData.farm_parcels];
+                                            newParcels[index].remarks = e.target.value;
+                                            setFormData({ ...formData, farm_parcels: newParcels });
+                                        }} 
+                                        placeholder="Additional notes about this parcel"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        </div>
+                    ) : (
+                        <div className="p-4 border rounded-lg bg-muted/30 text-center">
+                            <p className="text-muted-foreground">Please enter a farm name first to add farm parcels</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Emergency Contact */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Emergency Contact</CardTitle>
+                    <CardDescription>Person to contact in case of emergency</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                    <div className="grid gap-2 md:grid-cols-4">
+                        <div className="grid gap-2">
+                            <Label>First Name</Label>
+                            <Input value={formData.emergency_contact_first_name} onChange={(e) => setFormData({ ...formData, emergency_contact_first_name: e.target.value })} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Middle Name</Label>
+                            <Input value={formData.emergency_contact_middle_name} onChange={(e) => setFormData({ ...formData, emergency_contact_middle_name: e.target.value })} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Last Name</Label>
+                            <Input value={formData.emergency_contact_last_name} onChange={(e) => setFormData({ ...formData, emergency_contact_last_name: e.target.value })} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Extension Name</Label>
+                            <Input value={formData.emergency_contact_extension_name} onChange={(e) => setFormData({ ...formData, emergency_contact_extension_name: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="grid gap-2 md:col-span-4">
+                        <Label htmlFor="emergency_contact_number">Contact Number</Label>
+                        <Input id="emergency_contact_number" value={formData.emergency_contact_number} onChange={(e) => setFormData({ ...formData, emergency_contact_number: e.target.value })} placeholder="09XXXXXXXXX" />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
