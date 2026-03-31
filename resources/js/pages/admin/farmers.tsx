@@ -501,7 +501,7 @@ export default function Farmers() {
                                 <TableHeader>
                                     <TableRow>
                                       
-                                        <TableHead>ID</TableHead>
+                                        <TableHead>LFID</TableHead>
                                           <TableHead>Picture</TableHead>
                                         <TableHead>RSBSA No.</TableHead>
                                         <TableHead>
@@ -520,13 +520,14 @@ export default function Farmers() {
                                         <TableHead>Sex</TableHead>
                                         <TableHead>Contact</TableHead>
                                         <TableHead>Civil Status</TableHead>
+                                        <TableHead>Registration Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {paginatedFarmers.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={10} className="h-24 text-center">
+                                            <TableCell colSpan={11} className="h-24 text-center">
                                                 No farmers found. Click "Add Farmer" to create one.
                                             </TableCell>
                                         </TableRow>
@@ -537,7 +538,7 @@ export default function Farmers() {
                                                 className="cursor-pointer hover:bg-muted/50"
                                                 onClick={() => router.visit(`/admin/farmers/${farmer.id}`)}
                                             >
-                                                 <TableCell className="font-medium">{farmer.id}</TableCell>
+                                                 <TableCell className="font-medium">{farmer.lfid || 'Not generated'}</TableCell>
                                                 <TableCell>
                                                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted overflow-hidden">
                                                         {farmer.picture_id ? (
@@ -561,6 +562,19 @@ export default function Farmers() {
                                                 </TableCell>
                                                 <TableCell>{farmer.contact_number || '-'}</TableCell>
                                                 <TableCell>{farmer.civil_status || '-'}</TableCell>
+                                                <TableCell>
+                                                    <Badge 
+                                                        variant={
+                                                            farmer.registration_status === 'verified' ? 'default' :
+                                                            farmer.registration_status === 'for_submission' ? 'secondary' :
+                                                            farmer.registration_status === 'submitted_to_da' ? 'outline' :
+                                                            farmer.registration_status === 'rejected' ? 'destructive' :
+                                                            'outline'
+                                                        }
+                                                    >
+                                                        {farmer.registration_status?.replace('_', ' ') || 'not registered'}
+                                                    </Badge>
+                                                </TableCell>
                                                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>

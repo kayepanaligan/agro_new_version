@@ -10,6 +10,7 @@ use App\Models\Farm;
 use App\Models\Organization;
 use App\Models\Program;
 use App\Models\Variety;
+use App\Services\LfidGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -133,6 +134,16 @@ class FarmerController extends Controller
         }
 
         $farmer = Farmer::create($validated);
+
+        // Generate LFID after farmer creation
+        if ($farmer) {
+            $lfidGenerator = new LfidGenerator();
+            $lfid = $lfidGenerator->generate($farmer->id);
+            
+            if ($lfid) {
+                $farmer->update(['lfid' => $lfid]);
+            }
+        }
 
         return back()->with('success', 'Farmer created successfully.');
     }

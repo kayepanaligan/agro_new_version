@@ -12,6 +12,8 @@ class Farmer extends Model
     protected $fillable = [
         'rsbsa_number',
         'picture_id',
+        'lfid',
+        'registration_status',
     ];
 
     // Relationships to new normalized tables

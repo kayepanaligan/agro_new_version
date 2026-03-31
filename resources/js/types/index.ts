@@ -87,6 +87,8 @@ export interface Variety {
 export interface Farmer {
     id: number;
     rsbsa_number?: string | null;
+    lfid?: string | null;
+    registration_status?: 'not_registered' | 'for_submission' | 'submitted_to_da' | 'verified' | 'rejected' | null;
     first_name: string;
     last_name: string;
     middle_name?: string | null;

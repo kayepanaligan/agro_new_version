@@ -3,6 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Farmer;
+use App\Models\FarmerAddress;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class FarmerFactory extends Factory
 {
+    use HasFactory;
     /**
      * Define the model's default state.
      *
@@ -88,5 +91,23 @@ class FarmerFactory extends Factory
             'emergency_contact_last_name' => fake()->lastName(),
             'emergency_contact_number' => '09' . substr(fake()->phoneNumber(), 0, 9),
         ];
+    }
+
+    /**
+     * Indicate that the farmer should have an address.
+     */
+    public function withAddress(): static
+    {
+        return $this->afterCreating(function (Farmer $farmer) {
+            FarmerAddress::create([
+                'farmer_id' => $farmer->id,
+                'house_lot_bldg_no_purok' => fake()->buildingNumber() . ' Purok ' . rand(1, 10),
+                'street_sitio_subdv' => fake()->streetName(),
+                'barangay' => fake()->randomElement(['Poblacion', 'San Isidro', 'Santa Cruz', 'San Jose', 'Rizal', 'Bonifacio', 'Aguinaldo', 'Aplaya', 'Zone 1', 'Zone 2']),
+                'municipality_city' => fake()->city(),
+                'province' => fake()->randomElement(['Cebu', 'Davao', 'Laguna', 'Batangas', 'Cavite', 'Bulacan']),
+                'region' => 'Region ' . fake()->randomElement(['VII', 'XI', 'IV-A', 'CALABARZON', 'III', 'Central Luzon']),
+            ]);
+        });
     }
 }
