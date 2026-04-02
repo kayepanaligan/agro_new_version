@@ -1,4 +1,4 @@
-import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
@@ -31,7 +31,7 @@ export function AppSidebar() {
 
     if (isAdmin) {
         navGroups.push({
-            title: 'Crop Management',
+            title: 'Crop Libary',
             items: [
                 {
                     title: 'Categories',
@@ -68,7 +68,7 @@ export function AppSidebar() {
         });
 
         navGroups.push({
-            title: 'Allocation Management',
+            title: 'Programs & Aid',
             items: [
                 {
                     title: 'Organizations',
@@ -84,17 +84,17 @@ export function AppSidebar() {
         });
 
         navGroups.push({
-            title: 'Damage Management',
+            title: 'Field Reports',
             items: [
                 {
                     title: 'Damage Categories',
                     url: '/admin/damage-categories',
-                    icon: AlertTriangle,
+                    icon: WormIcon,
                 },
                 {
                     title: 'Damage Types',
                     url: '/admin/damage-types',
-                    icon: AlertTriangle,
+                    icon: Rat,
                 },
             ],
         });

@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Farmer, type Farm } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpDown, Plus, Search, Filter } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Plus, Search, Filter, Trash2, Eye } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -96,8 +104,15 @@ export default function FarmsIndex({ farms }: FarmsProps) {
 
     // Pagination
     const totalPages = Math.ceil(filteredFarms.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedFarms = filteredFarms.slice(startIndex, startIndex + itemsPerPage);
+    const paginatedFarms = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredFarms.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredFarms, currentPage, itemsPerPage]);
+
+    // Reset to page 1 when filters change
+    useMemo(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterFarmer]);
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
@@ -112,6 +127,14 @@ export default function FarmsIndex({ farms }: FarmsProps) {
         setSearchTerm('');
         setFilterFarmer('all');
         setCurrentPage(1);
+    };
+
+    const handleDelete = (farmId: number) => {
+        if (confirm('Are you sure you want to delete this farm? This action cannot be undone.')) {
+            router.delete(`/admin/farms/${farmId}`, {
+                preserveScroll: true,
+            });
+        }
     };
 
     // Handle server-side pagination navigation
@@ -181,7 +204,7 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                             </div>
 
                             <div className="text-sm text-muted-foreground">
-                                {filteredFarms.length} farm{filteredFarms.length !== 1 ? 's' : ''} found
+                                {paginatedFarms.length} of {filteredFarms.length} farm{filteredFarms.length !== 1 ? 's' : ''}
                             </div>
                         </div>
                     </CardContent>
@@ -213,7 +236,6 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                                                 <ArrowUpDown className="ml-2 h-4 w-4" />
                                             </Button>
                                         </TableHead>
-                                        <TableHead>RSBSA Number</TableHead>
                                         <TableHead>Created At</TableHead>
                                         <TableHead className="w-[70px]">Actions</TableHead>
                                     </TableRow>
@@ -221,7 +243,7 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                                 <TableBody>
                                     {paginatedFarms.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="h-24 text-center">
+                                            <TableCell colSpan={6} className="h-24 text-center">
                                                 No farms found.
                                             </TableCell>
                                         </TableRow>
@@ -251,16 +273,36 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                                                         {farm.farm_parcels_count || 0} parcel{(farm.farm_parcels_count || 0) !== 1 ? 's' : ''}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell>
-                                                    {farm.farmer.rsbsa_number || 'Not assigned'}
-                                                </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground">
                                                     {new Date(farm.created_at).toLocaleDateString()}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Button variant="ghost" size="sm" asChild>
-                                                        <Link href={`/admin/farms/${farm.id}`}>View</Link>
-                                                    </Button>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem onClick={() => router.visit(`/admin/farms/${farm.id}`)}>
+                                                                <Eye className="mr-2 h-4 w-4" />
+                                                                <span>View</span>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => router.visit(`/admin/farms/${farm.id}/edit`)}>
+                                                                <Pencil className="mr-2 h-4 w-4" />
+                                                                <span>Edit</span>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem 
+                                                                onClick={() => handleDelete(farm.id)}
+                                                                className="text-red-600 focus:text-red-600"
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                <span>Delete</span>
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
                                                 </TableCell>
                                             </TableRow>
                                         ))
@@ -271,29 +313,63 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                     </CardContent>
                 </Card>
 
-                {/* Pagination */}
-                {farms.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => goToPage(farms.current_page - 1)}
-                            disabled={farms.current_page === 1}
-                        >
-                            Previous
-                        </Button>
-                        <span className="text-sm text-muted-foreground">
-                            Page {farms.current_page} of {farms.last_page}
-                        </span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => goToPage(farms.current_page + 1)}
-                            disabled={farms.current_page === farms.last_page}
-                        >
-                            Next
-                        </Button>
-                    </div>
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground">
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum;
+                                            if (totalPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage >= totalPages - 2) {
+                                                pageNum = totalPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPage - 2 + i;
+                                            }
+                                            
+                                            return (
+                                                <Button
+                                                    key={pageNum}
+                                                    variant={currentPage === pageNum ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                    className="w-10"
+                                                >
+                                                    {pageNum}
+                                                </Button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
         </AppLayout>

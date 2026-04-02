@@ -47,6 +47,8 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
     const [sortField, setSortField] = useState<'damage_type_name' | 'damage_category_name' | 'created_at'>('damage_type_name');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [filterCategory, setFilterCategory] = useState<string>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -99,6 +101,18 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
 
         return result;
     }, [damageTypes, searchTerm, filterCategory, sortField, sortOrder]);
+
+    // Pagination
+    const totalPages = Math.ceil(filteredTypes.length / itemsPerPage);
+    const paginatedTypes = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredTypes.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredTypes, currentPage, itemsPerPage]);
+
+    // Reset to page 1 when filters change
+    useMemo(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterCategory]);
 
     const handleSort = (field: typeof sortField) => {
         if (sortField === field) {
@@ -259,7 +273,7 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                             </div>
 
                             <div className="text-sm text-muted-foreground">
-                                {filteredTypes.length} damage type{filteredTypes.length !== 1 ? 's' : ''} found
+                                {paginatedTypes.length} of {filteredTypes.length} damage type{filteredTypes.length !== 1 ? 's' : ''}
                             </div>
                         </div>
                     </CardContent>
@@ -292,14 +306,14 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filteredTypes.length === 0 ? (
+                                    {paginatedTypes.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={7} className="h-24 text-center">
                                                 No damage types found.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredTypes.map((type) => (
+                                        paginatedTypes.map((type) => (
                                             <TableRow key={type.damage_type_id}>
                                                 <TableCell className="font-medium">{type.damage_type_id}</TableCell>
                                                 <TableCell>
@@ -365,6 +379,65 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground">
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum;
+                                            if (totalPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage >= totalPages - 2) {
+                                                pageNum = totalPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPage - 2 + i;
+                                            }
+                                            
+                                            return (
+                                                <Button
+                                                    key={pageNum}
+                                                    variant={currentPage === pageNum ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                    className="w-10"
+                                                >
+                                                    {pageNum}
+                                                </Button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {/* Create Modal */}
