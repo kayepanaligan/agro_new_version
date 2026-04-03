@@ -3,6 +3,7 @@ import { type BreadcrumbItem, type Category, type Commodity } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, Upload, X, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useMemo, useState, useRef, useCallback } from 'react';
+import axios from 'axios';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -190,6 +191,7 @@ export default function Commodities() {
     });
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+    const [generatedImagePath, setGeneratedImagePath] = useState<string | null>(null);
 
     // Filter and sort commodities
     const filteredCommodities = useMemo(() => {
@@ -278,6 +280,7 @@ export default function Commodities() {
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setFormData({ category_id: '', name: '', description: '', image: null, use_ai_generated: false });
+                setGeneratedImageUrl(null);
             },
         });
     };
@@ -310,6 +313,7 @@ export default function Commodities() {
                 setIsEditModalOpen(false);
                 setFormData({ category_id: '', name: '', description: '', image: null, use_ai_generated: false });
                 setSelectedCommodity(null);
+                setGeneratedImageUrl(null);
             },
         });
     };
@@ -346,6 +350,76 @@ export default function Commodities() {
     const resetForm = () => {
         setFormData({ category_id: '', name: '', description: '', image: null, use_ai_generated: false });
         setSelectedCommodity(null);
+        setGeneratedImageUrl(null);
+        setGeneratedImagePath(null);
+    };
+
+    const generateAiImage = async (name: string, description: string) => {
+        if (!name || !description) {
+            alert('Please enter both name and description before generating AI image');
+            return;
+        }
+
+        try {
+            setIsGeneratingImage(true);
+            
+            // Create a detailed prompt for AI image generation
+            const prompt = `High quality professional product photo of fresh ${name}. ${description}. Studio lighting, white background, commercial photography style, photorealistic.`;
+            
+            // Call the AI generation API using axios (using admin web route with rate limiting)
+            const response = await axios.post('/admin/ai/generate-image', {
+                prompt: prompt,
+                size: '1024x1024',
+                save_to_storage: true, // Save to storage for persistence
+            }, {
+                timeout: 90000, // 90 second timeout for Gemini API
+            });
+
+            const data = response.data;
+
+            if (data.success && data.data?.base64) {
+                // Set the generated image data URI for preview
+                const dataUri = data.data.dataUri || `data:${data.data.mimeType};base64,${data.data.base64}`;
+                setGeneratedImageUrl(dataUri);
+                
+                // Store metadata for form submission
+                setGeneratedImagePath(data.data.storage_path || null);
+                
+                // Show success message
+                const hasStorageUrl = data.data.url ? ' Image saved to server.' : '';
+                alert(`✅ AI image generated successfully!${hasStorageUrl}`);
+            } else {
+                throw new Error(data.message || 'Failed to generate image - no image data returned');
+            }
+        } catch (error: any) {
+            console.error('Error generating AI image:', error);
+            
+            let errorMessage = 'Failed to generate AI image. ';
+            
+            if (error.code === 'ECONNABORTED') {
+                errorMessage += 'The request timed out (90s). The AI service may be busy. Please try again.';
+            } else if (error.response?.status === 429) {
+                const retryAfter = error.response?.data?.retry_after || 60;
+                errorMessage += `Rate limit exceeded. Please wait ${retryAfter} seconds before trying again.`;
+            } else if (error.response?.status === 422) {
+                const errors = error.response?.data?.errors;
+                if (errors?.prompt) {
+                    errorMessage = errors.prompt.join(' ');
+                } else {
+                    errorMessage += 'Invalid input parameters.';
+                }
+            } else if (error.response?.status === 503) {
+                errorMessage += error.response.data.message || 'The AI service is temporarily unavailable.';
+            } else if (error.response?.status === 500) {
+                errorMessage += 'An internal server error occurred. Please check the logs and try again.';
+            } else {
+                errorMessage += 'Please try again in a few moments.';
+            }
+            
+            alert('⚠️ ' + errorMessage);
+        } finally {
+            setIsGeneratingImage(false);
+        }
     };
 
     return (
@@ -599,6 +673,28 @@ export default function Commodities() {
                             generatedImageUrl={generatedImageUrl}
                         />
 
+                        {formData.use_ai_generated && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => generateAiImage(formData.name, formData.description)}
+                                disabled={!formData.name || !formData.description || isGeneratingImage}
+                                className="w-full"
+                            >
+                                {isGeneratingImage ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Generating AI Image...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                        Generate AI Image Now
+                                    </>
+                                )}
+                            </Button>
+                        )}
+
                         <div className="flex items-center space-x-2 border rounded-lg p-4 bg-muted/50">
                             <input
                                 type="checkbox"
@@ -609,16 +705,11 @@ export default function Commodities() {
                                     setFormData({ ...formData, use_ai_generated: isChecked });
                                     
                                     if (isChecked && formData.name && formData.description) {
-                                        // Simulate AI image generation
-                                        setIsGeneratingImage(true);
-                                        // TODO: Replace with actual API call
-                                        // For demo purposes, we'll show a placeholder after delay
-                                        await new Promise(resolve => setTimeout(resolve, 2000));
-                                        // In production, this would be the actual generated image URL from API
-                                        setGeneratedImageUrl(`https://placehold.co/400x400?text=${encodeURIComponent(formData.name)}`);
-                                        setIsGeneratingImage(false);
+                                        // Call the actual AI generation API
+                                        await generateAiImage(formData.name, formData.description);
                                     } else if (!isChecked) {
                                         setGeneratedImageUrl(null);
+                                        setGeneratedImagePath(null);
                                     }
                                 }}
                                 className="h-4 w-4"
@@ -698,6 +789,28 @@ export default function Commodities() {
                             generatedImageUrl={generatedImageUrl}
                         />
 
+                        {formData.use_ai_generated && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => generateAiImage(formData.name, formData.description)}
+                                disabled={!formData.name || !formData.description || isGeneratingImage}
+                                className="w-full"
+                            >
+                                {isGeneratingImage ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Generating AI Image...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                        Generate AI Image Now
+                                    </>
+                                )}
+                            </Button>
+                        )}
+
                         <div className="flex items-center space-x-2 border rounded-lg p-4 bg-muted/50">
                             <input
                                 type="checkbox"
@@ -708,16 +821,11 @@ export default function Commodities() {
                                     setFormData({ ...formData, use_ai_generated: isChecked });
                                     
                                     if (isChecked && formData.name && formData.description) {
-                                        // Simulate AI image generation
-                                        setIsGeneratingImage(true);
-                                        // TODO: Replace with actual API call
-                                        // For demo purposes, we'll show a placeholder after delay
-                                        await new Promise(resolve => setTimeout(resolve, 2000));
-                                        // In production, this would be the actual generated image URL from API
-                                        setGeneratedImageUrl(`https://placehold.co/400x400?text=${encodeURIComponent(formData.name)}`);
-                                        setIsGeneratingImage(false);
+                                        // Call the actual AI generation API
+                                        await generateAiImage(formData.name, formData.description);
                                     } else if (!isChecked) {
                                         setGeneratedImageUrl(null);
+                                        setGeneratedImagePath(null);
                                     }
                                 }}
                                 className="h-4 w-4"

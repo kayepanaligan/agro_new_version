@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Commodity;
+use App\Services\GeminiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,6 +13,12 @@ use Inertia\Response;
 
 class CommodityController extends Controller
 {
+    protected GeminiService $geminiService;
+
+    public function __construct(GeminiService $geminiService)
+    {
+        $this->geminiService = $geminiService;
+    }
     /**
      * Display commodities page.
      */
@@ -102,27 +109,14 @@ class CommodityController extends Controller
 
     /**
      * Generate an AI image based on commodity details.
-     * This is a placeholder - in production, you would integrate with an AI image generation API
-     * like DALL-E, Stable Diffusion, Midjourney, etc.
      */
     private function generateAiImage(string $name, string $description): ?string
     {
-        // TODO: Integrate with actual AI image generation API
-        // For now, this returns null and the commodity will be created without an image
+        // Create a detailed prompt for the AI
+        $prompt = "High quality professional product photo of fresh {$name}. {$description}. Studio lighting, white background, commercial photography style.";
         
-        // Example integration with an AI service:
-        // $prompt = "High quality product photo of {$name}. {$description}";
-        // $response = Http::post('https://api.example.com/generate-image', [
-        //     'prompt' => $prompt,
-        //     'size' => '1024x1024',
-        // ]);
-        // $imageUrl = $response->json('image_url');
-        // $imageContent = file_get_contents($imageUrl);
-        // $filename = 'commodities/ai_' . uniqid() . '.png';
-        // Storage::disk('public')->put($filename, $imageContent);
-        // return $filename;
-        
-        return null;
+        // Use GeminiService to generate the image
+        return $this->geminiService->generateImage($prompt);
     }
 
     /**

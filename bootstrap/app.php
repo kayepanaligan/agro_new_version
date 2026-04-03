@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AiRateLimiter;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SuperAdminMiddleware;
 use Illuminate\Foundation\Application;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $middleware->alias([
             'super-admin' => SuperAdminMiddleware::class,
+            'ai-rate-limit' => AiRateLimiter::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FarmerController;
+use App\Http\Controllers\Api\SyncController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,19 +22,20 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Protected routes (authentication required)
 Route::middleware('auth:sanctum')->group(function () {
-    // User routes
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
     
     Route::post('/logout', [AuthController::class, 'logout']);
     
-    // Farmer routes
+    Route::post('/ai/generate-image', [AiController::class, 'generateImage']);
+    Route::post('/ai/generate-text', [AiController::class, 'generateText']);
+    
+    Route::post('/sync', [SyncController::class, 'sync']);
+
     Route::apiResource('farmers', FarmerController::class);
     
-    // Additional farmer-specific routes
     Route::get('/farmers/{farmer}/profile', [FarmerController::class, 'profile']);
     Route::put('/farmers/{farmer}/profile', [FarmerController::class, 'updateProfile']);
 });

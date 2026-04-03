@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'image_model' => env('GEMINI_IMAGE_MODEL', 'imagen-3.0-generate-001'),
+        'text_model' => env('GEMINI_TEXT_MODEL', 'gemini-pro'),
+    ],
+
 ];

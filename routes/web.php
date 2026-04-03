@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AiController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -32,6 +33,14 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/commodities', [App\Http\Controllers\Admin\CommodityController::class, 'store'])->name('admin.commodities.store');
         Route::put('/commodities/{commodity}', [App\Http\Controllers\Admin\CommodityController::class, 'update'])->name('admin.commodities.update');
         Route::delete('/commodities/{commodity}', [App\Http\Controllers\Admin\CommodityController::class, 'destroy'])->name('admin.commodities.destroy');
+
+        // AI Image Generation Routes (for admin use)
+        Route::post('/ai/generate-image', [AiController::class, 'generateImage'])
+            ->name('admin.ai.generate-image')
+            ->middleware('ai-rate-limit');
+        Route::post('/ai/generate-text', [AiController::class, 'generateText'])
+            ->name('admin.ai.generate-text')
+            ->middleware('ai-rate-limit');
 
         Route::get('/varieties', [App\Http\Controllers\Admin\VarietyController::class, 'index'])->name('admin.varieties');
         Route::post('/varieties', [App\Http\Controllers\Admin\VarietyController::class, 'store'])->name('admin.varieties.store');
@@ -72,6 +81,25 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/damage-types', [App\Http\Controllers\Admin\DamageTypeController::class, 'store'])->name('admin.damage-types.store');
         Route::put('/damage-types/{damageType}', [App\Http\Controllers\Admin\DamageTypeController::class, 'update'])->name('admin.damage-types.update');
         Route::delete('/damage-types/{damageType}', [App\Http\Controllers\Admin\DamageTypeController::class, 'destroy'])->name('admin.damage-types.destroy');
+
+        // Unit of Measure Routes
+        Route::get('/unit-of-measures', [App\Http\Controllers\Admin\UnitOfMeasureController::class, 'index'])->name('admin.unit-of-measures');
+        Route::post('/unit-of-measures', [App\Http\Controllers\Admin\UnitOfMeasureController::class, 'store'])->name('admin.unit-of-measures.store');
+        Route::put('/unit-of-measures/{unitOfMeasure}', [App\Http\Controllers\Admin\UnitOfMeasureController::class, 'update'])->name('admin.unit-of-measures.update');
+        Route::delete('/unit-of-measures/{unitOfMeasure}', [App\Http\Controllers\Admin\UnitOfMeasureController::class, 'destroy'])->name('admin.unit-of-measures.destroy');
+
+        // Allocation Type Routes
+        Route::get('/allocation-types', [App\Http\Controllers\Admin\AllocationTypeController::class, 'index'])->name('admin.allocation-types');
+        Route::get('/allocation-types/form-data', [App\Http\Controllers\Admin\AllocationTypeController::class, 'getFormData'])->name('admin.allocation-types.form-data');
+        Route::post('/allocation-types', [App\Http\Controllers\Admin\AllocationTypeController::class, 'store'])->name('admin.allocation-types.store');
+        Route::put('/allocation-types/{allocationType}', [App\Http\Controllers\Admin\AllocationTypeController::class, 'update'])->name('admin.allocation-types.update');
+        Route::delete('/allocation-types/{allocationType}', [App\Http\Controllers\Admin\AllocationTypeController::class, 'destroy'])->name('admin.allocation-types.destroy');
+
+        // Farmer Eligibility Routes
+        Route::get('/farmer-eligibilities', [App\Http\Controllers\Admin\FarmerEligibilityController::class, 'index'])->name('admin.farmer-eligibilities');
+        Route::post('/farmer-eligibilities', [App\Http\Controllers\Admin\FarmerEligibilityController::class, 'store'])->name('admin.farmer-eligibilities.store');
+        Route::put('/farmer-eligibilities/{farmerEligibility}', [App\Http\Controllers\Admin\FarmerEligibilityController::class, 'update'])->name('admin.farmer-eligibilities.update');
+        Route::delete('/farmer-eligibilities/{farmerEligibility}', [App\Http\Controllers\Admin\FarmerEligibilityController::class, 'destroy'])->name('admin.farmer-eligibilities.destroy');
     });
 
     // Super Admin Routes

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Award, Check, X } from 'lucide-react';
 import React from 'react';
 import { type Farm } from '@/types';
+import FileUploadPreview from '@/components/file-upload-preview';
 
 interface FarmerFormProps {
     formData: any;
@@ -96,6 +97,9 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
             farm_type: '',
             is_organic_practitioner: false,
             remarks: '',
+            commodity_category_id: '',
+            commodity_id: '',
+            variety_id: '',
         };
         updatedFarms[farmIndex].farm_parcels = [
             ...(updatedFarms[farmIndex].farm_parcels || []),
@@ -526,24 +530,19 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                 </div>
                                 <div className="grid gap-2">
                                     <Label>Upload ID File (Image/PDF)</Label>
-                                    <Input 
-                                        type="file" 
+                                    <FileUploadPreview
                                         accept="image/*,.pdf"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const newIds = [...formData.government_ids];
-                                                newIds[index].file = file;
-                                                newIds[index].file_name = file.name;
-                                                setFormData({ ...formData, government_ids: newIds });
-                                            }
+                                        maxSizeMB={5}
+                                        selectedFile={id.file || null}
+                                        onFileSelect={(file) => {
+                                            const newIds = [...formData.government_ids];
+                                            newIds[index].file = file;
+                                            newIds[index].file_name = file?.name || '';
+                                            setFormData({ ...formData, government_ids: newIds });
                                         }}
+                                        placeholderText="Drag or upload ID file here"
+                                        helperText="Accepted formats: PDF, JPG, PNG. Maximum file size: 5MB"
                                     />
-                                    {id.file_name && (
-                                        <p className="text-xs text-muted-foreground">
-                                            Selected: {id.file_name}
-                                        </p>
-                                    )}
                                 </div>
                             </div>
                         ))}
@@ -714,6 +713,81 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                             </div>
                                                         </div>
 
+                                                        {/* Commodity Classification */}
+                                                        <div className="grid gap-4 md:grid-cols-3 border-t pt-4">
+                                                            <div className="grid gap-2">
+                                                                <Label>Commodity Category</Label>
+                                                                <Select 
+                                                                    value={parcel.commodity_category_id || undefined} 
+                                                                    onValueChange={(value) => {
+                                                                        handleUpdateParcel(farmIndex, parcelIndex, 'commodity_category_id', value);
+                                                                        // Reset commodity and variety when category changes
+                                                                        handleUpdateParcel(farmIndex, parcelIndex, 'commodity_id', '');
+                                                                        handleUpdateParcel(farmIndex, parcelIndex, 'variety_id', '');
+                                                                    }}
+                                                                >
+                                                                    <SelectTrigger>
+                                                                        <SelectValue placeholder="Select category" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {categories.map((category) => (
+                                                                            <SelectItem key={category.id} value={category.id.toString()}>
+                                                                                {category.name}
+                                                                            </SelectItem>
+                                                                        ))}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                            <div className="grid gap-2">
+                                                                <Label>Commodity</Label>
+                                                                <Select 
+                                                                    value={parcel.commodity_id || undefined} 
+                                                                    onValueChange={(value) => {
+                                                                        handleUpdateParcel(farmIndex, parcelIndex, 'commodity_id', value);
+                                                                        // Reset variety when commodity changes
+                                                                        handleUpdateParcel(farmIndex, parcelIndex, 'variety_id', '');
+                                                                    }}
+                                                                    disabled={!parcel.commodity_category_id}
+                                                                >
+                                                                    <SelectTrigger>
+                                                                        <SelectValue placeholder="Select commodity" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {commodities
+                                                                            .filter(c => c.category_id === parseInt(parcel.commodity_category_id))
+                                                                            .map((commodity) => (
+                                                                                <SelectItem key={commodity.id} value={commodity.id.toString()}>
+                                                                                    {commodity.name}
+                                                                                </SelectItem>
+                                                                            ))
+                                                                        }
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                            <div className="grid gap-2">
+                                                                <Label>Variety</Label>
+                                                                <Select 
+                                                                    value={parcel.variety_id || undefined} 
+                                                                    onValueChange={(value) => handleUpdateParcel(farmIndex, parcelIndex, 'variety_id', value)}
+                                                                    disabled={!parcel.commodity_id}
+                                                                >
+                                                                    <SelectTrigger>
+                                                                        <SelectValue placeholder="Select variety" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {varieties
+                                                                            .filter(v => v.commodity_id === parseInt(parcel.commodity_id))
+                                                                            .map((variety) => (
+                                                                                <SelectItem key={variety.id} value={variety.id.toString()}>
+                                                                                    {variety.name}
+                                                                                </SelectItem>
+                                                                            ))
+                                                                        }
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                        </div>
+
                                                         <div className="grid gap-4 md:grid-cols-3">
                                                             <div className="grid gap-2">
                                                                 <Label>Total Farm Area (hectares)</Label>
@@ -733,14 +807,29 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                                     onChange={(e) => handleUpdateParcel(farmIndex, parcelIndex, 'parcel_size', e.target.value)} 
                                                                 />
                                                             </div>
-                                                            <div className="grid gap-2">
-                                                                <Label>Livestock Count</Label>
-                                                                <Input 
-                                                                    type="number" 
-                                                                    value={parcel.livestock_count || 0} 
-                                                                    onChange={(e) => handleUpdateParcel(farmIndex, parcelIndex, 'livestock_count', parseInt(e.target.value) || 0)} 
-                                                                />
-                                                            </div>
+                                                            {/* Livestock Count - Only show if category is Livestock */}
+                                                            {(() => {
+                                                                // Find the selected category to check if it's livestock
+                                                                const selectedCategory = categories.find(
+                                                                    c => c.id === parseInt(parcel.commodity_category_id)
+                                                                );
+                                                                const isLivestockCategory = selectedCategory && 
+                                                                    selectedCategory.name.toLowerCase().includes('livestock');
+                                                                
+                                                                if (isLivestockCategory) {
+                                                                    return (
+                                                                        <div className="grid gap-2">
+                                                                            <Label>Livestock Count</Label>
+                                                                            <Input 
+                                                                                type="number" 
+                                                                                value={parcel.livestock_count || 0} 
+                                                                                onChange={(e) => handleUpdateParcel(farmIndex, parcelIndex, 'livestock_count', parseInt(e.target.value) || 0)} 
+                                                                            />
+                                                                        </div>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })()}
                                                         </div>
 
                                                         <div className="grid gap-4 md:grid-cols-3">
@@ -856,38 +945,14 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                         {/* Ownership Document Upload */}
                                                         <div className="grid gap-2">
                                                             <Label htmlFor={`document_upload_${farmIndex}_${parcelIndex}`}>Upload Ownership Document</Label>
-                                                            <Input 
-                                                                id={`document_upload_${farmIndex}_${parcelIndex}`}
-                                                                type="file" 
+                                                            <FileUploadPreview
                                                                 accept=".pdf,.jpg,.jpeg,.png"
-                                                                onChange={(e) => {
-                                                                    const file = e.target.files?.[0];
-                                                                    if (file) {
-                                                                        // Store file reference in parcel data
-                                                                        handleUpdateParcel(farmIndex, parcelIndex, 'document_file', file);
-                                                                    }
-                                                                }}
+                                                                maxSizeMB={5}
+                                                                selectedFile={parcel.document_file || null}
+                                                                onFileSelect={(file) => handleUpdateParcel(farmIndex, parcelIndex, 'document_file', file)}
+                                                                placeholderText="Drag or upload ownership document here"
+                                                                helperText="Accepted formats: PDF, JPG, PNG. Maximum file size: 5MB"
                                                             />
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Accepted formats: PDF, JPG, PNG. Maximum file size: 5MB
-                                                            </p>
-                                                            {parcel.document_file && (
-                                                                <div className="flex items-center justify-between p-2 bg-muted rounded-md mt-2">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="text-sm font-medium">{parcel.document_file.name}</span>
-                                                                        <Badge variant="outline" className="text-xs">
-                                                                            {(parcel.document_file.size / 1024).toFixed(1)} KB
-                                                                        </Badge>
-                                                                    </div>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleUpdateParcel(farmIndex, parcelIndex, 'document_file', null)}
-                                                                        className="text-red-600 hover:text-red-800 text-sm"
-                                                                    >
-                                                                        Remove
-                                                                    </button>
-                                                                </div>
-                                                            )}
                                                         </div>
 
                                                         <div className="grid gap-4 md:grid-cols-3">

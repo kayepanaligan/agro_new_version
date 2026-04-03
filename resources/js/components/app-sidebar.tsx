@@ -1,6 +1,7 @@
-import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import OfflineStatusIndicator from '@/components/offline-status-indicator';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -98,6 +99,33 @@ export function AppSidebar() {
                 },
             ],
         });
+
+        navGroups.push({
+            title: 'Allocation Logs',
+            items: [
+                {
+                    title: 'Allocation Types',
+                    url: '/admin/allocation-types',
+                    icon: ClipboardList,
+                },
+            ],
+        });
+
+        navGroups.push({
+            title: 'Supporting Infrastructure',
+            items: [
+                {
+                    title: 'Unit of Measures',
+                    url: '/admin/unit-of-measures',
+                    icon: Ruler,
+                },
+                {
+                    title: 'Farmer Eligibilities',
+                    url: '/admin/farmer-eligibilities',
+                    icon: FileCheck,
+                },
+            ],
+        });
     }
 
     if (isSuperAdmin) {
@@ -152,7 +180,9 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-              
+                <div className="px-4 py-2 border-t">
+                    <OfflineStatusIndicator />
+                </div>
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

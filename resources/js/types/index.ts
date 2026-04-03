@@ -294,6 +294,7 @@ export interface FarmParcel {
     land_owner_middle_name?: string | null;
     land_owner_surname?: string | null;
     land_owner_extension_name?: string | null;
+    commodity_category_id?: number | null;
     commodity_id?: number | null;
     variety_id?: number | null;
     parcel_size?: number | null;
@@ -304,6 +305,7 @@ export interface FarmParcel {
     remarks?: string | null;
     created_at: string;
     updated_at: string;
+    commodity_category?: Category | null;
     commodity?: Commodity | null;
     variety?: Variety | null;
     crop_rotations?: CropRotation[];
@@ -381,6 +383,101 @@ export interface DamageType {
     created_at: string;
     updated_at: string;
     damage_category?: DamageCategory | null;
+}
+
+export interface UnitOfMeasure {
+    id: number;
+    name: string;
+    code: string;
+    description?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Barangay {
+    id: number;
+    name: string;
+    description?: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface FarmerEligibility {
+    id: number;
+    name: string;
+    description?: string | null;
+    attribute_field: string;
+    required_value: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface AllocationType {
+    id: number;
+    name: string;
+    description?: string | null;
+    amount: number;
+    unit_of_measurement_id: number;
+    program_id: number;
+    category_ids: number[] | null;
+    commodity_ids: number[] | null;
+    variety_ids: number[] | null;
+    barangay_ids: number[] | null;
+    farmer_eligibility_criteria: Record<string, any> | null;
+    created_at: string;
+    updated_at: string;
+    unit_of_measurement?: UnitOfMeasure | null;
+    program?: Program | null;
+}
+
+// Offline-First Types
+export type OnlineStatus = 'online' | 'offline' | 'syncing';
+
+export type QueueActionType = 'create' | 'update' | 'delete';
+
+export interface OfflineQueueItem {
+    id?: number;
+    operation_id: string; // UUID for idempotency
+    action_type: QueueActionType;
+    entity_type: 'farmer' | 'farm' | 'farm_parcel' | 'crop_damage' | 'allocation';
+    payload: any;
+    timestamp: string;
+    retry_count: number;
+    synced_at?: string | null;
+    error_message?: string | null;
+}
+
+export interface SyncStatus {
+    is_online: boolean;
+    is_syncing: boolean;
+    last_sync_time?: string | null;
+    unsynced_count: number;
+}
+
+export interface CachedFarmer extends Farmer {
+    _cached_at: string;
+    _is_dirty: boolean;
+}
+
+export interface CachedFarm extends Farm {
+    _cached_at: string;
+    _is_dirty: boolean;
+    farm_parcels?: CachedFarmParcel[];
+}
+
+export interface CachedFarmParcel extends FarmParcel {
+    _cached_at: string;
+    _is_dirty: boolean;
+}
+
+export interface ReferenceDataCache {
+    id?: number;
+    data_type: 'commodities' | 'varieties' | 'damage_types' | 'barangays' | 'programs';
+    data: any[];
+    cached_at: string;
+    expires_at?: string | null;
 }
 
 export function getFullName(user: User): string {
