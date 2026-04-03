@@ -1,10 +1,12 @@
-import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import OfflineStatusIndicator from '@/components/offline-status-indicator';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { type NavItem, type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
+import { useEffect, useRef } from 'react';
 import AppLogo from './app-logo';
 
 export interface NavGroup {
@@ -16,12 +18,78 @@ export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
     const isSuperAdmin = auth.user.role?.name === 'super admin';
     const isAdmin = auth.user.role?.name === 'admin';
+    const scrollAreaContainerRef = useRef<HTMLDivElement>(null);
+    const SCROLL_STORAGE_KEY = 'sidebar_scroll_position';
+
+    // Helper to get the viewport element
+    const getViewport = () => {
+        if (!scrollAreaContainerRef.current) return null;
+        // The viewport is the direct child of the ScrollArea root with data attribute
+        return scrollAreaContainerRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+    };
+
+    // Restore scroll position on mount
+    useEffect(() => {
+        const savedPosition = sessionStorage.getItem(SCROLL_STORAGE_KEY);
+        if (savedPosition) {
+            const scrollTop = parseInt(savedPosition, 10);
+            if (!isNaN(scrollTop)) {
+                // Use setTimeout to ensure the DOM is ready
+                setTimeout(() => {
+                    const viewport = getViewport();
+                    if (viewport) {
+                        viewport.scrollTop = scrollTop;
+                    }
+                }, 0);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const viewport = getViewport();
+            if (viewport) {
+                sessionStorage.setItem(
+                    SCROLL_STORAGE_KEY,
+                    viewport.scrollTop.toString()
+                );
+            }
+        };
+
+        // Wait for component to mount, then attach scroll listener
+        const timeoutId = setTimeout(() => {
+            const viewport = getViewport();
+            if (viewport) {
+                viewport.addEventListener('scroll', handleScroll);
+            }
+        }, 0);
+
+        // Listen to Inertia navigation start event
+        const unsubscribe = router.on('start', () => {
+            const viewport = getViewport();
+            if (viewport) {
+                sessionStorage.setItem(
+                    SCROLL_STORAGE_KEY,
+                    viewport.scrollTop.toString()
+                );
+            }
+        });
+
+        return () => {
+            clearTimeout(timeoutId);
+            const viewport = getViewport();
+            if (viewport) {
+                viewport.removeEventListener('scroll', handleScroll);
+            }
+            unsubscribe();
+        };
+    }, []);
 
     const navGroups = [
         {
             title: 'Main',
             items: [
-                {
+                { 
                     title: 'Dashboard',
                     url: '/dashboard',
                     icon: LayoutGrid,
@@ -53,7 +121,7 @@ export function AppSidebar() {
         });
 
         navGroups.push({
-            title: 'Farm Management',
+            title: 'Farmer Records',
             items: [
                 {
                     title: 'Farmers',
@@ -68,24 +136,55 @@ export function AppSidebar() {
             ],
         });
 
-        navGroups.push({
-            title: 'Programs & Aid',
+         navGroups.push({
+            title: 'Programs & Assistance',
             items: [
-                {
-                    title: 'Organizations',
-                    url: '/admin/organizations',
-                    icon: UsersRound,
-                },
-                {
+                 {
                     title: 'Programs',
                     url: '/admin/programs',
-                    icon: GraduationCap,
+                    icon: HandCoinsIcon,
                 },
+                {
+                    title: 'Funding Sources',
+                    url: '/admin/funding-sources',
+                    icon: Wallet,
+                },
+                {
+                    title: 'Assistance Categories',
+                    url: '/admin/assistance-categories',
+                    icon: Layers,
+                },
+                {
+                    title: 'Allocation Types',
+                    url: '/admin/allocation-types',
+                    icon: ClipboardList,
+                },
+                {
+                    title: 'Eligible Barangays',
+                    url: '/admin/eligible-barangays',
+                    icon: MapPin,
+                },
+                {
+                    title: 'Eligibility Rules',
+                    url: '/admin/eligibility-rules',
+                    icon: CheckSquare,
+                },
+                {
+                    title: 'Distribution Records',
+                    url: '/admin/distribution-records',
+                    icon: Truck,
+                },
+                {
+                    title: 'Allocation Policies',
+                    url: '/admin/allocation-policies',
+                    icon: Scale,
+                },
+               
             ],
         });
 
         navGroups.push({
-            title: 'Field Reports',
+            title: 'Damage Logs',
             items: [
                 {
                     title: 'Damage Categories',
@@ -97,23 +196,24 @@ export function AppSidebar() {
                     url: '/admin/damage-types',
                     icon: Rat,
                 },
-            ],
-        });
-
-        navGroups.push({
-            title: 'Allocation Logs',
-            items: [
                 {
-                    title: 'Allocation Types',
-                    url: '/admin/allocation-types',
-                    icon: ClipboardList,
+                    title: 'Crop Damage Records',
+                    url: '/admin/crop-damage-records',
+                    icon: FileText,
                 },
             ],
         });
 
+       
+
         navGroups.push({
             title: 'Supporting Infrastructure',
             items: [
+                {
+                    title: 'Organizations',
+                    url: '/admin/organizations',
+                    icon: UsersRound,
+                },
                 {
                     title: 'Unit of Measures',
                     url: '/admin/unit-of-measures',
@@ -173,10 +273,12 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
-                {navGroups.map((group) => (
-                    <NavMain key={group.title} title={group.title} items={group.items} />
-                ))}
+            <SidebarContent className="overflow-hidden">
+                <ScrollArea className="h-full px-2 py-0" ref={scrollAreaContainerRef}>
+                    {navGroups.map((group) => (
+                        <NavMain key={group.title} title={group.title} items={group.items} />
+                    ))}
+                </ScrollArea>
             </SidebarContent>
 
             <SidebarFooter>

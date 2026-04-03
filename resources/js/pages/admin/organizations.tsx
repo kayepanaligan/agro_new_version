@@ -112,10 +112,13 @@ export default function Organizations() {
 
     const handleCreate = () => {
         router.post('/admin/organizations', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 resetForm();
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -124,11 +127,14 @@ export default function Organizations() {
         if (!selectedOrganization) return;
 
         router.put(`/admin/organizations/${selectedOrganization.id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 resetForm();
                 setSelectedOrganization(null);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -137,10 +143,13 @@ export default function Organizations() {
         if (!selectedOrganization) return;
 
         router.delete(`/admin/organizations/${selectedOrganization.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedOrganization(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };

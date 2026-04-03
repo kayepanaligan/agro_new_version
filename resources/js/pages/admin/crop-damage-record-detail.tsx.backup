@@ -1,0 +1,473 @@
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem, type CropDamageRecord } from '@/types';
+import { Head, Link, router } from '@inertiajs/react';
+import { 
+    ArrowLeft, 
+    Calendar, 
+    Edit2, 
+    FileText, 
+    Image as ImageIcon, 
+    Trash2,
+    User,
+    MapPin,
+    Sprout,
+    Leaf,
+    AlertCircle
+} from 'lucide-react';
+import { useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Crop Damage Records',
+        href: '/admin/crop-damage-records',
+    },
+    {
+        title: 'Record Details',
+        href: '#',
+    },
+];
+
+interface CropDamageRecordDetailProps {
+    cropDamageRecord: CropDamageRecord;
+}
+
+export default function CropDamageRecordDetail({ cropDamageRecord }: CropDamageRecordDetailProps) {
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        name: cropDamageRecord.name,
+        recorded_date: cropDamageRecord.recorded_date,
+        notes: cropDamageRecord.notes || '',
+        farm_id: cropDamageRecord.farm_id.toString(),
+        damage_severity: cropDamageRecord.damage_severity,
+        status: cropDamageRecord.status,
+        photo: null as File | null,
+        commodity_name: cropDamageRecord.commodity_name || '',
+        variety_name: cropDamageRecord.variety_name || '',
+    });
+
+    const getSeverityColor = (severity: string) => {
+        switch (severity) {
+            case 'low':
+                return 'bg-green-500 text-white';
+            case 'medium':
+                return 'bg-yellow-500 text-white';
+            case 'high':
+                return 'bg-red-500 text-white';
+            default:
+                return 'bg-gray-500 text-white';
+        }
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'pending':
+                return 'bg-yellow-500 text-white';
+            case 'verified':
+                return 'bg-blue-500 text-white';
+            case 'closed':
+                return 'bg-gray-500 text-white';
+            default:
+                return 'bg-gray-500 text-white';
+        }
+    };
+
+    const handleUpdate = () => {
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('recorded_date', formData.recorded_date);
+        data.append('notes', formData.notes);
+        data.append('farm_id', formData.farm_id);
+        data.append('damage_severity', formData.damage_severity);
+        data.append('status', formData.status);
+        data.append('commodity_name', formData.commodity_name);
+        data.append('variety_name', formData.variety_name);
+        if (formData.photo) {
+            data.append('photo', formData.photo);
+        }
+
+        router.post(`/admin/crop-damage-records/${cropDamageRecord.crop_damage_record_id}?_method=PUT`, data, {
+            preserveScroll: false,
+            onSuccess: () => {
+                setIsEditModalOpen(false);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
+            },
+        });
+    };
+
+    const handleDelete = () => {
+        router.delete(`/admin/crop-damage-records/${cropDamageRecord.crop_damage_record_id}`, {
+            preserveScroll: false,
+            onSuccess: () => {
+                router.visit('/admin/crop-damage-records');
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
+            },
+        });
+    };
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={`Crop Damage Record - ${cropDamageRecord.name}`} />
+            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+                {/* Header Actions */}
+                <div className="flex items-center justify-between">
+                    <Button variant="outline" onClick={() => router.visit('/admin/crop-damage-records')}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Records
+                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+                            <Edit2 className="mr-2 h-4 w-4" />
+                            Edit Record
+                        </Button>
+                        <Button variant="destructive" onClick={() => setIsDeleteModalOpen(true)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Record
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Main Content Grid */}
+                <div className="grid gap-6 md:grid-cols-3">
+                    {/* Photo Section */}
+                    <Card className="md:col-span-1">
+                        <CardHeader>
+                            <CardTitle>Photo/Proof</CardTitle>
+                            <CardDescription>Visual documentation of damage</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                                {cropDamageRecord.photo_path ? (
+                                    <img 
+                                        src={`/storage/${cropDamageRecord.photo_path}`} 
+                                        alt={cropDamageRecord.name}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex h-full w-full items-center justify-center">
+                                        <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Quick Info */}
+                    <Card className="md:col-span-2">
+                        <CardHeader>
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <CardTitle className="text-2xl">{cropDamageRecord.name}</CardTitle>
+                                    <CardDescription className="flex items-center gap-2 mt-2">
+                                        <Calendar className="h-4 w-4" />
+                                        Recorded on {new Date(cropDamageRecord.recorded_date).toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        })}
+                                    </CardDescription>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Badge className={getSeverityColor(cropDamageRecord.damage_severity)}>
+                                        {cropDamageRecord.damage_severity.toUpperCase()} SEVERITY
+                                    </Badge>
+                                    <Badge className={getStatusColor(cropDamageRecord.status)}>
+                                        {cropDamageRecord.status.toUpperCase()}
+                                    </Badge>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-muted-foreground">Farm</Label>
+                                    <p className="mt-1 flex items-center gap-2 font-semibold">
+                                        <User className="h-4 w-4" />
+                                        {cropDamageRecord.farm?.farm_name || 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-muted-foreground">Farmer</Label>
+                                    <p className="mt-1 font-semibold">
+                                        {cropDamageRecord.farm?.farmer?.lfid || 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {(cropDamageRecord.commodity_name || cropDamageRecord.variety_name) && (
+                                    <>
+                                        {cropDamageRecord.commodity_name && (
+                                            <div>
+                                                <Label className="text-sm font-medium text-muted-foreground">Commodity</Label>
+                                                <p className="mt-1 flex items-center gap-2 font-semibold">
+                                                    <Sprout className="h-4 w-4" />
+                                                    {cropDamageRecord.commodity_name}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {cropDamageRecord.variety_name && (
+                                            <div>
+                                                <Label className="text-sm font-medium text-muted-foreground">Variety</Label>
+                                                <p className="mt-1 flex items-center gap-2 font-semibold">
+                                                    <Leaf className="h-4 w-4" />
+                                                    {cropDamageRecord.variety_name}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+
+                            <Separator />
+
+                            <div>
+                                <Label className="text-sm font-medium text-muted-foreground">Damage Type</Label>
+                                <p className="mt-1 font-semibold">
+                                    {cropDamageRecord.damage_type?.damage_type_name || 'N/A'}
+                                </p>
+                                {cropDamageRecord.damage_type?.damage_category && (
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Category: {cropDamageRecord.damage_type.damage_category.damage_category_name}
+                                    </p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Detailed Information */}
+                <div className="grid gap-6 md:grid-cols-2">
+                    {/* Notes/Remarks */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <FileText className="h-5 w-5" />
+                                Notes/Remarks
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {cropDamageRecord.notes ? (
+                                <div className="whitespace-pre-wrap rounded-md bg-muted p-4">
+                                    {cropDamageRecord.notes}
+                                </div>
+                            ) : (
+                                <p className="text-muted-foreground italic">No notes provided</p>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Timeline & Metadata */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <AlertCircle className="h-5 w-5" />
+                                Record Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <Label className="text-sm font-medium text-muted-foreground">Created At</Label>
+                                <p className="mt-1 font-medium">
+                                    {new Date(cropDamageRecord.created_at).toLocaleString()}
+                                </p>
+                            </div>
+                            <div>
+                                <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
+                                <p className="mt-1 font-medium">
+                                    {new Date(cropDamageRecord.updated_at).toLocaleString()}
+                                </p>
+                            </div>
+                            <div>
+                                <Label className="text-sm font-medium text-muted-foreground">Record ID</Label>
+                                <p className="mt-1 font-mono text-sm">
+                                    #{cropDamageRecord.crop_damage_record_id}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Farm Location Info (if available) */}
+                {cropDamageRecord.farm && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <MapPin className="h-5 w-5" />
+                                Farm Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid md:grid-cols-3 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-muted-foreground">Farm Name</Label>
+                                    <p className="mt-1 font-semibold">{cropDamageRecord.farm.farm_name}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-muted-foreground">Owner LFID</Label>
+                                    <p className="mt-1 font-semibold">{cropDamageRecord.farm.farmer?.lfid || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            {/* Edit Modal */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Crop Damage Record</DialogTitle>
+                        <DialogDescription>
+                            Update the crop damage record information.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-name">Record Name</Label>
+                            <Input
+                                id="edit-name"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-date">Date Recorded</Label>
+                            <Input
+                                id="edit-date"
+                                type="date"
+                                value={formData.recorded_date}
+                                onChange={(e) => setFormData({ ...formData, recorded_date: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-severity">Damage Severity</Label>
+                                <Select value={formData.damage_severity} onValueChange={(val) => setFormData({ ...formData, damage_severity: val as 'low' | 'medium' | 'high' })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-status">Status</Label>
+                                <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val as 'pending' | 'verified' | 'closed' })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="verified">Verified</SelectItem>
+                                        <SelectItem value="closed">Closed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-commodity">Commodity</Label>
+                                <Input
+                                    id="edit-commodity"
+                                    value={formData.commodity_name}
+                                    onChange={(e) => setFormData({ ...formData, commodity_name: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-variety">Variety</Label>
+                                <Input
+                                    id="edit-variety"
+                                    value={formData.variety_name}
+                                    onChange={(e) => setFormData({ ...formData, variety_name: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-photo">Update Photo</Label>
+                            <Input
+                                id="edit-photo"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
+                            />
+                            {cropDamageRecord.photo_path && (
+                                <div className="mt-2">
+                                    <p className="text-sm text-muted-foreground mb-2">Current Photo:</p>
+                                    <img 
+                                        src={`/storage/${cropDamageRecord.photo_path}`} 
+                                        alt="Current"
+                                        className="h-32 w-full object-cover rounded-md"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-notes">Notes/Remarks</Label>
+                            <Textarea
+                                id="edit-notes"
+                                value={formData.notes}
+                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                rows={4}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUpdate}>
+                            Update Record
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Crop Damage Record</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete "{cropDamageRecord.name}"? This action cannot be undone and will permanently remove all associated data including photos.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete}>
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </AppLayout>
+    );
+}

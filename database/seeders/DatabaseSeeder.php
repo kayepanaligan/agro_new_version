@@ -19,10 +19,18 @@ class DatabaseSeeder extends Seeder
             CommoditySeeder::class,
             VarietySeeder::class,
             ProgramSeeder::class,
+            UnitOfMeasureSeeder::class,
             OrganizationSeeder::class,
             FarmerSeeder::class,
             DamageCategorySeeder::class,
             DamageTypeSeeder::class,
+            AllocationTypeSeeder::class,
+            EligibilityRuleSeeder::class,
+            AllocationPolicySeeder::class,
+            DistributionRecordSeeder::class,
+            DistributionRecordItemSeeder::class,
+            AcknowledgementSeeder::class,
+            CropDamageRecordSeeder::class,
         ]);
 
         // User::factory(10)->create();

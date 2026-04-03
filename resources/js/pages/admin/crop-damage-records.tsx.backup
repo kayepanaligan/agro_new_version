@@ -1,0 +1,1061 @@
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem, type CropDamageRecord } from '@/types';
+import { Head, Link, router } from '@inertiajs/react';
+import { 
+    Calendar, 
+    FileText, 
+    MoreHorizontal, 
+    Pencil, 
+    Plus, 
+    Search, 
+    Trash2, 
+    Image as ImageIcon,
+    Eye,
+    Filter,
+    X,
+    List,
+    LayoutGrid,
+    ArrowUpDown
+} from 'lucide-react';
+import { useState, useMemo } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Crop Damage Records',
+        href: '/admin/crop-damage-records',
+    },
+];
+
+interface CropDamageRecordsProps {
+    cropDamageRecords: CropDamageRecord[];
+}
+
+export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecordsProps) {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterSeverity, setFilterSeverity] = useState<string>('all');
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+    const [sortField, setSortField] = useState<'name' | 'recorded_date' | 'farm_name' | 'damage_severity' | 'status'>('recorded_date');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState<CropDamageRecord | null>(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        recorded_date: new Date().toISOString().split('T')[0],
+        notes: '',
+        farm_id: '',
+        damage_type_id: '',
+        damage_severity: 'low' as 'low' | 'medium' | 'high',
+        status: 'pending' as 'pending' | 'verified' | 'closed',
+        photo: null as File | null,
+        commodity_name: '',
+        variety_name: '',
+    });
+
+    const filteredRecords = useMemo(() => {
+        let result = [...cropDamageRecords];
+
+        // Search filter
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(
+                (record) =>
+                    record.name.toLowerCase().includes(term) ||
+                    record.notes?.toLowerCase().includes(term) ||
+                    record.farm?.farm_name.toLowerCase().includes(term) ||
+                    record.commodity_name?.toLowerCase().includes(term) ||
+                    record.variety_name?.toLowerCase().includes(term),
+            );
+        }
+
+        // Severity filter
+        if (filterSeverity !== 'all') {
+            result = result.filter((record) => record.damage_severity === filterSeverity);
+        }
+
+        // Status filter
+        if (filterStatus !== 'all') {
+            result = result.filter((record) => record.status === filterStatus);
+        }
+
+        // Sort
+        result.sort((a, b) => {
+            let comparison = 0;
+            
+            switch (sortField) {
+                case 'name':
+                    comparison = a.name.localeCompare(b.name);
+                    break;
+                case 'recorded_date':
+                    comparison = new Date(a.recorded_date).getTime() - new Date(b.recorded_date).getTime();
+                    break;
+                case 'farm_name':
+                    comparison = (a.farm?.farm_name || '').localeCompare(b.farm?.farm_name || '');
+                    break;
+                case 'damage_severity':
+                    const severityOrder = { low: 0, medium: 1, high: 2 };
+                    comparison = severityOrder[a.damage_severity as keyof typeof severityOrder] - severityOrder[b.damage_severity as keyof typeof severityOrder];
+                    break;
+                case 'status':
+                    const statusOrder = { pending: 0, verified: 1, closed: 2 };
+                    comparison = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder];
+                    break;
+            }
+            
+            return sortOrder === 'asc' ? comparison : -comparison;
+        });
+
+        return result;
+    }, [cropDamageRecords, searchTerm, filterSeverity, filterStatus, sortField, sortOrder]);
+
+    // Pagination
+    const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+    const paginatedRecords = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredRecords.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredRecords, currentPage, itemsPerPage]);
+
+    // Reset to page 1 when filters change
+    useMemo(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterSeverity, filterStatus, viewMode]);
+
+    const handleSort = (field: typeof sortField) => {
+        if (sortField === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortOrder('asc');
+        }
+    };
+
+    const openCreateModal = () => {
+        setFormData({
+            name: '',
+            recorded_date: new Date().toISOString().split('T')[0],
+            notes: '',
+            farm_id: '',
+            damage_type_id: '',
+            damage_severity: 'low',
+            status: 'pending',
+            photo: null,
+            commodity_name: '',
+            variety_name: '',
+        });
+        setIsCreateModalOpen(true);
+    };
+
+    const openEditModal = (record: CropDamageRecord) => {
+        setSelectedRecord(record);
+        setFormData({
+            name: record.name,
+            recorded_date: record.recorded_date,
+            notes: record.notes || '',
+            farm_id: record.farm_id.toString(),
+            damage_type_id: record.damage_type_id.toString(),
+            damage_severity: record.damage_severity,
+            status: record.status,
+            photo: null,
+            commodity_name: record.commodity_name || '',
+            variety_name: record.variety_name || '',
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const openViewModal = (record: CropDamageRecord) => {
+        setSelectedRecord(record);
+        setIsViewModalOpen(true);
+    };
+
+    const openDeleteModal = (record: CropDamageRecord) => {
+        setSelectedRecord(record);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleCreate = () => {
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('recorded_date', formData.recorded_date);
+        data.append('notes', formData.notes);
+        data.append('farm_id', formData.farm_id);
+        data.append('damage_type_id', formData.damage_type_id);
+        data.append('damage_severity', formData.damage_severity);
+        data.append('status', formData.status);
+        data.append('commodity_name', formData.commodity_name);
+        data.append('variety_name', formData.variety_name);
+        if (formData.photo) {
+            data.append('photo', formData.photo);
+        }
+
+        router.post('/admin/crop-damage-records', data, {
+            preserveScroll: false,
+            onSuccess: () => {
+                setIsCreateModalOpen(false);
+                setFormData({
+                    name: '',
+                    recorded_date: new Date().toISOString().split('T')[0],
+                    notes: '',
+                    farm_id: '',
+                    damage_type_id: '',
+                    damage_severity: 'low',
+                    status: 'pending',
+                    photo: null,
+                    commodity_name: '',
+                    variety_name: '',
+                });
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
+            },
+        });
+    };
+
+    const handleUpdate = () => {
+        if (!selectedRecord) return;
+        
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('recorded_date', formData.recorded_date);
+        data.append('notes', formData.notes);
+        data.append('farm_id', formData.farm_id);
+        data.append('damage_severity', formData.damage_severity);
+        data.append('status', formData.status);
+        data.append('commodity_name', formData.commodity_name);
+        data.append('variety_name', formData.variety_name);
+        if (formData.photo) {
+            data.append('photo', formData.photo);
+        }
+
+        router.post(`/admin/crop-damage-records/${selectedRecord.crop_damage_record_id}?_method=PUT`, data, {
+            preserveScroll: false,
+            onSuccess: () => {
+                setIsEditModalOpen(false);
+                setSelectedRecord(null);
+                setFormData({
+                    name: '',
+                    recorded_date: new Date().toISOString().split('T')[0],
+                    notes: '',
+                    farm_id: '',
+                    damage_type_id: '',
+                    damage_severity: 'low',
+                    status: 'pending',
+                    photo: null,
+                    commodity_name: '',
+                    variety_name: '',
+                });
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
+            },
+        });
+    };
+
+    const handleDelete = () => {
+        if (!selectedRecord) return;
+
+        router.delete(`/admin/crop-damage-records/${selectedRecord.crop_damage_record_id}`, {
+            preserveScroll: false,
+            onSuccess: () => {
+                setIsDeleteModalOpen(false);
+                setSelectedRecord(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
+            },
+        });
+    };
+
+    const getSeverityColor = (severity: string) => {
+        switch (severity) {
+            case 'low':
+                return 'bg-green-500';
+            case 'medium':
+                return 'bg-yellow-500';
+            case 'high':
+                return 'bg-red-500';
+            default:
+                return 'bg-gray-500';
+        }
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'pending':
+                return 'bg-yellow-500';
+            case 'verified':
+                return 'bg-blue-500';
+            case 'closed':
+                return 'bg-gray-500';
+            default:
+                return 'bg-gray-500';
+        }
+    };
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Crop Damage Records" />
+            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+                {/* Header */}
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-2xl font-bold">Crop Damage Records</h1>
+                                <p className="text-muted-foreground">File manager view of all crop damage records</p>
+                            </div>
+                            <Button onClick={openCreateModal}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Record
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Filters */}
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div className="flex items-center gap-2 flex-1">
+                                <div className="relative flex-1 max-w-sm">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search records..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+                                
+                                <Select value={filterSeverity} onValueChange={setFilterSeverity}>
+                                    <SelectTrigger className="w-[150px]">
+                                        <SelectValue placeholder="Severity" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Severities</SelectItem>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                                    <SelectTrigger className="w-[150px]">
+                                        <SelectValue placeholder="Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Statuses</SelectItem>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="verified">Verified</SelectItem>
+                                        <SelectItem value="closed">Closed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                {(searchTerm || filterSeverity !== 'all' || filterStatus !== 'all') && (
+                                    <Button variant="ghost" size="sm" onClick={() => { setSearchTerm(''); setFilterSeverity('all'); setFilterStatus('all'); }}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <div className="text-sm text-muted-foreground">
+                                    {paginatedRecords.length} of {filteredRecords.length} record{filteredRecords.length !== 1 ? 's' : ''}
+                                </div>
+                                <Button 
+                                    variant={viewMode === 'card' ? 'default' : 'outline'} 
+                                    size="sm" 
+                                    onClick={() => { setViewMode('card'); setCurrentPage(1); }}
+                                    className="h-9 w-9 p-0"
+                                >
+                                    <LayoutGrid className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                    variant={viewMode === 'list' ? 'default' : 'outline'} 
+                                    size="sm" 
+                                    onClick={() => { setViewMode('list'); setCurrentPage(1); }}
+                                    className="h-9 w-9 p-0"
+                                >
+                                    <List className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Grid View */}
+                {viewMode === 'card' && (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {paginatedRecords.length === 0 ? (
+                            <div className="col-span-full flex h-64 items-center justify-center">
+                                <div className="text-center">
+                                    <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                                    <h3 className="mt-4 text-lg font-semibold">No records found</h3>
+                                    <p className="text-muted-foreground">Add your first crop damage record to get started</p>
+                                </div>
+                            </div>
+                        ) : (
+                            paginatedRecords.map((record) => (
+                                <Card key={record.crop_damage_record_id} className="group relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1 min-w-0">
+                                            <CardTitle className="text-base font-semibold truncate">{record.name}</CardTitle>
+                                            <CardDescription className="truncate">
+                                                Farm: {record.farm?.farm_name || 'Unknown'}
+                                            </CardDescription>
+                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => openViewModal(record)}>
+                                                    <Eye className="mr-2 h-4 w-4" />
+                                                    <span>View Details</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => openEditModal(record)}>
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    <span>Edit</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem 
+                                                    onClick={() => openDeleteModal(record)}
+                                                    className="text-red-600 focus:text-red-600"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-3">
+                                        {/* Photo Preview */}
+                                        <div className="relative aspect-video overflow-hidden rounded-md bg-muted">
+                                            {record.photo_path ? (
+                                                <img 
+                                                    src={`/storage/${record.photo_path}`} 
+                                                    alt={record.name}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center">
+                                                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Badges */}
+                                        <div className="flex gap-2 flex-wrap">
+                                            <Badge variant="outline" className="gap-1">
+                                                <div className={`h-2 w-2 rounded-full ${getSeverityColor(record.damage_severity)}`} />
+                                                {record.damage_severity}
+                                            </Badge>
+                                            <Badge variant="outline" className="gap-1">
+                                                <div className={`h-2 w-2 rounded-full ${getStatusColor(record.status)}`} />
+                                                {record.status}
+                                            </Badge>
+                                        </div>
+
+                                        {/* Info */}
+                                        <div className="space-y-1 text-sm">
+                                            <div className="flex items-center gap-2 text-muted-foreground">
+                                                <Calendar className="h-4 w-4" />
+                                                <span>{new Date(record.recorded_date).toLocaleDateString()}</span>
+                                            </div>
+                                            {record.commodity_name && (
+                                                <div className="truncate">
+                                                    <span className="font-medium">Commodity:</span> {record.commodity_name}
+                                                </div>
+                                            )}
+                                            {record.variety_name && (
+                                                <div className="truncate">
+                                                    <span className="font-medium">Variety:</span> {record.variety_name}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button 
+                                        variant="outline" 
+                                        className="w-full"
+                                        onClick={() => router.visit(`/admin/crop-damage-records/${record.crop_damage_record_id}`)}
+                                    >
+                                        <FileText className="mr-2 h-4 w-4" />
+                                        View Full Details
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        ))
+                    )}
+                    </div>
+                )}
+
+                {/* List View */}
+                {viewMode === 'list' && (
+                    <Card>
+                        <CardContent className="p-0">
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[80px]">Photo</TableHead>
+                                            <TableHead>
+                                                <Button variant="ghost" onClick={() => handleSort('name')} className="-ml-4">
+                                                    Name
+                                                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </TableHead>
+                                            <TableHead>Farm</TableHead>
+                                            <TableHead>
+                                                <Button variant="ghost" onClick={() => handleSort('recorded_date')} className="-ml-4">
+                                                    Date
+                                                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </TableHead>
+                                            <TableHead>Commodity</TableHead>
+                                            <TableHead>
+                                                <Button variant="ghost" onClick={() => handleSort('damage_severity')} className="-ml-4">
+                                                    Severity
+                                                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </TableHead>
+                                            <TableHead>
+                                                <Button variant="ghost" onClick={() => handleSort('status')} className="-ml-4">
+                                                    Status
+                                                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </TableHead>
+                                            <TableHead className="w-[70px]">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {paginatedRecords.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={8} className="h-24 text-center">
+                                                    No records found.
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            paginatedRecords.map((record) => (
+                                                <TableRow key={record.crop_damage_record_id} className="cursor-pointer hover:bg-accent/50" onClick={() => router.visit(`/admin/crop-damage-records/${record.crop_damage_record_id}`)}>
+                                                    <TableCell>
+                                                        {record.photo_path ? (
+                                                            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md border">
+                                                                <img 
+                                                                    src={`/storage/${record.photo_path}`} 
+                                                                    alt={record.name}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
+                                                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">{record.name}</TableCell>
+                                                    <TableCell>{record.farm?.farm_name || '-'}</TableCell>
+                                                    <TableCell>{new Date(record.recorded_date).toLocaleDateString()}</TableCell>
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            {record.commodity_name && (
+                                                                <div className="text-sm">{record.commodity_name}</div>
+                                                            )}
+                                                            {record.variety_name && (
+                                                                <div className="text-xs text-muted-foreground">{record.variety_name}</div>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline" className="gap-1">
+                                                            <div className={`h-2 w-2 rounded-full ${getSeverityColor(record.damage_severity)}`} />
+                                                            {record.damage_severity}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline" className="gap-1">
+                                                            <div className={`h-2 w-2 rounded-full ${getStatusColor(record.status)}`} />
+                                                            {record.status}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell onClick={(e) => e.stopPropagation()}>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem onClick={() => router.visit(`/admin/crop-damage-records/${record.crop_damage_record_id}`)}>
+                                                                    <Eye className="mr-2 h-4 w-4" />
+                                                                    <span>View Details</span>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => openEditModal(record)}>
+                                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                                    <span>Edit</span>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem 
+                                                                    onClick={() => openDeleteModal(record)}
+                                                                    className="text-red-600 focus:text-red-600"
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    <span>Delete</span>
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground">
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum;
+                                            if (totalPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage >= totalPages - 2) {
+                                                pageNum = totalPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPage - 2 + i;
+                                            }
+                                            
+                                            return (
+                                                <Button
+                                                    key={pageNum}
+                                                    variant={currentPage === pageNum ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    className="w-10"
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                >
+                                                    {pageNum}
+                                                </Button>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            {/* Create Modal */}
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Add Crop Damage Record</DialogTitle>
+                        <DialogDescription>
+                            Create a new crop damage record. Fill in all the details below.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="create-name">Record Name</Label>
+                            <Input
+                                id="create-name"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="e.g., Rice Blast Outbreak - Field A"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="create-date">Date Recorded</Label>
+                            <Input
+                                id="create-date"
+                                type="date"
+                                value={formData.recorded_date}
+                                onChange={(e) => setFormData({ ...formData, recorded_date: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="create-farm">Farm</Label>
+                            <Input
+                                id="create-farm"
+                                value={formData.farm_id}
+                                onChange={(e) => setFormData({ ...formData, farm_id: e.target.value })}
+                                placeholder="Farm ID"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="create-severity">Damage Severity</Label>
+                                <Select value={formData.damage_severity} onValueChange={(val) => setFormData({ ...formData, damage_severity: val as 'low' | 'medium' | 'high' })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="create-status">Status</Label>
+                                <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val as 'pending' | 'verified' | 'closed' })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="verified">Verified</SelectItem>
+                                        <SelectItem value="closed">Closed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="create-commodity">Commodity</Label>
+                                <Input
+                                    id="create-commodity"
+                                    value={formData.commodity_name}
+                                    onChange={(e) => setFormData({ ...formData, commodity_name: e.target.value })}
+                                    placeholder="e.g., Rice"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="create-variety">Variety</Label>
+                                <Input
+                                    id="create-variety"
+                                    value={formData.variety_name}
+                                    onChange={(e) => setFormData({ ...formData, variety_name: e.target.value })}
+                                    placeholder="e.g., PSB Rc82"
+                                />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="create-photo">Photo/Proof</Label>
+                            <Input
+                                id="create-photo"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="create-notes">Notes/Remarks</Label>
+                            <Textarea
+                                id="create-notes"
+                                value={formData.notes}
+                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                placeholder="Additional notes about this damage record..."
+                                rows={4}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleCreate}>
+                            Create Record
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Modal */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Crop Damage Record</DialogTitle>
+                        <DialogDescription>
+                            Update the crop damage record information.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-name">Record Name</Label>
+                            <Input
+                                id="edit-name"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-date">Date Recorded</Label>
+                            <Input
+                                id="edit-date"
+                                type="date"
+                                value={formData.recorded_date}
+                                onChange={(e) => setFormData({ ...formData, recorded_date: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-severity">Damage Severity</Label>
+                                <Select value={formData.damage_severity} onValueChange={(val) => setFormData({ ...formData, damage_severity: val as 'low' | 'medium' | 'high' })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-status">Status</Label>
+                                <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val as 'pending' | 'verified' | 'closed' })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="verified">Verified</SelectItem>
+                                        <SelectItem value="closed">Closed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-commodity">Commodity</Label>
+                                <Input
+                                    id="edit-commodity"
+                                    value={formData.commodity_name}
+                                    onChange={(e) => setFormData({ ...formData, commodity_name: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-variety">Variety</Label>
+                                <Input
+                                    id="edit-variety"
+                                    value={formData.variety_name}
+                                    onChange={(e) => setFormData({ ...formData, variety_name: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-photo">Update Photo</Label>
+                            <Input
+                                id="edit-photo"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
+                            />
+                            {selectedRecord?.photo_path && (
+                                <div className="mt-2">
+                                    <p className="text-sm text-muted-foreground mb-2">Current Photo:</p>
+                                    <img 
+                                        src={`/storage/${selectedRecord.photo_path}`} 
+                                        alt="Current"
+                                        className="h-32 w-full object-cover rounded-md"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-notes">Notes/Remarks</Label>
+                            <Textarea
+                                id="edit-notes"
+                                value={formData.notes}
+                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                rows={4}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUpdate}>
+                            Update Record
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Crop Damage Record</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete "{selectedRecord?.name}"? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete}>
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* View Details Modal */}
+            <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{selectedRecord?.name}</DialogTitle>
+                        <DialogDescription>
+                            Crop Damage Record Details
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedRecord && (
+                        <div className="space-y-6 py-4">
+                            {/* Photo */}
+                            <div>
+                                <Label className="text-base font-semibold">Photo/Proof</Label>
+                                <div className="mt-2 aspect-video overflow-hidden rounded-md bg-muted">
+                                    {selectedRecord.photo_path ? (
+                                        <img 
+                                            src={`/storage/${selectedRecord.photo_path}`} 
+                                            alt={selectedRecord.name}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center">
+                                            <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Basic Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium">Recorded Date</Label>
+                                    <p className="mt-1">{new Date(selectedRecord.recorded_date).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium">Farm</Label>
+                                    <p className="mt-1">{selectedRecord.farm?.farm_name || 'N/A'}</p>
+                                </div>
+                            </div>
+
+                            {/* Damage Assessment */}
+                            <div>
+                                <Label className="text-sm font-medium">Damage Assessment</Label>
+                                <div className="mt-2 flex gap-2">
+                                    <Badge variant="outline" className="gap-1">
+                                        <div className={`h-2 w-2 rounded-full ${getSeverityColor(selectedRecord.damage_severity)}`} />
+                                        Severity: {selectedRecord.damage_severity}
+                                    </Badge>
+                                    <Badge variant="outline" className="gap-1">
+                                        <div className={`h-2 w-2 rounded-full ${getStatusColor(selectedRecord.status)}`} />
+                                        Status: {selectedRecord.status}
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            {/* Crop Information */}
+                            {(selectedRecord.commodity_name || selectedRecord.variety_name) && (
+                                <div>
+                                    <Label className="text-sm font-medium">Crop Information</Label>
+                                    <div className="mt-2 space-y-1">
+                                        {selectedRecord.commodity_name && (
+                                            <p><span className="font-medium">Commodity:</span> {selectedRecord.commodity_name}</p>
+                                        )}
+                                        {selectedRecord.variety_name && (
+                                            <p><span className="font-medium">Variety:</span> {selectedRecord.variety_name}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Notes */}
+                            {selectedRecord.notes && (
+                                <div>
+                                    <Label className="text-sm font-medium">Notes/Remarks</Label>
+                                    <p className="mt-2 whitespace-pre-wrap">{selectedRecord.notes}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
+                            Close
+                        </Button>
+                        <Button onClick={() => {
+                            setIsViewModalOpen(false);
+                            if (selectedRecord) {
+                                router.visit(`/admin/crop-damage-records/${selectedRecord.crop_damage_record_id}`);
+                            }
+                        }}>
+                            View Comprehensive Details
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </AppLayout>
+    );
+}

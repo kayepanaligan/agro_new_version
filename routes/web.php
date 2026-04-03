@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\AiController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -34,14 +33,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/commodities/{commodity}', [App\Http\Controllers\Admin\CommodityController::class, 'update'])->name('admin.commodities.update');
         Route::delete('/commodities/{commodity}', [App\Http\Controllers\Admin\CommodityController::class, 'destroy'])->name('admin.commodities.destroy');
 
-        // AI Image Generation Routes (for admin use)
-        Route::post('/ai/generate-image', [AiController::class, 'generateImage'])
-            ->name('admin.ai.generate-image')
-            ->middleware('ai-rate-limit');
-        Route::post('/ai/generate-text', [AiController::class, 'generateText'])
-            ->name('admin.ai.generate-text')
-            ->middleware('ai-rate-limit');
-
         Route::get('/varieties', [App\Http\Controllers\Admin\VarietyController::class, 'index'])->name('admin.varieties');
         Route::post('/varieties', [App\Http\Controllers\Admin\VarietyController::class, 'store'])->name('admin.varieties.store');
         Route::put('/varieties/{variety}', [App\Http\Controllers\Admin\VarietyController::class, 'update'])->name('admin.varieties.update');
@@ -64,6 +55,64 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/programs/{program}', [App\Http\Controllers\Admin\ProgramController::class, 'update'])->name('admin.programs.update');
         Route::delete('/programs/{program}', [App\Http\Controllers\Admin\ProgramController::class, 'destroy'])->name('admin.programs.destroy');
 
+        // Funding Source Routes
+        Route::get('/funding-sources', [App\Http\Controllers\Admin\FundingSourceController::class, 'index'])->name('admin.funding-sources');
+        Route::post('/funding-sources', [App\Http\Controllers\Admin\FundingSourceController::class, 'store'])->name('admin.funding-sources.store');
+        Route::put('/funding-sources/{fundingSource}', [App\Http\Controllers\Admin\FundingSourceController::class, 'update'])->name('admin.funding-sources.update');
+        Route::delete('/funding-sources/{fundingSource}', [App\Http\Controllers\Admin\FundingSourceController::class, 'destroy'])->name('admin.funding-sources.destroy');
+
+        // Assistance Category Routes
+        Route::get('/assistance-categories', [App\Http\Controllers\Admin\AssistanceCategoryController::class, 'index'])->name('admin.assistance-categories');
+        Route::get('/assistance-categories/form-data', [App\Http\Controllers\Admin\AssistanceCategoryController::class, 'getFormData'])->name('admin.assistance-categories.form-data');
+        Route::post('/assistance-categories', [App\Http\Controllers\Admin\AssistanceCategoryController::class, 'store'])->name('admin.assistance-categories.store');
+        Route::put('/assistance-categories/{assistanceCategory}', [App\Http\Controllers\Admin\AssistanceCategoryController::class, 'update'])->name('admin.assistance-categories.update');
+        Route::delete('/assistance-categories/{assistanceCategory}', [App\Http\Controllers\Admin\AssistanceCategoryController::class, 'destroy'])->name('admin.assistance-categories.destroy');
+
+        // Eligible Barangays Routes
+        Route::get('/eligible-barangays', [App\Http\Controllers\Admin\EligibleBarangayController::class, 'index'])->name('admin.eligible-barangays');
+        Route::get('/eligible-barangays/form-data', [App\Http\Controllers\Admin\EligibleBarangayController::class, 'getFormData'])->name('admin.eligible-barangays.form-data');
+        Route::post('/eligible-barangays', [App\Http\Controllers\Admin\EligibleBarangayController::class, 'store'])->name('admin.eligible-barangays.store');
+        Route::delete('/eligible-barangays/{eligibleBarangay}', [App\Http\Controllers\Admin\EligibleBarangayController::class, 'destroy'])->name('admin.eligible-barangays.destroy');
+
+        // Distribution Records Routes (Master List)
+        Route::get('/distribution-records', [App\Http\Controllers\Admin\DistributionRecordController::class, 'index'])->name('admin.distribution-records');
+        Route::post('/distribution-records', [App\Http\Controllers\Admin\DistributionRecordController::class, 'store'])->name('admin.distribution-records.store');
+        Route::put('/distribution-records/{distributionRecord}', [App\Http\Controllers\Admin\DistributionRecordController::class, 'update'])->name('admin.distribution-records.update');
+        Route::delete('/distribution-records/{distributionRecord}', [App\Http\Controllers\Admin\DistributionRecordController::class, 'destroy'])->name('admin.distribution-records.destroy');
+
+        // Distribution Record Items Routes (Detailed List)
+        Route::get('/distribution-records/{distributionRecord}/items', [App\Http\Controllers\Admin\DistributionRecordItemController::class, 'index'])->name('admin.distribution-records.items');
+        Route::post('/distribution-record-items', [App\Http\Controllers\Admin\DistributionRecordItemController::class, 'store'])->name('admin.distribution-record-items.store');
+        Route::put('/distribution-record-items/{distributionRecordItem}', [App\Http\Controllers\Admin\DistributionRecordItemController::class, 'update'])->name('admin.distribution-record-items.update');
+        Route::delete('/distribution-record-items/{distributionRecordItem}', [App\Http\Controllers\Admin\DistributionRecordItemController::class, 'destroy'])->name('admin.distribution-record-items.destroy');
+        Route::get('/distribution-records/{distributionRecord}/export-csv', [App\Http\Controllers\Admin\DistributionRecordItemController::class, 'exportCsv'])->name('admin.distribution-records.export-csv');
+
+        // Acknowledgements Routes
+        Route::post('/acknowledgements', [App\Http\Controllers\Admin\AcknowledgementController::class, 'store'])->name('admin.acknowledgements.store');
+        Route::put('/acknowledgements/{acknowledgement}', [App\Http\Controllers\Admin\AcknowledgementController::class, 'update'])->name('admin.acknowledgements.update');
+        Route::delete('/acknowledgements/{acknowledgement}', [App\Http\Controllers\Admin\AcknowledgementController::class, 'destroy'])->name('admin.acknowledgements.destroy');
+
+        // Eligibility Rules Routes
+        Route::get('/eligibility-rules', [App\Http\Controllers\Admin\EligibilityRuleController::class, 'index'])->name('admin.eligibility-rules');
+        Route::get('/eligibility-rules/form-data', [App\Http\Controllers\Admin\EligibilityRuleController::class, 'getFormData'])->name('admin.eligibility-rules.form-data');
+        Route::post('/eligibility-rules', [App\Http\Controllers\Admin\EligibilityRuleController::class, 'store'])->name('admin.eligibility-rules.store');
+        Route::put('/eligibility-rules/{eligibilityRule}', [App\Http\Controllers\Admin\EligibilityRuleController::class, 'update'])->name('admin.eligibility-rules.update');
+        Route::delete('/eligibility-rules/{eligibilityRule}', [App\Http\Controllers\Admin\EligibilityRuleController::class, 'destroy'])->name('admin.eligibility-rules.destroy');
+
+        // Distribution Records Routes
+        Route::get('/distribution-records', [App\Http\Controllers\Admin\DistributionRecordController::class, 'index'])->name('admin.distribution-records');
+        Route::get('/distribution-records/form-data', [App\Http\Controllers\Admin\DistributionRecordController::class, 'getFormData'])->name('admin.distribution-records.form-data');
+        Route::post('/distribution-records', [App\Http\Controllers\Admin\DistributionRecordController::class, 'store'])->name('admin.distribution-records.store');
+        Route::put('/distribution-records/{distributionRecord}', [App\Http\Controllers\Admin\DistributionRecordController::class, 'update'])->name('admin.distribution-records.update');
+        Route::delete('/distribution-records/{distributionRecord}', [App\Http\Controllers\Admin\DistributionRecordController::class, 'destroy'])->name('admin.distribution-records.destroy');
+
+        // Allocation Policies Routes
+        Route::get('/allocation-policies', [App\Http\Controllers\Admin\AllocationPolicyController::class, 'index'])->name('admin.allocation-policies');
+        Route::get('/allocation-policies/form-data', [App\Http\Controllers\Admin\AllocationPolicyController::class, 'getFormData'])->name('admin.allocation-policies.form-data');
+        Route::post('/allocation-policies', [App\Http\Controllers\Admin\AllocationPolicyController::class, 'store'])->name('admin.allocation-policies.store');
+        Route::put('/allocation-policies/{allocationPolicy}', [App\Http\Controllers\Admin\AllocationPolicyController::class, 'update'])->name('admin.allocation-policies.update');
+        Route::delete('/allocation-policies/{allocationPolicy}', [App\Http\Controllers\Admin\AllocationPolicyController::class, 'destroy'])->name('admin.allocation-policies.destroy');
+
         // Organization Routes
         Route::get('/organizations', [App\Http\Controllers\Admin\OrganizationController::class, 'index'])->name('admin.organizations');
         Route::post('/organizations', [App\Http\Controllers\Admin\OrganizationController::class, 'store'])->name('admin.organizations.store');
@@ -81,6 +130,18 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/damage-types', [App\Http\Controllers\Admin\DamageTypeController::class, 'store'])->name('admin.damage-types.store');
         Route::put('/damage-types/{damageType}', [App\Http\Controllers\Admin\DamageTypeController::class, 'update'])->name('admin.damage-types.update');
         Route::delete('/damage-types/{damageType}', [App\Http\Controllers\Admin\DamageTypeController::class, 'destroy'])->name('admin.damage-types.destroy');
+
+        // Crop Damage Records Routes (Folders)
+        Route::get('/crop-damage-records', [App\Http\Controllers\Admin\CropDamageRecordController::class, 'index'])->name('admin.crop-damage-records');
+        Route::get('/crop-damage-records/{cropDamageRecord}', [App\Http\Controllers\Admin\CropDamageRecordController::class, 'show'])->name('admin.crop-damage-records.show');
+        Route::post('/crop-damage-records', [App\Http\Controllers\Admin\CropDamageRecordController::class, 'store'])->name('admin.crop-damage-records.store');
+        Route::put('/crop-damage-records/{cropDamageRecord}', [App\Http\Controllers\Admin\CropDamageRecordController::class, 'update'])->name('admin.crop-damage-records.update');
+        Route::delete('/crop-damage-records/{cropDamageRecord}', [App\Http\Controllers\Admin\CropDamageRecordController::class, 'destroy'])->name('admin.crop-damage-records.destroy');
+
+        // Crop Damage Record Items Routes (Files inside folders)
+        Route::post('/crop-damage-records/{cropDamageRecord}/items', [App\Http\Controllers\Admin\CropDamageRecordItemController::class, 'store'])->name('admin.crop-damage-record-items.store');
+        Route::put('/crop-damage-record-items/{cropDamageRecordItem}', [App\Http\Controllers\Admin\CropDamageRecordItemController::class, 'update'])->name('admin.crop-damage-record-items.update');
+        Route::delete('/crop-damage-record-items/{cropDamageRecordItem}', [App\Http\Controllers\Admin\CropDamageRecordItemController::class, 'destroy'])->name('admin.crop-damage-record-items.destroy');
 
         // Unit of Measure Routes
         Route::get('/unit-of-measures', [App\Http\Controllers\Admin\UnitOfMeasureController::class, 'index'])->name('admin.unit-of-measures');

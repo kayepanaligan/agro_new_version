@@ -1,12 +1,13 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Commodity, type Farmer, type Organization, type Program, type Variety } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, User } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, User, List, LayoutGrid } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
     DropdownMenu,
@@ -49,6 +50,16 @@ export default function Farmers() {
     }>().props;
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [viewMode, setViewMode] = useState<'list' | 'card'>(() => {
+        // Initialize from localStorage if available
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('farmerViewMode');
+            if (saved === 'card' || saved === 'list') {
+                return saved;
+            }
+        }
+        return 'list'; // Default to list view
+    });
     const [sortField, setSortField] = useState<SortField>('last_name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
     const [currentPage, setCurrentPage] = useState(1);
@@ -253,10 +264,13 @@ export default function Farmers() {
         }
 
         router.post('/admin/farmers', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 resetForm();
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -271,11 +285,14 @@ export default function Farmers() {
         }
 
         router.put(`/admin/farmers/${selectedFarmer.id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 resetForm();
                 setSelectedFarmer(null);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -284,10 +301,13 @@ export default function Farmers() {
         if (!selectedFarmer) return;
 
         router.delete(`/admin/farmers/${selectedFarmer.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedFarmer(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };
@@ -295,11 +315,9 @@ export default function Farmers() {
     const openEditModal = (farmer: Farmer) => {
         setSelectedFarmer(farmer);
         
-        // Get existing farms for this farmer
         const farmerFarms = farmer.farms || [];
         
         setFormData({
-            // Basic Info
             rsbsa_number: farmer.rsbsa_number || '',
             first_name: farmer.first_name,
             last_name: farmer.last_name,
@@ -475,19 +493,44 @@ export default function Farmers() {
                     <div className="border-t p-6">
                         {/* Header with Add button */}
                         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="relative flex-1 max-w-sm">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search farmers..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-9"
-                                />
+                            <div className="flex flex-col gap-4 md:flex-row md:items-center flex-1">
+                                <div className="relative flex-1 max-w-sm">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search farmers..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
                             </div>
-
-                            <Button onClick={() => setIsCreateModalOpen(true)}>
-                                Add Farmer
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant={viewMode === 'card' ? 'default' : 'outline'} 
+                                    size="sm" 
+                                    onClick={() => {
+                                        setViewMode('card');
+                                        localStorage.setItem('farmerViewMode', 'card');
+                                    }}
+                                    className="h-9 w-9 p-0"
+                                >
+                                    <LayoutGrid className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                    variant={viewMode === 'list' ? 'default' : 'outline'} 
+                                    size="sm" 
+                                    onClick={() => {
+                                        setViewMode('list');
+                                        localStorage.setItem('farmerViewMode', 'list');
+                                    }}
+                                    className="h-9 w-9 p-0"
+                                >
+                                    <List className="h-4 w-4" />
+                                </Button>
+                                <Button onClick={() => setIsCreateModalOpen(true)}>
+                                    Add Farmer
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Results count */}
@@ -495,7 +538,138 @@ export default function Farmers() {
                             Showing {paginatedFarmers.length} of {filteredFarmers.length} farmers
                         </div>
 
-                        {/* Table */}
+                        {/* Card View */}
+                        {viewMode === 'card' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                {paginatedFarmers.map((farmer) => (
+                                    <Card key={farmer.lfid} className="group cursor-pointer transition-all hover:shadow-lg hover:border-primary/50">
+                                        <CardContent className="p-4 space-y-4">
+                                            {/* Header with Photo and Actions */}
+                                            <div className="flex items-start justify-between">
+                                                <div 
+                                                    className="flex items-center gap-3 flex-1 cursor-pointer"
+                                                    onClick={() => router.get(`/admin/farmers/${farmer.lfid}`)}
+                                                >
+                                                    <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-muted border-2 border-muted group-hover:border-primary/30 transition-colors">
+                                                        {farmer.picture_id ? (
+                                                            <img 
+                                                                src={farmer.picture_id} 
+                                                                alt={`${farmer.first_name} ${farmer.last_name}`}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-full w-full flex items-center justify-center">
+                                                                <User className="h-8 w-8 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">{farmer.last_name}, {farmer.first_name}</h3>
+                                                        <p className="text-xs text-muted-foreground truncate">{farmer.lfid}</p>
+                                                    </div>
+                                                </div>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.get(`/admin/farmers/${farmer.lfid}`); }}>
+                                                            <User className="mr-2 h-4 w-4" />
+                                                            View Profile
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditModal(farmer); }}>
+                                                            <Pencil className="mr-2 h-4 w-4" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem 
+                                                            onClick={(e) => { e.stopPropagation(); openDeleteModal(farmer); }}
+                                                            className="text-red-600 focus:text-red-600"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+
+                                            {/* Information Grid */}
+                                            <div className="space-y-2 text-sm">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <span className="text-xs text-muted-foreground">RSBSA No</span>
+                                                        <p className="font-medium text-xs truncate">{farmer.rsbsa_number || '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs text-muted-foreground">Sex</span>
+                                                        <div className="mt-0.5">
+                                                            <Badge variant="outline" className="text-xs">{farmer.sex}</Badge>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <span className="text-xs text-muted-foreground">Contact</span>
+                                                        <p className="font-medium text-xs truncate">{farmer.contact_number || '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs text-muted-foreground">Civil Status</span>
+                                                        <p className="font-medium text-xs capitalize truncate">{farmer.civil_status || '-'}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-2 border-t">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs text-muted-foreground">Registration Status</span>
+                                                        <Badge 
+                                                            variant={
+                                                                farmer.registration_status === 'verified' ? 'default' :
+                                                                farmer.registration_status === 'for_submission' ? 'secondary' :
+                                                                farmer.registration_status === 'submitted_to_da' ? 'outline' :
+                                                                farmer.registration_status === 'rejected' ? 'destructive' :
+                                                                'outline'
+                                                            }
+                                                            className="text-xs"
+                                                        >
+                                                            {farmer.registration_status?.replace('_', ' ') || 'not registered'}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-2 pt-2 border-t">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="flex-1 text-xs"
+                                                    onClick={(e) => { e.stopPropagation(); router.get(`/admin/farmers/${farmer.lfid}`); }}
+                                                >
+                                                    <User className="h-3 w-3 mr-1" />
+                                                    View Profile
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="secondary" 
+                                                    className="flex-1 text-xs"
+                                                    onClick={(e) => { e.stopPropagation(); openEditModal(farmer); }}
+                                                >
+                                                    <Pencil className="h-3 w-3 mr-1" />
+                                                    Edit
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Table View (List) */}
+                        {viewMode === 'list' && (
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>
@@ -540,7 +714,7 @@ export default function Farmers() {
                                             >
                                                  <TableCell className="font-medium">{farmer.lfid || 'Not generated'}</TableCell>
                                                 <TableCell>
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted overflow-hidden">
+                                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted overflow-hidden border border-muted">
                                                         {farmer.picture_id ? (
                                                             <img 
                                                                 src={farmer.picture_id} 
@@ -548,7 +722,7 @@ export default function Farmers() {
                                                                 className="h-full w-full object-cover"
                                                             />
                                                         ) : (
-                                                            <User className="h-5 w-5 text-muted-foreground" />
+                                                            <User className="h-6 w-6 text-muted-foreground" />
                                                         )}
                                                     </div>
                                                 </TableCell>
@@ -605,6 +779,7 @@ export default function Farmers() {
                                 </TableBody>
                             </Table>
                         </div>
+                        )}
                     </div>
 
                     {/* Pagination Controls */}

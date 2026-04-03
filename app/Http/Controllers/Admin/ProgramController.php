@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Program;
+use App\Models\FundingSource;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,10 +17,11 @@ class ProgramController extends Controller
      */
     public function index(): Response
     {
-        $programs = Program::orderBy('program_name', 'asc')->get();
+        $programs = Program::with('fundingSource')->orderBy('program_name', 'asc')->get();
 
         return Inertia::render('admin/programs', [
             'programs' => $programs,
+            'fundingSources' => FundingSource::orderBy('name', 'asc')->get(),
         ]);
     }
 
@@ -31,8 +33,12 @@ class ProgramController extends Controller
         $validated = $request->validate([
             'program_name' => 'required|string|max:255|unique:programs,program_name',
             'program_description' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'funding_source_id' => 'nullable|exists:funding_sources,id',
         ], [
             'program_name.unique' => 'A program with this name already exists.',
+            'end_date.after_or_equal' => 'End date must be equal to or after start date.',
         ]);
 
         Program::create($validated);
@@ -48,8 +54,12 @@ class ProgramController extends Controller
         $validated = $request->validate([
             'program_name' => 'required|string|max:255|unique:programs,program_name,' . $program->id,
             'program_description' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'funding_source_id' => 'nullable|exists:funding_sources,id',
         ], [
             'program_name.unique' => 'A program with this name already exists.',
+            'end_date.after_or_equal' => 'End date must be equal to or after start date.',
         ]);
 
         $program->update($validated);

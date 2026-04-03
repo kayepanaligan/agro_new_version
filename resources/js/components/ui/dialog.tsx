@@ -8,7 +8,24 @@ const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
-const DialogPortal = DialogPrimitive.Portal;
+const DialogPortal = ({ children }: { children: React.ReactNode }) => {
+    // Cleanup function to remove portal container on unmount
+    React.useEffect(() => {
+        return () => {
+            // Force cleanup of portal containers after dialog closes
+            setTimeout(() => {
+                const portals = document.querySelectorAll('[data-radix-portal]');
+                portals.forEach(portal => {
+                    if (portal.children.length === 0) {
+                        portal.remove();
+                    }
+                });
+            }, 50);
+        };
+    }, []);
+
+    return <DialogPrimitive.Portal>{children}</DialogPrimitive.Portal>;
+};
 
 const DialogClose = DialogPrimitive.Close;
 
@@ -23,6 +40,16 @@ const DialogOverlay = React.forwardRef<
             className,
         )}
         {...props}
+        style={{
+            ...props.style,
+            pointerEvents: 'auto',
+        }}
+        onPointerDown={(e) => {
+            // Allow click-through when dialog is closed
+            if (props.onPointerDown) {
+                props.onPointerDown(e);
+            }
+        }}
     />
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
@@ -41,9 +68,13 @@ const DialogContent = React.forwardRef<
                 className,
             )}
             {...props}
+            style={{
+                ...props.style,
+                pointerEvents: 'auto',
+            }}
         >
             {children}
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
             </DialogPrimitive.Close>

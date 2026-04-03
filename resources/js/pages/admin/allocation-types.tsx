@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
     DropdownMenu,
-    DropdownMenuContent,
+    DropdownMenuContent, 
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -85,7 +85,6 @@ export default function AllocationTypes() {
             );
         }
 
-        // Sorting
         result.sort((a, b) => {
             let aValue: any = a[sortField];
             let bValue: any = b[sortField];
@@ -114,7 +113,7 @@ export default function AllocationTypes() {
 
     const handleCreate = () => {
         router.post('/admin/allocation-types', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setFormData({ 
@@ -129,6 +128,9 @@ export default function AllocationTypes() {
                     barangay_ids: [],
                 });
             },
+            onError: (errors) => {
+                console.error('Create error:', errors);
+            },
         });
     };
 
@@ -136,7 +138,7 @@ export default function AllocationTypes() {
         if (!selectedAllocation) return;
 
         router.put(`/admin/allocation-types/${selectedAllocation.id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 setFormData({ 
@@ -152,6 +154,9 @@ export default function AllocationTypes() {
                 });
                 setSelectedAllocation(null);
             },
+            onError: (errors) => {
+                console.error('Update error:', errors);
+            },
         });
     };
 
@@ -159,10 +164,13 @@ export default function AllocationTypes() {
         if (!selectedAllocation) return;
 
         router.delete(`/admin/allocation-types/${selectedAllocation.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedAllocation(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };

@@ -1,9 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Category, type Commodity } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, Upload, X, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { useMemo, useState, useRef, useCallback } from 'react';
-import axios from 'axios';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,8 +47,6 @@ interface ImageUploadAreaProps {
     onImageChange: (file: File | null) => void;
     label: string;
     disabled?: boolean;
-    isGenerating?: boolean;
-    generatedImageUrl?: string | null;
 }
 
 const ImageUploadArea: React.FC<ImageUploadAreaProps> = ({
@@ -58,8 +55,6 @@ const ImageUploadArea: React.FC<ImageUploadAreaProps> = ({
     onImageChange,
     label,
     disabled = false,
-    isGenerating = false,
-    generatedImageUrl = null,
 }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,14 +92,11 @@ const ImageUploadArea: React.FC<ImageUploadAreaProps> = ({
     }, [onImageChange]);
 
     const previewUrl = useMemo(() => {
-        if (generatedImageUrl) {
-            return generatedImageUrl;
-        }
         if (imageFile) {
             return URL.createObjectURL(imageFile);
         }
         return imageUrl;
-    }, [imageFile, imageUrl, generatedImageUrl]);
+    }, [imageFile, imageUrl]);
 
     return (
         <div className="grid gap-2">
@@ -119,12 +111,7 @@ const ImageUploadArea: React.FC<ImageUploadAreaProps> = ({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
             >
-                {isGenerating ? (
-                    <div className="flex flex-col items-center justify-center gap-2 py-12">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground">AI is generating your image...</p>
-                    </div>
-                ) : previewUrl ? (
+                {previewUrl ? (
                     <div className="relative">
                         <img
                             src={previewUrl}
@@ -187,11 +174,20 @@ export default function Commodities() {
         name: '',
         description: '',
         image: null as File | null,
-        use_ai_generated: false,
     });
-    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-    const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-    const [generatedImagePath, setGeneratedImagePath] = useState<string | null>(null);
+
+    // Cleanup all dialogs on page navigation/unmount
+    useEffect(() => {
+        return () => {
+            // Force close all dialogs when navigating away
+            setIsCreateModalOpen(false);
+            setIsEditModalOpen(false);
+            setIsDeleteModalOpen(false);
+            // Remove any leftover overlays from DOM
+            const overlays = document.querySelectorAll('[data-radix-dialog-overlay], [data-state="open"]');
+            overlays.forEach(overlay => overlay.remove());
+        };
+    }, []);
 
     // Filter and sort commodities
     const filteredCommodities = useMemo(() => {
@@ -270,17 +266,37 @@ export default function Commodities() {
         data.append('category_id', formData.category_id);
         data.append('name', formData.name);
         data.append('description', formData.description);
-        data.append('use_ai_generated', formData.use_ai_generated.toString());
         if (formData.image) {
             data.append('image', formData.image);
         }
 
         router.post('/admin/commodities', data, {
-            preserveScroll: true,
+            preserveScroll: false,
+            preserveState: false,
             onSuccess: () => {
+                console.log('🔧 CREATE SUCCESS - Starting cleanup...');
+                
+                // NUCLEAR OPTION: Force remove ALL dialog overlays from DOM
+                const overlays = document.querySelectorAll('[data-state="open"]');
+                console.log('Found', overlays.length, 'open dialogs to close');
+                overlays.forEach((overlay, idx) => {
+                    console.log(`Closing overlay #${idx}:`, overlay.tagName);
+                    overlay.setAttribute('data-state', 'closed');
+                    (overlay as HTMLElement).style.display = 'none';
+                });
+                
+                // Then update React state
                 setIsCreateModalOpen(false);
-                setFormData({ category_id: '', name: '', description: '', image: null, use_ai_generated: false });
-                setGeneratedImageUrl(null);
+                console.log('Set modal state to false');
+                
+                // Clean up other state
+                setTimeout(() => {
+                    setFormData({ category_id: '', name: '', description: '', image: null });
+                    console.log('Cleanup complete!');
+                }, 100);
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -302,18 +318,40 @@ export default function Commodities() {
         data.append('category_id', formData.category_id);
         data.append('name', formData.name);
         data.append('description', formData.description);
-        data.append('use_ai_generated', formData.use_ai_generated.toString());
         if (formData.image) {
             data.append('image', formData.image);
         }
 
         router.post(`/admin/commodities/${selectedCommodity.id}?_method=PUT`, data, {
-            preserveScroll: true,
+            preserveScroll: false,
+            preserveState: false,
             onSuccess: () => {
+                console.log('🔧 UPDATE SUCCESS - Starting cleanup...');
+                console.log('Current modal state:', isEditModalOpen);
+                
+                // NUCLEAR OPTION: Force remove ALL dialog overlays from DOM
+                const overlays = document.querySelectorAll('[data-state="open"]');
+                console.log('Found', overlays.length, 'open dialogs to close');
+                overlays.forEach((overlay, idx) => {
+                    console.log(`Closing overlay #${idx}:`, overlay.tagName, overlay.getAttribute('data-radix-dialog-overlay'));
+                    overlay.setAttribute('data-state', 'closed');
+                    // Also hide it visually
+                    (overlay as HTMLElement).style.display = 'none';
+                });
+                
+                // Then update React state
                 setIsEditModalOpen(false);
-                setFormData({ category_id: '', name: '', description: '', image: null, use_ai_generated: false });
-                setSelectedCommodity(null);
-                setGeneratedImageUrl(null);
+                console.log('Set modal state to false');
+                
+                // Clean up other state
+                setTimeout(() => {
+                    setFormData({ category_id: '', name: '', description: '', image: null });
+                    setSelectedCommodity(null);
+                    console.log('Cleanup complete!');
+                }, 100);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -322,10 +360,32 @@ export default function Commodities() {
         if (!selectedCommodity) return;
 
         router.delete(`/admin/commodities/${selectedCommodity.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
+            preserveState: false,
             onSuccess: () => {
+                console.log('🔧 DELETE SUCCESS - Starting cleanup...');
+                
+                // NUCLEAR OPTION: Force remove ALL dialog overlays from DOM
+                const overlays = document.querySelectorAll('[data-state="open"]');
+                console.log('Found', overlays.length, 'open dialogs to close');
+                overlays.forEach((overlay, idx) => {
+                    console.log(`Closing overlay #${idx}:`, overlay.tagName);
+                    overlay.setAttribute('data-state', 'closed');
+                    (overlay as HTMLElement).style.display = 'none';
+                });
+                
+                // Then update React state
                 setIsDeleteModalOpen(false);
-                setSelectedCommodity(null);
+                console.log('Set modal state to false');
+                
+                // Clean up other state
+                setTimeout(() => {
+                    setSelectedCommodity(null);
+                    console.log('Cleanup complete!');
+                }, 100);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };
@@ -337,7 +397,6 @@ export default function Commodities() {
             name: commodity.name,
             description: commodity.description || '',
             image: null,
-            use_ai_generated: false,
         });
         setIsEditModalOpen(true);
     };
@@ -348,78 +407,8 @@ export default function Commodities() {
     };
 
     const resetForm = () => {
-        setFormData({ category_id: '', name: '', description: '', image: null, use_ai_generated: false });
+        setFormData({ category_id: '', name: '', description: '', image: null });
         setSelectedCommodity(null);
-        setGeneratedImageUrl(null);
-        setGeneratedImagePath(null);
-    };
-
-    const generateAiImage = async (name: string, description: string) => {
-        if (!name || !description) {
-            alert('Please enter both name and description before generating AI image');
-            return;
-        }
-
-        try {
-            setIsGeneratingImage(true);
-            
-            // Create a detailed prompt for AI image generation
-            const prompt = `High quality professional product photo of fresh ${name}. ${description}. Studio lighting, white background, commercial photography style, photorealistic.`;
-            
-            // Call the AI generation API using axios (using admin web route with rate limiting)
-            const response = await axios.post('/admin/ai/generate-image', {
-                prompt: prompt,
-                size: '1024x1024',
-                save_to_storage: true, // Save to storage for persistence
-            }, {
-                timeout: 90000, // 90 second timeout for Gemini API
-            });
-
-            const data = response.data;
-
-            if (data.success && data.data?.base64) {
-                // Set the generated image data URI for preview
-                const dataUri = data.data.dataUri || `data:${data.data.mimeType};base64,${data.data.base64}`;
-                setGeneratedImageUrl(dataUri);
-                
-                // Store metadata for form submission
-                setGeneratedImagePath(data.data.storage_path || null);
-                
-                // Show success message
-                const hasStorageUrl = data.data.url ? ' Image saved to server.' : '';
-                alert(`✅ AI image generated successfully!${hasStorageUrl}`);
-            } else {
-                throw new Error(data.message || 'Failed to generate image - no image data returned');
-            }
-        } catch (error: any) {
-            console.error('Error generating AI image:', error);
-            
-            let errorMessage = 'Failed to generate AI image. ';
-            
-            if (error.code === 'ECONNABORTED') {
-                errorMessage += 'The request timed out (90s). The AI service may be busy. Please try again.';
-            } else if (error.response?.status === 429) {
-                const retryAfter = error.response?.data?.retry_after || 60;
-                errorMessage += `Rate limit exceeded. Please wait ${retryAfter} seconds before trying again.`;
-            } else if (error.response?.status === 422) {
-                const errors = error.response?.data?.errors;
-                if (errors?.prompt) {
-                    errorMessage = errors.prompt.join(' ');
-                } else {
-                    errorMessage += 'Invalid input parameters.';
-                }
-            } else if (error.response?.status === 503) {
-                errorMessage += error.response.data.message || 'The AI service is temporarily unavailable.';
-            } else if (error.response?.status === 500) {
-                errorMessage += 'An internal server error occurred. Please check the logs and try again.';
-            } else {
-                errorMessage += 'Please try again in a few moments.';
-            }
-            
-            alert('⚠️ ' + errorMessage);
-        } finally {
-            setIsGeneratingImage(false);
-        }
     };
 
     return (
@@ -619,7 +608,14 @@ export default function Commodities() {
             </div>
 
             {/* Create Modal */}
-            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { setIsCreateModalOpen(open); if (!open) resetForm(); }}>
+            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { 
+                setIsCreateModalOpen(open); 
+                if (!open) {
+                    resetForm();
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Create Commodity</DialogTitle>
@@ -669,61 +665,7 @@ export default function Commodities() {
                             imageFile={formData.image}
                             imageUrl={null}
                             onImageChange={(image) => setFormData({ ...formData, image })}
-                            isGenerating={isGeneratingImage}
-                            generatedImageUrl={generatedImageUrl}
                         />
-
-                        {formData.use_ai_generated && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => generateAiImage(formData.name, formData.description)}
-                                disabled={!formData.name || !formData.description || isGeneratingImage}
-                                className="w-full"
-                            >
-                                {isGeneratingImage ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Generating AI Image...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles className="mr-2 h-4 w-4" />
-                                        Generate AI Image Now
-                                    </>
-                                )}
-                            </Button>
-                        )}
-
-                        <div className="flex items-center space-x-2 border rounded-lg p-4 bg-muted/50">
-                            <input
-                                type="checkbox"
-                                id="ai-generate"
-                                checked={formData.use_ai_generated}
-                                onChange={async (e) => {
-                                    const isChecked = e.target.checked;
-                                    setFormData({ ...formData, use_ai_generated: isChecked });
-                                    
-                                    if (isChecked && formData.name && formData.description) {
-                                        // Call the actual AI generation API
-                                        await generateAiImage(formData.name, formData.description);
-                                    } else if (!isChecked) {
-                                        setGeneratedImageUrl(null);
-                                        setGeneratedImagePath(null);
-                                    }
-                                }}
-                                className="h-4 w-4"
-                            />
-                            <label htmlFor="ai-generate" className="flex items-center gap-2 cursor-pointer flex-1">
-                                <Sparkles className="h-4 w-4 text-purple-600" />
-                                <div className="flex-1">
-                                    <span className="text-sm font-medium">AI-Generate Image</span>
-                                    <p className="text-xs text-muted-foreground">
-                                        Let AI generate an image based on the commodity name and description
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
@@ -737,7 +679,14 @@ export default function Commodities() {
             </Dialog>
 
             {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={(open) => { setIsEditModalOpen(open); if (!open) resetForm(); }}>
+            <Dialog open={isEditModalOpen} onOpenChange={(open) => { 
+                setIsEditModalOpen(open); 
+                if (!open) {
+                    resetForm();
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Edit Commodity</DialogTitle>
@@ -785,61 +734,7 @@ export default function Commodities() {
                             imageFile={formData.image}
                             imageUrl={selectedCommodity?.image_path ? `/storage/${selectedCommodity.image_path}` : null}
                             onImageChange={(image) => setFormData({ ...formData, image })}
-                            isGenerating={isGeneratingImage}
-                            generatedImageUrl={generatedImageUrl}
                         />
-
-                        {formData.use_ai_generated && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => generateAiImage(formData.name, formData.description)}
-                                disabled={!formData.name || !formData.description || isGeneratingImage}
-                                className="w-full"
-                            >
-                                {isGeneratingImage ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Generating AI Image...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles className="mr-2 h-4 w-4" />
-                                        Generate AI Image Now
-                                    </>
-                                )}
-                            </Button>
-                        )}
-
-                        <div className="flex items-center space-x-2 border rounded-lg p-4 bg-muted/50">
-                            <input
-                                type="checkbox"
-                                id="edit-ai-generate"
-                                checked={formData.use_ai_generated}
-                                onChange={async (e) => {
-                                    const isChecked = e.target.checked;
-                                    setFormData({ ...formData, use_ai_generated: isChecked });
-                                    
-                                    if (isChecked && formData.name && formData.description) {
-                                        // Call the actual AI generation API
-                                        await generateAiImage(formData.name, formData.description);
-                                    } else if (!isChecked) {
-                                        setGeneratedImageUrl(null);
-                                        setGeneratedImagePath(null);
-                                    }
-                                }}
-                                className="h-4 w-4"
-                            />
-                            <label htmlFor="edit-ai-generate" className="flex items-center gap-2 cursor-pointer flex-1">
-                                <Sparkles className="h-4 w-4 text-purple-600" />
-                                <div className="flex-1">
-                                    <span className="text-sm font-medium">AI-Generate Image</span>
-                                    <p className="text-xs text-muted-foreground">
-                                        Let AI generate an image based on the commodity name and description
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
@@ -853,7 +748,14 @@ export default function Commodities() {
             </Dialog>
 
             {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => {
+                setIsDeleteModalOpen(open);
+                if (!open) {
+                    setSelectedCommodity(null);
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Delete Commodity</DialogTitle>

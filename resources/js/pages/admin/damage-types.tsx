@@ -58,7 +58,6 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
         damage_category_id: '',
         damage_type_description: '',
         image: null as File | null,
-        is_ai_generated: false,
     });
 
     const filteredTypes = useMemo(() => {
@@ -129,7 +128,6 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
             damage_category_id: '',
             damage_type_description: '',
             image: null,
-            is_ai_generated: false,
         });
         setIsCreateModalOpen(true);
     };
@@ -141,7 +139,6 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
             damage_category_id: type.damage_category_id.toString(),
             damage_type_description: type.damage_type_description || '',
             image: null,
-            is_ai_generated: type.is_ai_generated,
         });
         setIsEditModalOpen(true);
     };
@@ -156,13 +153,12 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
         data.append('damage_type_name', formData.damage_type_name);
         data.append('damage_category_id', formData.damage_category_id);
         data.append('damage_type_description', formData.damage_type_description);
-        data.append('is_ai_generated', formData.is_ai_generated.toString());
         if (formData.image) {
             data.append('image', formData.image);
         }
 
         router.post('/admin/damage-types', data, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setFormData({
@@ -170,8 +166,10 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                     damage_category_id: '',
                     damage_type_description: '',
                     image: null,
-                    is_ai_generated: false,
                 });
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -183,13 +181,12 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
         data.append('damage_type_name', formData.damage_type_name);
         data.append('damage_category_id', formData.damage_category_id);
         data.append('damage_type_description', formData.damage_type_description);
-        data.append('is_ai_generated', formData.is_ai_generated.toString());
         if (formData.image) {
             data.append('image', formData.image);
         }
 
         router.post(`/admin/damage-types/${selectedType.damage_type_id}?_method=PUT`, data, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 setSelectedType(null);
@@ -198,8 +195,10 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                     damage_category_id: '',
                     damage_type_description: '',
                     image: null,
-                    is_ai_generated: false,
                 });
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -208,10 +207,13 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
         if (!selectedType) return;
 
         router.delete(`/admin/damage-types/${selectedType.damage_type_id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedType(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };
@@ -301,7 +303,6 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                                             </Button>
                                         </TableHead>
                                         <TableHead>Description</TableHead>
-                                        <TableHead>AI Generated</TableHead>
                                         <TableHead className="w-[70px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -339,13 +340,6 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                                                 </TableCell>
                                                 <TableCell className="max-w-[200px] truncate">
                                                     {type.damage_type_description || '-'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {type.is_ai_generated ? (
-                                                        <Badge variant="default">Yes</Badge>
-                                                    ) : (
-                                                        <Badge variant="secondary">No</Badge>
-                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <DropdownMenu>
@@ -489,21 +483,45 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="image">Image (Optional)</Label>
-                            <Input
-                                id="image"
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
-                            />
-                            <p className="text-xs text-muted-foreground">Supported formats: JPEG, PNG, GIF. Max size: 2MB</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="is_ai_generated"
-                                checked={formData.is_ai_generated}
-                                onCheckedChange={(checked) => setFormData({ ...formData, is_ai_generated: checked as boolean })}
-                            />
-                            <Label htmlFor="is_ai_generated">AI Generated Image</Label>
+                            <div 
+                                className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
+                                    formData.image 
+                                        ? 'border-primary bg-muted/30' 
+                                        : 'border-border hover:bg-muted/50'
+                                }`}
+                            >
+                                <input
+                                    id="image"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        setFormData({ ...formData, image: file });
+                                    }}
+                                    className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                
+                                {formData.image ? (
+                                    // Image Preview Inside Drop Zone
+                                    <div className="flex h-full w-full flex-col items-center justify-center p-4">
+                                        <img
+                                            src={URL.createObjectURL(formData.image)}
+                                            alt="Preview"
+                                            className="max-h-[160px] w-full rounded-lg border object-contain bg-white shadow-sm"
+                                        />
+                                        <p className="mt-3 text-[15px] text-muted-foreground/80">Click to change image</p>
+                                    </div>
+                                ) : (
+                                    // Default Upload Prompt
+                                    <div className="flex flex-col items-center justify-center p-6 text-center">
+                                        <ImageIcon className="mb-3 h-8 w-8 text-muted-foreground/70" />
+                                        <p className="text-[15px] font-medium text-foreground">Drag & drop file here or click to browse</p>
+                                        <p className="mt-1 text-[15px] text-muted-foreground/80">Supported formats: JPEG, PNG, GIF. Max size: 2MB</p>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Upload a clear image of the damage type</p>
                         </div>
                     </div>
                     <DialogFooter>
@@ -564,30 +582,63 @@ export default function DamageTypes({ damageTypes, damageCategories }: DamageTyp
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit_image">Update Image (Optional)</Label>
-                            {selectedType?.image_path && !formData.image && (
-                                <div className="mb-2">
-                                    <img 
-                                        src={`/storage/${selectedType.image_path}`} 
-                                        alt={selectedType.damage_type_name}
-                                        className="h-20 w-20 rounded-md object-cover"
-                                    />
-                                </div>
-                            )}
-                            <Input
-                                id="edit_image"
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
-                            />
-                            <p className="text-xs text-muted-foreground">Leave empty to keep current image</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="edit_is_ai_generated"
-                                checked={formData.is_ai_generated}
-                                onCheckedChange={(checked) => setFormData({ ...formData, is_ai_generated: checked as boolean })}
-                            />
-                            <Label htmlFor="edit_is_ai_generated">AI Generated Image</Label>
+                            <div 
+                                className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
+                                    formData.image || selectedType?.image_path
+                                        ? 'border-primary bg-muted/30' 
+                                        : 'border-border hover:bg-muted/50'
+                                }`}
+                            >
+                                <input
+                                    id="edit_image"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        setFormData({ ...formData, image: file });
+                                    }}
+                                    className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                
+                                {(() => {
+                                    // Show new image preview if file selected
+                                    if (formData.image) {
+                                        return (
+                                            <div className="flex h-full w-full flex-col items-center justify-center p-4">
+                                                <img
+                                                    src={URL.createObjectURL(formData.image)}
+                                                    alt="Preview"
+                                                    className="max-h-[160px] w-full rounded-lg border object-contain bg-white shadow-sm"
+                                                />
+                                                <p className="mt-3 text-[15px] text-muted-foreground/80">Click to change image</p>
+                                            </div>
+                                        );
+                                    }
+                                    // Show existing image if no new file selected
+                                    if (selectedType?.image_path) {
+                                        return (
+                                            <div className="flex h-full w-full flex-col items-center justify-center p-4">
+                                                <img
+                                                    src={`/storage/${selectedType.image_path}`}
+                                                    alt={selectedType.damage_type_name}
+                                                    className="max-h-[160px] w-full rounded-lg border object-contain bg-white shadow-sm"
+                                                />
+                                                <p className="mt-3 text-[15px] text-muted-foreground/80">Current image - Click to replace</p>
+                                            </div>
+                                        );
+                                    }
+                                    // Show default upload prompt
+                                    return (
+                                        <div className="flex flex-col items-center justify-center p-6 text-center">
+                                            <ImageIcon className="mb-3 h-8 w-8 text-muted-foreground/70" />
+                                            <p className="text-[15px] font-medium text-foreground">Drag & drop file here or click to browse</p>
+                                            <p className="mt-1 text-[15px] text-muted-foreground/80">Leave empty to keep current image</p>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                            <p className="text-xs text-muted-foreground">Upload a clear image of the damage type</p>
                         </div>
                     </div>
                     <DialogFooter>

@@ -37,7 +37,10 @@ class ProgramSeeder extends Seeder
         ];
 
         foreach ($programs as $program) {
-            Program::create($program);
+            Program::firstOrCreate(
+                ['program_name' => $program['program_name']],
+                $program
+            );
         }
     }
 }

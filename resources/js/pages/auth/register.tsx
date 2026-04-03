@@ -406,8 +406,14 @@ export default function Register() {
                     <h3 className="text-lg font-medium">Proof of Identity</h3>
                     <div className="grid gap-2">
                         <Label htmlFor="id_document">Upload One Valid ID</Label>
-                        <div className="flex items-center gap-4">
-                            <Input
+                        <div 
+                            className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
+                                idPreview || data.id_document 
+                                    ? 'border-primary bg-muted/30' 
+                                    : 'border-border hover:bg-muted/50'
+                            }`}
+                        >
+                            <input
                                 id="id_document"
                                 ref={fileInputRef}
                                 type="file"
@@ -415,38 +421,37 @@ export default function Register() {
                                 tabIndex={13}
                                 onChange={handleFileChange}
                                 disabled={processing}
-                                className="flex-1"
+                                className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
+                                onClick={(e) => e.stopPropagation()}
                             />
-                        </div>
-                        <p className="text-muted-foreground text-sm">
-                            Accepted formats: JPG, PNG, PDF. Max size: 5MB
-                        </p>
-                        
-                        {idPreview && (
-                            <div className="mt-3 rounded-xl border-2 border-border bg-muted/50 p-4">
-                                <p className="mb-2 text-sm font-medium">ID Preview:</p>
-                                <div className="relative">
+                            
+                            {idPreview ? (
+                                // Image Preview Inside Drop Zone
+                                <div className="flex h-full w-full flex-col items-center justify-center p-4">
                                     <img
                                         src={idPreview}
                                         alt="ID Preview"
-                                        className="max-h-64 w-full rounded-xl border-2 object-contain bg-white shadow-sm"
+                                        className="max-h-[160px] w-full rounded-lg border object-contain bg-white shadow-sm"
                                     />
+                                    <p className="mt-3 text-[15px] text-muted-foreground/80">Click to change image</p>
                                 </div>
-                            </div>
-                        )}
-                        
-                        {data.id_document && !idPreview && (
-                            <div className="mt-3 rounded-xl border-2 border-border bg-muted/50 p-4">
-                                <div className="flex items-center gap-3">
-                                    <Upload className="h-5 w-5" />
-                                    <div>
-                                        <p className="font-medium">PDF File Selected:</p>
-                                        <p className="text-sm text-muted-foreground">{data.id_document.name}</p>
-                                    </div>
+                            ) : data.id_document && !idPreview ? (
+                                // PDF File Info Inside Drop Zone
+                                <div className="flex flex-col items-center justify-center p-4 text-center">
+                                    <Upload className="mb-3 h-8 w-8 text-muted-foreground/70" />
+                                    <p className="text-[15px] font-medium text-foreground">PDF File Selected</p>
+                                    <p className="text-[15px] text-muted-foreground/80 break-all max-w-md">{data.id_document.name}</p>
+                                    <p className="mt-2 text-[15px] text-muted-foreground/80">Click to change file</p>
                                 </div>
-                            </div>
-                        )}
-                        
+                            ) : (
+                                // Default Upload Prompt
+                                <div className="flex flex-col items-center justify-center p-6 text-center">
+                                    <Upload className="mb-3 h-8 w-8 text-muted-foreground/70" />
+                                    <p className="text-[15px] font-medium text-foreground">Drag & drop file here or click to browse</p>
+                                    <p className="mt-1 text-[15px] text-muted-foreground/80">Accepted formats: JPG, PNG, PDF. Max size: 5MB</p>
+                                </div>
+                            )}
+                        </div>
                         <InputError message={errors.id_document} />
                     </div>
                 </div>

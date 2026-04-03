@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Program } from '@/types';
+import { type BreadcrumbItem, type Program, type FundingSource } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -24,6 +24,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -36,7 +37,7 @@ type SortField = 'program_name' | 'created_at';
 type SortOrder = 'asc' | 'desc';
 
 export default function Programs() {
-    const { programs } = usePage<{ programs: Program[] }>().props;
+    const { programs, fundingSources } = usePage<{ programs: Program[]; fundingSources: FundingSource[] }>().props;
 
     const [searchTerm, setSearchTerm] = useState('');
     const [sortField, setSortField] = useState<SortField>('program_name');
@@ -50,6 +51,9 @@ export default function Programs() {
     const [formData, setFormData] = useState({
         program_name: '',
         program_description: '',
+        start_date: '',
+        end_date: '',
+        funding_source_id: 0,
     });
 
     // Filter and sort programs
@@ -107,10 +111,13 @@ export default function Programs() {
 
     const handleCreate = () => {
         router.post('/admin/programs', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 resetForm();
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -119,11 +126,14 @@ export default function Programs() {
         if (!selectedProgram) return;
 
         router.put(`/admin/programs/${selectedProgram.id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 resetForm();
                 setSelectedProgram(null);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -132,10 +142,13 @@ export default function Programs() {
         if (!selectedProgram) return;
 
         router.delete(`/admin/programs/${selectedProgram.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedProgram(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };
@@ -145,6 +158,9 @@ export default function Programs() {
         setFormData({
             program_name: program.program_name,
             program_description: program.program_description || '',
+            start_date: program.start_date || '',
+            end_date: program.end_date || '',
+            funding_source_id: program.funding_source_id || 0,
         });
         setIsEditModalOpen(true);
     };
@@ -158,6 +174,9 @@ export default function Programs() {
         setFormData({
             program_name: '',
             program_description: '',
+            start_date: '',
+            end_date: '',
+            funding_source_id: 0,
         });
         setSelectedProgram(null);
     };
@@ -208,6 +227,8 @@ export default function Programs() {
                                             </Button>
                                         </TableHead>
                                         <TableHead>Description</TableHead>
+                                        <TableHead>Funding Source</TableHead>
+                                        <TableHead>Duration</TableHead>
                                         <TableHead>Created</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -215,7 +236,7 @@ export default function Programs() {
                                 <TableBody>
                                     {paginatedPrograms.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="h-24 text-center">
+                                            <TableCell colSpan={6} className="h-24 text-center">
                                                 No programs found. Click "Add Program" to create one.
                                             </TableCell>
                                         </TableRow>
@@ -225,6 +246,16 @@ export default function Programs() {
                                                 <TableCell className="font-medium">{program.id}</TableCell>
                                                 <TableCell className="font-medium">{program.program_name}</TableCell>
                                                 <TableCell>{program.program_description || '-'}</TableCell>
+                                                <TableCell>{program.funding_source?.name || '-'}</TableCell>
+                                                <TableCell>
+                                                    {program.start_date && program.end_date ? (
+                                                        <span className="text-sm">
+                                                            {new Date(program.start_date).toLocaleDateString()} - {new Date(program.end_date).toLocaleDateString()}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                </TableCell>
                                                 <TableCell>{new Date(program.created_at).toLocaleDateString()}</TableCell>
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
@@ -348,6 +379,58 @@ export default function Programs() {
                                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="create-start-date">Start Date</Label>
+                                <Input
+                                    id="create-start-date"
+                                    type="date"
+                                    value={formData.start_date}
+                                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="create-end-date">End Date</Label>
+                                <Input
+                                    id="create-end-date"
+                                    type="date"
+                                    value={formData.end_date}
+                                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="create-funding-source">Funding Source</Label>
+                            <Select
+                                value={formData.funding_source_id.toString()}
+                                onValueChange={(value) => setFormData({ ...formData, funding_source_id: parseInt(value) })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a funding source" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {fundingSources.length === 0 ? (
+                                        <div className="p-2 text-sm text-muted-foreground">
+                                            No funding sources found. <br />
+                                            <a 
+                                                href="/admin/funding-sources" 
+                                                className="text-primary hover:underline"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Add a funding source
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        fundingSources.map((source) => (
+                                            <SelectItem key={source.id} value={source.id.toString()}>
+                                                {source.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
@@ -388,6 +471,58 @@ export default function Programs() {
                                 rows={4}
                                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-start-date">Start Date</Label>
+                                <Input
+                                    id="edit-start-date"
+                                    type="date"
+                                    value={formData.start_date}
+                                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-end-date">End Date</Label>
+                                <Input
+                                    id="edit-end-date"
+                                    type="date"
+                                    value={formData.end_date}
+                                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-funding-source">Funding Source</Label>
+                            <Select
+                                value={formData.funding_source_id.toString()}
+                                onValueChange={(value) => setFormData({ ...formData, funding_source_id: parseInt(value) })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a funding source" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {fundingSources.length === 0 ? (
+                                        <div className="p-2 text-sm text-muted-foreground">
+                                            No funding sources found. <br />
+                                            <a 
+                                                href="/admin/funding-sources" 
+                                                className="text-primary hover:underline"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Add a funding source
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        fundingSources.map((source) => (
+                                            <SelectItem key={source.id} value={source.id.toString()}>
+                                                {source.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                     <DialogFooter>

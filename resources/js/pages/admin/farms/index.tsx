@@ -132,7 +132,13 @@ export default function FarmsIndex({ farms }: FarmsProps) {
     const handleDelete = (farmId: number) => {
         if (confirm('Are you sure you want to delete this farm? This action cannot be undone.')) {
             router.delete(`/admin/farms/${farmId}`, {
-                preserveScroll: true,
+                preserveScroll: false,
+                onSuccess: () => {
+                    console.log('Farm deleted successfully');
+                },
+                onError: (errors) => {
+                    console.error('Delete error:', errors);
+                },
             });
         }
     };

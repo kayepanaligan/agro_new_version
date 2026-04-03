@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Commodity, type Variety } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,16 @@ interface VarietyWithCommodity extends Variety {
 
 export default function Varieties() {
     const { varieties, commodities } = usePage<{ varieties: VarietyWithCommodity[]; commodities: Commodity[] }>().props;
+    
+    // CRITICAL: Force reset all modal states on page load/navigation
+    const [key, setKey] = useState(0);
+    const forceUpdate = () => setKey(k => k + 1);
+    
+    // Reset everything when page URL changes (Inertia navigation)
+    useEffect(() => {
+        forceUpdate();
+    }, [varieties]); // varieties changes when page navigates
+    
     const [searchTerm, setSearchTerm] = useState('');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -58,6 +68,19 @@ export default function Varieties() {
         name: '',
         description: '',
     });
+
+    // Cleanup all dialogs on page navigation/unmount
+    useEffect(() => {
+        return () => {
+            // Force close all dialogs when navigating away
+            setIsCreateModalOpen(false);
+            setIsEditModalOpen(false);
+            setIsDeleteModalOpen(false);
+            // Remove any leftover overlays from DOM
+            const overlays = document.querySelectorAll('[data-radix-dialog-overlay], [data-state="open"]');
+            overlays.forEach(overlay => overlay.remove());
+        };
+    }, []);
 
     // Filter and sort varieties
     const filteredVarieties = useMemo(() => {
@@ -133,10 +156,19 @@ export default function Varieties() {
         }
 
         router.post('/admin/varieties', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
+            preserveState: false,  // CRITICAL: Don't preserve React state
             onSuccess: () => {
+                // Force close dialog IMMEDIATELY
                 setIsCreateModalOpen(false);
-                setFormData({ commodity_id: '', name: '', description: '' });
+                
+                // Clean up other state after dialog closes
+                setTimeout(() => {
+                    setFormData({ commodity_id: '', name: '', description: '' });
+                }, 0);
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -155,11 +187,20 @@ export default function Varieties() {
         }
 
         router.put(`/admin/varieties/${selectedVariety.id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
+            preserveState: false,  // CRITICAL: Don't preserve React state
             onSuccess: () => {
+                // Force close dialog IMMEDIATELY
                 setIsEditModalOpen(false);
-                setFormData({ commodity_id: '', name: '', description: '' });
-                setSelectedVariety(null);
+                
+                // Clean up other state after dialog closes
+                setTimeout(() => {
+                    setFormData({ commodity_id: '', name: '', description: '' });
+                    setSelectedVariety(null);
+                }, 0);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -168,10 +209,19 @@ export default function Varieties() {
         if (!selectedVariety) return;
 
         router.delete(`/admin/varieties/${selectedVariety.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
+            preserveState: false,  // CRITICAL: Don't preserve React state
             onSuccess: () => {
+                // Force close dialog IMMEDIATELY
                 setIsDeleteModalOpen(false);
-                setSelectedVariety(null);
+                
+                // Clean up other state after dialog closes
+                setTimeout(() => {
+                    setSelectedVariety(null);
+                }, 0);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };
@@ -379,7 +429,14 @@ export default function Varieties() {
             </div>
 
             {/* Create Modal */}
-            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { setIsCreateModalOpen(open); if (!open) resetForm(); }}>
+            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { 
+                setIsCreateModalOpen(open); 
+                if (!open) {
+                    resetForm();
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create Variety</DialogTitle>
@@ -434,7 +491,14 @@ export default function Varieties() {
             </Dialog>
 
             {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={(open) => { setIsEditModalOpen(open); if (!open) resetForm(); }}>
+            <Dialog open={isEditModalOpen} onOpenChange={(open) => { 
+                setIsEditModalOpen(open); 
+                if (!open) {
+                    resetForm();
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit Variety</DialogTitle>
@@ -487,7 +551,14 @@ export default function Varieties() {
             </Dialog>
 
             {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => {
+                setIsDeleteModalOpen(open);
+                if (!open) {
+                    setSelectedVariety(null);
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Delete Variety</DialogTitle>

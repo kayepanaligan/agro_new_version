@@ -94,10 +94,13 @@ export default function UnitOfMeasures() {
 
     const handleCreate = () => {
         router.post('/admin/unit-of-measures', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setFormData({ name: '', code: '', description: '' });
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -106,11 +109,14 @@ export default function UnitOfMeasures() {
         if (!selectedUoM) return;
 
         router.put(`/admin/unit-of-measures/${selectedUoM.id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 setFormData({ name: '', code: '', description: '' });
                 setSelectedUoM(null);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -119,10 +125,13 @@ export default function UnitOfMeasures() {
         if (!selectedUoM) return;
 
         router.delete(`/admin/unit-of-measures/${selectedUoM.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedUoM(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };

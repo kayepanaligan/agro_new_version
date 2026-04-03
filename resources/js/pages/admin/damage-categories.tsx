@@ -118,10 +118,13 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
 
     const handleCreate = () => {
         router.post('/admin/damage-categories', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setFormData({ damage_category_name: '', damage_category_description: '' });
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -130,11 +133,14 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
         if (!selectedCategory) return;
         
         router.put(`/admin/damage-categories/${selectedCategory.damage_category_id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 setSelectedCategory(null);
                 setFormData({ damage_category_name: '', damage_category_description: '' });
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -143,10 +149,13 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
         if (!selectedCategory) return;
 
         router.delete(`/admin/damage-categories/${selectedCategory.damage_category_id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedCategory(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };

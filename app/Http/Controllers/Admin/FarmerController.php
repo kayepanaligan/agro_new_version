@@ -111,10 +111,67 @@ class FarmerController extends Controller
                 ->toArray();
         }
 
+        // Get allocation history - all distribution items for this farmer
+        $allocationHistory = \App\Models\DistributionRecordItem::with([
+            'distributionRecord.allocationType.program',
+            'distributionRecord.allocationType.unitOfMeasurement',
+            'acknowledgement'
+        ])
+            ->where('farmer_lfid', $farmer->lfid)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'distribution_name' => $item->distributionRecord->distribution_name ?? 'N/A',
+                    'allocation_type' => $item->distributionRecord->allocationType->name ?? 'N/A',
+                    'program_name' => $item->distributionRecord->allocationType->program->program_name ?? 'N/A',
+                    'quantity_allocated' => $item->quantity_allocated,
+                    'unit' => $item->distributionRecord->allocationType->unitOfMeasurement->name ?? 'units',
+                    'status' => $item->status,
+                    'release_date' => $item->distributionRecord->release_date,
+                    'received_at' => $item->acknowledgement?->received_at,
+                    'received_by' => $item->acknowledgement?->received_by,
+                ];
+            });
+
+        // Get crop damage history - linked via farm_id
+        $farmIds = $farmer->farms->pluck('farm_id')->toArray();
+        $cropDamageHistory = [];
+        
+        if (!empty($farmIds)) {
+            $cropDamageHistory = \App\Models\CropDamageRecordItem::with([
+                'cropDamageRecord',
+                'farm',
+                'damageType.damageCategory'
+            ])
+                ->whereIn('farm_id', $farmIds)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'id' => $item->crop_damage_record_item_id,
+                        'damage_record_id' => $item->crop_damage_record_id,
+                        'commodity_name' => $item->commodity_name,
+                        'variety_name' => $item->variety_name,
+                        'damage_type' => $item->damageType->name ?? 'N/A',
+                        'damage_category' => $item->damageType?->damageCategory?->name ?? 'N/A',
+                        'severity' => $item->damage_severity,
+                        'status' => $item->status,
+                        'area_affected' => $item->cropDamageRecord->area_affected ?? null,
+                        'date_reported' => $item->cropDamageRecord->date_reported,
+                        'barangay' => $item->cropDamageRecord->barangay,
+                        'municipality' => $item->cropDamageRecord->municipality_city,
+                    ];
+                });
+        }
+
         return Inertia::render('admin/farmers/show', [
             'farmer' => array_merge($farmer->toArray(), [
                 'household_members_count' => $householdMembersCount,
                 'crops_planted' => $cropsPlanted,
+                'allocation_history' => $allocationHistory,
+                'crop_damage_history' => $cropDamageHistory,
             ]),
         ]);
     }

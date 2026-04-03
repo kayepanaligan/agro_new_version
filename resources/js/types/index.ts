@@ -218,8 +218,12 @@ export interface Program {
     id: number;
     program_name: string;
     program_description?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    funding_source_id?: number | null;
     created_at: string;
     updated_at: string;
+    funding_source?: FundingSource | null;
 }
 
 export interface Eligibility {
@@ -385,6 +389,34 @@ export interface DamageType {
     damage_category?: DamageCategory | null;
 }
 
+export interface CropDamageRecord {
+    crop_damage_record_id: number;
+    name: string;
+    recorded_date: string;
+    notes?: string | null;
+    created_at: string;
+    updated_at: string;
+    items_count?: number;
+}
+
+export interface CropDamageRecordItem {
+    crop_damage_record_item_id: number;
+    crop_damage_record_id: number;
+    photo_path?: string | null;
+    farm_id: number;
+    commodity_name: string;
+    variety_name: string;
+    damage_type_id: number;
+    damage_severity: 'low' | 'medium' | 'high';
+    status: 'pending' | 'verified' | 'closed';
+    notes?: string | null;
+    created_at: string;
+    updated_at: string;
+    farm?: Farm | null;
+    damage_type?: DamageType | null;
+    crop_damage_record?: CropDamageRecord | null;
+}
+
 export interface UnitOfMeasure {
     id: number;
     name: string;
@@ -430,6 +462,101 @@ export interface AllocationType {
     updated_at: string;
     unit_of_measurement?: UnitOfMeasure | null;
     program?: Program | null;
+}
+
+export interface FundingSource {
+    id: number;
+    name: string;
+    description?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface AssistanceCategory {
+    id: number;
+    name: string;
+    description?: string | null;
+    program_id: number;
+    barangay_ids: number[] | null;
+    created_at: string;
+    updated_at: string;
+    program?: Program | null;
+}
+
+export interface EligibleBarangay {
+    id: number;
+    allocation_type_id: number;
+    barangay_id: number;
+    created_at: string;
+    updated_at: string;
+    allocation_type?: AllocationType | null;
+    barangay?: Barangay | null;
+}
+
+export interface EligibilityRule {
+    id: number;
+    allocation_type_id: number;
+    field_name: string;
+    operator: string;
+    value: string;
+    score: number;
+    created_at: string;
+    updated_at: string;
+    allocation_type?: AllocationType | null;
+}
+
+export interface DistributionRecord {
+    id: number;
+    distribution_name: string;
+    allocation_type_id: number;
+    source_type: 'dss_generated' | 'manual';
+    total_quantity: number;
+    release_date: string;
+    note?: string | null;
+    allocation_policy_id?: number | null;
+    created_at: string;
+    updated_at: string;
+    allocation_type?: AllocationType | null;
+    allocation_policy?: AllocationPolicy | null;
+}
+
+export interface DistributionRecordItem {
+    id: number;
+    distribution_record_id: number;
+    farmer_lfid: string;
+    quantity_allocated: number;
+    allocation_policy_id?: number | null;
+    status: 'pending' | 'received';
+    created_at: string;
+    updated_at: string;
+    allocation_policy?: AllocationPolicy | null;
+    acknowledgement?: Acknowledgement | null;
+}
+
+export interface Acknowledgement {
+    id: number;
+    distribution_record_item_id: number;
+    farmer_lfid: string;
+    received_at: string;
+    photo_proof?: string | null;
+    notes?: string | null;
+    created_at: string;
+    updated_at: string;
+    distribution_record_item?: DistributionRecordItem | null;
+}
+
+export interface AllocationPolicy {
+    id: number;
+    allocation_type_id: number;
+    allocation_inputs?: any | null;
+    eligible_rules?: number[] | null;
+    eligible_barangays?: number[] | null;
+    policy_type: 'equal' | 'proportional' | 'priority' | 'weighted' | 'hybrid';
+    policy_config?: any | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    allocation_type?: AllocationType | null;
 }
 
 // Offline-First Types

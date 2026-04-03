@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FarmerController;
+use App\Http\Controllers\Api\ReferenceDataController;
 use App\Http\Controllers\Api\SyncController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,12 @@ use Illuminate\Support\Facades\Route;
 // Public routes (no authentication required)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Reference data endpoints (public)
+Route::get('/commodities', [ReferenceDataController::class, 'commodities']);
+Route::get('/varieties', [ReferenceDataController::class, 'varieties']);
+Route::get('/damage-types', [ReferenceDataController::class, 'damageTypes']);
+Route::get('/programs', [ReferenceDataController::class, 'programs']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {

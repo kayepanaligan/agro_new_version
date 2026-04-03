@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type FarmerEligibility } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -37,7 +38,7 @@ type SortField = 'name' | 'attribute_field' | 'created_at';
 type SortOrder = 'asc' | 'desc';
 
 export default function FarmerEligibilities() {
-    const { farmerEligibilities } = usePage<{ farmerEligibilities: FarmerEligibility[] }>().props;
+    const { farmerEligibilities, farmerAttributes } = usePage<{ farmerEligibilities: FarmerEligibility[]; farmerAttributes: any[] }>().props;
     const [searchTerm, setSearchTerm] = useState('');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -52,6 +53,7 @@ export default function FarmerEligibilities() {
         required_value: '',
         is_active: true,
     });
+    const [availableValues, setAvailableValues] = useState<any[]>([]);
 
     // Filter and sort eligibilities
     const filteredEligibilities = useMemo(() => {
@@ -98,10 +100,13 @@ export default function FarmerEligibilities() {
 
     const handleCreate = () => {
         router.post('/admin/farmer-eligibilities', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setFormData({ name: '', description: '', attribute_field: '', required_value: '', is_active: true });
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -110,11 +115,14 @@ export default function FarmerEligibilities() {
         if (!selectedEligibility) return;
 
         router.put(`/admin/farmer-eligibilities/${selectedEligibility.id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 setFormData({ name: '', description: '', attribute_field: '', required_value: '', is_active: true });
                 setSelectedEligibility(null);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -123,10 +131,13 @@ export default function FarmerEligibilities() {
         if (!selectedEligibility) return;
 
         router.delete(`/admin/farmer-eligibilities/${selectedEligibility.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedEligibility(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };
@@ -147,6 +158,20 @@ export default function FarmerEligibilities() {
         setSelectedEligibility(eligibility);
         setIsDeleteModalOpen(true);
     };
+
+    // Update available values when attribute_field changes
+    useEffect(() => {
+        if (formData.attribute_field && farmerAttributes) {
+            const selectedAttr = farmerAttributes.find(attr => attr.value === formData.attribute_field);
+            if (selectedAttr && selectedAttr.values) {
+                setAvailableValues(selectedAttr.values);
+            } else {
+                setAvailableValues([]);
+            }
+        } else {
+            setAvailableValues([]);
+        }
+    }, [formData.attribute_field, farmerAttributes]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -288,21 +313,34 @@ export default function FarmerEligibilities() {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="create-attribute">Attribute Field</Label>
-                            <Input
-                                id="create-attribute"
-                                value={formData.attribute_field}
-                                onChange={(e) => setFormData({ ...formData, attribute_field: e.target.value })}
-                                placeholder="e.g., is_pwd"
-                            />
+                            <Select value={formData.attribute_field} onValueChange={(value) => setFormData({ ...formData, attribute_field: value, required_value: '' })}>
+                                <SelectTrigger><SelectValue placeholder="Select farmer attribute" /></SelectTrigger>
+                                <SelectContent>
+                                    {(farmerAttributes || []).map((attr) => (
+                                        <SelectItem key={attr.value} value={attr.value}>{attr.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="create-value">Required Value</Label>
-                            <Input
-                                id="create-value"
-                                value={formData.required_value}
-                                onChange={(e) => setFormData({ ...formData, required_value: e.target.value })}
-                                placeholder="e.g., 1 or true"
-                            />
+                            {availableValues && availableValues.length > 0 ? (
+                                <Select value={formData.required_value} onValueChange={(value) => setFormData({ ...formData, required_value: value })}>
+                                    <SelectTrigger><SelectValue placeholder="Select value" /></SelectTrigger>
+                                    <SelectContent>
+                                        {availableValues.map((val: any) => (
+                                            <SelectItem key={val.value} value={val.value}>{val.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <Input
+                                    id="create-value"
+                                    value={formData.required_value}
+                                    onChange={(e) => setFormData({ ...formData, required_value: e.target.value })}
+                                    placeholder="Enter required value"
+                                />
+                            )}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="create-active">Active</Label>
@@ -356,19 +394,33 @@ export default function FarmerEligibilities() {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-attribute">Attribute Field</Label>
-                            <Input
-                                id="edit-attribute"
-                                value={formData.attribute_field}
-                                onChange={(e) => setFormData({ ...formData, attribute_field: e.target.value })}
-                            />
+                            <Select value={formData.attribute_field} onValueChange={(value) => setFormData({ ...formData, attribute_field: value, required_value: '' })}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {(farmerAttributes || []).map((attr) => (
+                                        <SelectItem key={attr.value} value={attr.value}>{attr.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-value">Required Value</Label>
-                            <Input
-                                id="edit-value"
-                                value={formData.required_value}
-                                onChange={(e) => setFormData({ ...formData, required_value: e.target.value })}
-                            />
+                            {availableValues && availableValues.length > 0 ? (
+                                <Select value={formData.required_value} onValueChange={(value) => setFormData({ ...formData, required_value: value })}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        {availableValues.map((val: any) => (
+                                            <SelectItem key={val.value} value={val.value}>{val.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <Input
+                                    id="edit-value"
+                                    value={formData.required_value}
+                                    onChange={(e) => setFormData({ ...formData, required_value: e.target.value })}
+                                />
+                            )}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-active">Active</Label>

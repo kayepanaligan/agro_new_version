@@ -93,10 +93,13 @@ export default function Categories() {
 
     const handleCreate = () => {
         router.post('/admin/categories', formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setFormData({ name: '', description: '' });
+            },
+            onError: (errors) => {
+                console.error('Create error:', errors);
             },
         });
     };
@@ -105,11 +108,14 @@ export default function Categories() {
         if (!selectedCategory) return;
 
         router.put(`/admin/categories/${selectedCategory.id}`, formData, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsEditModalOpen(false);
                 setFormData({ name: '', description: '' });
                 setSelectedCategory(null);
+            },
+            onError: (errors) => {
+                console.error('Update error:', errors);
             },
         });
     };
@@ -118,10 +124,13 @@ export default function Categories() {
         if (!selectedCategory) return;
 
         router.delete(`/admin/categories/${selectedCategory.id}`, {
-            preserveScroll: true,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
                 setSelectedCategory(null);
+            },
+            onError: (errors) => {
+                console.error('Delete error:', errors);
             },
         });
     };
@@ -239,7 +248,14 @@ export default function Categories() {
             </div>
 
             {/* Create Modal */}
-            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
+                setIsCreateModalOpen(open);
+                if (!open) {
+                    setFormData({ name: '', description: '' });
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create Category</DialogTitle>
@@ -279,7 +295,15 @@ export default function Categories() {
             </Dialog>
 
             {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <Dialog open={isEditModalOpen} onOpenChange={(open) => {
+                setIsEditModalOpen(open);
+                if (!open) {
+                    setFormData({ name: '', description: '' });
+                    setSelectedCategory(null);
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit Category</DialogTitle>
@@ -317,7 +341,14 @@ export default function Categories() {
             </Dialog>
 
             {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => {
+                setIsDeleteModalOpen(open);
+                if (!open) {
+                    setSelectedCategory(null);
+                    // Clear any focused elements to prevent button lock
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Delete Category</DialogTitle>

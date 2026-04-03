@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Farmer } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Mail, MapPin, Phone, User, Users, Home, FileText, Briefcase, GraduationCap, Heart, Shield, Award } from 'lucide-react';
+import { ArrowLeft, Calendar, Mail, MapPin, Phone, User, Users, Home, FileText, Briefcase, GraduationCap, Heart, Shield, Award, Package, Sprout, TrendingDown } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,8 @@ export default function FarmerProfile() {
             farms?: any[];
             documents?: any[];
             memberships?: any[];
+            allocation_history?: any[];
+            crop_damage_history?: any[];
         };
     }>().props;
 
@@ -75,7 +77,7 @@ export default function FarmerProfile() {
                     <div className="border-b p-6">
                         <div className="flex items-start justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground overflow-hidden">
+                                <div className="flex h-24 w-24 items-center justify-center rounded-xl bg-primary text-primary-foreground overflow-hidden border-2 border-primary/20">
                                     {farmer.picture_id ? (
                                         <img 
                                             src={farmer.picture_id} 
@@ -83,7 +85,7 @@ export default function FarmerProfile() {
                                             className="h-full w-full object-cover"
                                         />
                                     ) : (
-                                        <User className="h-10 w-10" />
+                                        <User className="h-12 w-12" />
                                     )}
                                 </div>
                                 <div>
@@ -475,6 +477,179 @@ export default function FarmerProfile() {
                                     </div>
                                 ) : (
                                     <p className="text-muted-foreground">No farm information provided</p>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Allocation History */}
+                        <Card className="col-span-full">
+                            <CardHeader className="pb-3 border-b">
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <Package className="h-5 w-5" />
+                                    Allocation History
+                                    {farmer.allocation_history && farmer.allocation_history.length > 0 && (
+                                        <Badge variant="secondary">{farmer.allocation_history.length} records</Badge>
+                                    )}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                                {farmer.allocation_history && farmer.allocation_history.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {farmer.allocation_history.map((allocation) => (
+                                            <div key={allocation.id} className="rounded-lg border p-4 space-y-3">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="space-y-1">
+                                                        <p className="font-semibold text-base">{allocation.distribution_name}</p>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <Badge variant="outline">{allocation.allocation_type}</Badge>
+                                                            <Badge variant="secondary">{allocation.program_name}</Badge>
+                                                            {allocation.status === 'received' && (
+                                                                <Badge variant="default" className="bg-green-600">Received</Badge>
+                                                            )}
+                                                            {allocation.status === 'pending' && (
+                                                                <Badge variant="outline">Pending</Badge>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-2xl font-bold text-primary">
+                                                            {parseFloat(allocation.quantity_allocated).toLocaleString()}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">{allocation.unit}</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <Separator />
+                                                
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">Release Date</p>
+                                                        <p className="font-medium">
+                                                            {allocation.release_date 
+                                                                ? new Date(allocation.release_date).toLocaleDateString('en-US', {
+                                                                    year: 'numeric',
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                })
+                                                                : 'N/A'
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                    {allocation.received_at && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground">Received On</p>
+                                                            <p className="font-medium">
+                                                                {new Date(allocation.received_at).toLocaleDateString('en-US', {
+                                                                    year: 'numeric',
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                })}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    {allocation.received_by && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground">Received By</p>
+                                                            <p className="font-medium">{allocation.received_by}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-3 text-muted-foreground py-8">
+                                        <Package className="h-8 w-8" />
+                                        <p>No allocation records found for this farmer</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Crop Damage History */}
+                        <Card className="col-span-full">
+                            <CardHeader className="pb-3 border-b">
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <Sprout className="h-5 w-5" />
+                                    Crop Damage History
+                                    {farmer.crop_damage_history && farmer.crop_damage_history.length > 0 && (
+                                        <Badge variant="secondary">{farmer.crop_damage_history.length} records</Badge>
+                                    )}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                                {farmer.crop_damage_history && farmer.crop_damage_history.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {farmer.crop_damage_history.map((damage) => (
+                                            <div key={damage.id} className="rounded-lg border p-4 space-y-3">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="space-y-1">
+                                                        <p className="font-semibold text-base">{damage.commodity_name || 'Unknown Crop'}</p>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <Badge variant="outline">{damage.damage_category}</Badge>
+                                                            <Badge variant="secondary">{damage.damage_type}</Badge>
+                                                            {damage.status === 'validated' && (
+                                                                <Badge variant="default" className="bg-blue-600">Validated</Badge>
+                                                            )}
+                                                            {damage.status === 'for_review' && (
+                                                                <Badge variant="secondary">For Review</Badge>
+                                                            )}
+                                                            {damage.status === 'rejected' && (
+                                                                <Badge variant="destructive">Rejected</Badge>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-sm font-medium">Severity</p>
+                                                        <p className="text-lg font-bold capitalize text-orange-600">
+                                                            {damage.severity?.replace('_', ' ') || 'N/A'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <Separator />
+                                                
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                    {damage.variety_name && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground">Variety</p>
+                                                            <p className="font-medium">{damage.variety_name}</p>
+                                                        </div>
+                                                    )}
+                                                    {damage.area_affected && (
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground">Area Affected</p>
+                                                            <p className="font-medium">{damage.area_affected} has</p>
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">Date Reported</p>
+                                                        <p className="font-medium">
+                                                            {damage.date_reported 
+                                                                ? new Date(damage.date_reported).toLocaleDateString('en-US', {
+                                                                    year: 'numeric',
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                })
+                                                                : 'N/A'
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">Location</p>
+                                                        <p className="font-medium truncate">
+                                                            {damage.barangay}, {damage.municipality}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-3 text-muted-foreground py-8">
+                                        <TrendingDown className="h-8 w-8" />
+                                        <p>No crop damage records found for this farmer's farms</p>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>
