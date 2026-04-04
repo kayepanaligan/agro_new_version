@@ -143,6 +143,24 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/crop-damage-record-items/{cropDamageRecordItem}', [App\Http\Controllers\Admin\CropDamageRecordItemController::class, 'update'])->name('admin.crop-damage-record-items.update');
         Route::delete('/crop-damage-record-items/{cropDamageRecordItem}', [App\Http\Controllers\Admin\CropDamageRecordItemController::class, 'destroy'])->name('admin.crop-damage-record-items.destroy');
 
+        // Crop Monitoring Categories Routes
+        Route::get('/monitoring-categories', [App\Http\Controllers\Admin\CropMonitoringCategoryController::class, 'index'])->name('admin.monitoring-categories.index');
+        Route::post('/monitoring-categories', [App\Http\Controllers\Admin\CropMonitoringCategoryController::class, 'store'])->name('admin.monitoring-categories.store');
+        Route::put('/monitoring-categories/{category}', [App\Http\Controllers\Admin\CropMonitoringCategoryController::class, 'update'])->name('admin.monitoring-categories.update');
+        Route::delete('/monitoring-categories/{category}', [App\Http\Controllers\Admin\CropMonitoringCategoryController::class, 'destroy'])->name('admin.monitoring-categories.destroy');
+
+        // Crop Monitoring Folders Routes
+        Route::get('/monitoring-folders', [App\Http\Controllers\Admin\CropMonitoringFolderController::class, 'index'])->name('admin.monitoring-folders.index');
+        Route::get('/monitoring-folders/{cropMonitoringFolder}', [App\Http\Controllers\Admin\CropMonitoringFolderController::class, 'show'])->name('admin.monitoring-folders.show');
+        Route::post('/monitoring-folders', [App\Http\Controllers\Admin\CropMonitoringFolderController::class, 'store'])->name('admin.monitoring-folders.store');
+        Route::put('/monitoring-folders/{folder}', [App\Http\Controllers\Admin\CropMonitoringFolderController::class, 'update'])->name('admin.monitoring-folders.update');
+        Route::delete('/monitoring-folders/{folder}', [App\Http\Controllers\Admin\CropMonitoringFolderController::class, 'destroy'])->name('admin.monitoring-folders.destroy');
+
+        // Crop Monitoring Items (Timeline Entries) Routes
+        Route::post('/monitoring-folders/{folder}/items', [App\Http\Controllers\Admin\CropMonitoringItemController::class, 'store'])->name('admin.monitoring-items.store');
+        Route::put('/monitoring-items/{item}', [App\Http\Controllers\Admin\CropMonitoringItemController::class, 'update'])->name('admin.monitoring-items.update');
+        Route::delete('/monitoring-items/{item}', [App\Http\Controllers\Admin\CropMonitoringItemController::class, 'destroy'])->name('admin.monitoring-items.destroy');
+
         // Unit of Measure Routes
         Route::get('/unit-of-measures', [App\Http\Controllers\Admin\UnitOfMeasureController::class, 'index'])->name('admin.unit-of-measures');
         Route::post('/unit-of-measures', [App\Http\Controllers\Admin\UnitOfMeasureController::class, 'store'])->name('admin.unit-of-measures.store');

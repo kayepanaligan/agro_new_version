@@ -1,4 +1,4 @@
-import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText, FolderOpen } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import OfflineStatusIndicator from '@/components/offline-status-indicator';
@@ -200,6 +200,23 @@ export function AppSidebar() {
                     title: 'Crop Damage Records',
                     url: '/admin/crop-damage-records',
                     icon: FileText,
+                },
+            ],
+        });
+
+        // Crop Monitoring Section
+        navGroups.push({
+            title: 'Crop Monitoring',
+            items: [
+                {
+                    title: 'Monitoring Categories',
+                    url: '/admin/monitoring-categories',
+                    icon: Tags,
+                },
+                {
+                    title: 'Monitoring Folders',
+                    url: '/admin/monitoring-folders',
+                    icon: FolderOpen,
                 },
             ],
         });

@@ -417,6 +417,55 @@ export interface CropDamageRecordItem {
     crop_damage_record?: CropDamageRecord | null;
 }
 
+export interface CropMonitoringCategory {
+    crop_monitoring_category_id: number;
+    category_name: string;
+    description?: string | null;
+    created_at: string;
+    updated_at: string;
+    folders_count?: number;
+}
+
+export interface CropMonitoringFolder {
+    crop_monitoring_folder_id: number;
+    folder_name: string;
+    description?: string | null;
+    category_id: number;
+    commodity_id: number;
+    variety_id: number;
+    created_at: string;
+    updated_at: string;
+    category?: CropMonitoringCategory;
+    commodity?: Commodity;
+    variety?: Variety;
+    items_count?: number;
+    updaters?: Array<{
+        user: User;
+        updated_at: string;
+    }>;
+}
+
+export interface CropMonitoringItem {
+    crop_monitoring_item_id: number;
+    folder_id: number;
+    item_name: string;
+    description?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    temperature?: number | null;
+    weather_condition?: string | null;
+    humidity?: number | null;
+    wind_speed?: number | null;
+    weather_notes?: string | null;
+    media_path?: string | null;
+    updated_by: number;
+    observation_date: string;
+    created_at: string;
+    updated_at: string;
+    updater?: User;
+    folder?: CropMonitoringFolder;
+}
+
 export interface UnitOfMeasure {
     id: number;
     name: string;

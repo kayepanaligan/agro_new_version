@@ -42,7 +42,6 @@ export default function FarmerProfile() {
         };
     }>().props;
 
-    // Extract data from normalized tables
     const profile = farmer.profile || farmer;
     const address = farmer.address || {};
     const contact = farmer.contact || {};
@@ -192,7 +191,6 @@ export default function FarmerProfile() {
                             </CardContent>
                         </Card>
 
-                        {/* Address Information */}
                         <Card>
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-lg flex items-center gap-2">
@@ -223,7 +221,6 @@ export default function FarmerProfile() {
                             </CardContent>
                         </Card>
 
-                        {/* Household Information */}
                         <Card>
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-lg flex items-center gap-2">
