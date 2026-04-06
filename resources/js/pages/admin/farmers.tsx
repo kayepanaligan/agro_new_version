@@ -692,8 +692,6 @@ export default function Farmers() {
                                         </TableHead>
                                         <TableHead>Middle Name</TableHead>
                                         <TableHead>Sex</TableHead>
-                                        <TableHead>Contact</TableHead>
-                                        <TableHead>Civil Status</TableHead>
                                         <TableHead>Registration Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -701,7 +699,7 @@ export default function Farmers() {
                                 <TableBody>
                                     {paginatedFarmers.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={11} className="h-24 text-center">
+                                            <TableCell colSpan={9} className="h-24 text-center">
                                                 No farmers found. Click "Add Farmer" to create one.
                                             </TableCell>
                                         </TableRow>
@@ -712,7 +710,7 @@ export default function Farmers() {
                                                 className="cursor-pointer hover:bg-muted/50"
                                                 onClick={() => router.visit(`/admin/farmers/${farmer.id}`)}
                                             >
-                                                 <TableCell className="font-medium">{farmer.lfid || 'Not generated'}</TableCell>
+                                                <TableCell className="font-[12px]">{farmer.lfid || 'Not generated'}</TableCell>
                                                 <TableCell>
                                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted overflow-hidden border border-muted">
                                                         {farmer.picture_id ? (
@@ -734,8 +732,6 @@ export default function Farmers() {
                                                 <TableCell>
                                                     <Badge variant="outline">{farmer.sex}</Badge>
                                                 </TableCell>
-                                                <TableCell>{farmer.contact_number || '-'}</TableCell>
-                                                <TableCell>{farmer.civil_status || '-'}</TableCell>
                                                 <TableCell>
                                                     <Badge 
                                                         variant={

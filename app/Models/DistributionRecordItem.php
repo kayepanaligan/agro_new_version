@@ -18,6 +18,8 @@ class DistributionRecordItem extends Model
         'farmer_lfid',
         'quantity_allocated',
         'allocation_policy_id',
+        'user_id',
+        'approved_by',
         'status',
     ];
 
@@ -44,6 +46,22 @@ class DistributionRecordItem extends Model
     public function allocationPolicy(): BelongsTo
     {
         return $this->belongsTo(AllocationPolicy::class);
+    }
+
+    /**
+     * Get the user who distributed this item.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the user who approved/verified this item.
+     */
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     /**

@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from '@/components/ui/avatar';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Distribution Records', href: '/admin/distribution-records' }];
 
@@ -314,6 +315,54 @@ export default function DistributionRecordsIndex() {
                                                     {getSourceTypeBadge(record.source_type)}
                                                     <span className="text-xs font-medium">{Number(record.total_quantity).toFixed(2)} units</span>
                                                 </div>
+                                                
+                                                {/* Avatar Group of Users Who Distributed Items */}
+                                                {record.items && record.items.length > 0 && (
+                                                    <div className="flex items-center gap-2 pt-2 border-t border-border mt-2">
+                                                        <span className="text-xs text-muted-foreground">Distributed by:</span>
+                                                        <AvatarGroup>
+                                                            {(() => {
+                                                                // Only include items where user_id is NOT null (actually distributed)
+                                                                const uniqueUsers = Array.from(
+                                                                    new Map(
+                                                                        record.items
+                                                                            .filter(item => item.user_id && item.user)
+                                                                            .map(item => [item.user!.id, item.user])
+                                                                    ).values()
+                                                                );
+                                                                
+                                                                // Don't show avatar group if no users distributed items
+                                                                if (uniqueUsers.length === 0) {
+                                                                    return null;
+                                                                }
+                                                                
+                                                                const displayUsers = uniqueUsers.slice(0, 3);
+                                                                const remainingCount = uniqueUsers.length - 3;
+                                                                
+                                                                return (
+                                                                    <>
+                                                                        {displayUsers.map((user: any) => (
+                                                                            <Avatar key={user.id} className="h-6 w-6">
+                                                                                <AvatarImage src={user.avatar ? `/storage/${user.avatar}` : undefined} />
+                                                                                <AvatarFallback className="text-xs">
+                                                                                    {user.first_name && user.last_name 
+                                                                                        ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase() 
+                                                                                        : 'U'}
+                                                                                </AvatarFallback>
+                                                                            </Avatar>
+                                                                        ))}
+                                                                        {remainingCount > 0 && (
+                                                                            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-xs font-medium">
+                                                                                +{remainingCount}
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </AvatarGroup>
+                                                    </div>
+                                                )}
+                                                
                                                 {record.note && (
                                                     <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{record.note}</p>
                                                 )}

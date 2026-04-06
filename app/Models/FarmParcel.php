@@ -27,6 +27,7 @@ class FarmParcel extends Model
         'farm_type',
         'is_organic_practitioner',
         'remarks',
+        'fpid',
     ];
 
     protected $casts = [
@@ -40,5 +41,51 @@ class FarmParcel extends Model
     public function farm()
     {
         return $this->belongsTo(Farm::class);
+    }
+
+    /**
+     * Generate FPID (Farm Parcel ID) for this parcel
+     * Format: [LFID]-FO[farm_number]-PO[parcel_number]
+     * Example: DCAG-26-ZN1-0001-FO1-PO1
+     */
+    public function generateFpid()
+    {
+        if ($this->fpid) {
+            return $this->fpid; // Already has FPID
+        }
+
+        $farm = $this->farm;
+        if (!$farm) {
+            return null; // Can't generate without farm
+        }
+
+        // Ensure farm has FID
+        if (!$farm->fid) {
+            $farm->generateFid();
+        }
+
+        // Count how many parcels this farm already has (including this one)
+        $parcelNumber = $farm->farmParcels()->where('id', '<=', $this->id)->count();
+        
+        // Extract farm number from FID (e.g., "DCAG-26-ZN1-0001-FO1" -> "1")
+        preg_match('/-FO(\d+)$/', $farm->fid, $matches);
+        $farmNumber = $matches[1] ?? '1';
+        
+        $this->fpid = $farm->fid . '-PO' . $parcelNumber;
+        $this->save();
+        
+        return $this->fpid;
+    }
+
+    /**
+     * Boot the model and auto-generate FPID on creation
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($parcel) {
+            $parcel->generateFpid();
+        });
     }
 }

@@ -17,7 +17,7 @@ class DistributionRecordItemController extends Controller
      */
     public function index(DistributionRecord $distributionRecord): \Inertia\Response
     {
-        $items = DistributionRecordItem::with(['allocationPolicy', 'acknowledgement'])
+        $items = DistributionRecordItem::with(['allocationPolicy', 'acknowledgement', 'user', 'approver'])
             ->where('distribution_record_id', $distributionRecord->id)
             ->orderBy('farmer_lfid', 'asc')
             ->get();
@@ -41,6 +41,9 @@ class DistributionRecordItemController extends Controller
             'allocation_policy_id' => 'nullable|exists:allocation_policies,id',
             'status' => 'required|in:pending,received',
         ]);
+
+        // Add the authenticated user ID
+        $validated['user_id'] = auth()->id();
 
         DistributionRecordItem::create($validated);
 

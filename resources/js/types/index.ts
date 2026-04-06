@@ -248,6 +248,7 @@ export interface Organization {
 // Farm Profile Types
 export interface Farm {
     id: number;
+    fid?: string | null;
     farmer_id: number;
     farm_name: string;
     created_at: string;
@@ -567,6 +568,7 @@ export interface DistributionRecord {
     updated_at: string;
     allocation_type?: AllocationType | null;
     allocation_policy?: AllocationPolicy | null;
+    items?: DistributionRecordItem[];
 }
 
 export interface DistributionRecordItem {
@@ -575,10 +577,14 @@ export interface DistributionRecordItem {
     farmer_lfid: string;
     quantity_allocated: number;
     allocation_policy_id?: number | null;
+    user_id?: number | null;
+    approved_by?: number | null;
     status: 'pending' | 'received';
     created_at: string;
     updated_at: string;
     allocation_policy?: AllocationPolicy | null;
+    user?: User | null;
+    approver?: User | null;
     acknowledgement?: Acknowledgement | null;
 }
 

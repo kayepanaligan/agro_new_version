@@ -16,7 +16,13 @@ class DistributionRecordController extends Controller
      */
     public function index(): \Inertia\Response
     {
-        $distributionRecords = DistributionRecord::with(['allocationType', 'allocationPolicy'])
+        $distributionRecords = DistributionRecord::with([
+            'allocationType', 
+            'allocationPolicy',
+            'items' => function($query) {
+                $query->with(['user', 'approver']);
+            }
+        ])
             ->orderBy('release_date', 'desc')
             ->get();
 

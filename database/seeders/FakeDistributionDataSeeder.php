@@ -9,6 +9,7 @@ use App\Models\Acknowledgement;
 use App\Models\AllocationType;
 use App\Models\AllocationPolicy;
 use App\Models\Farmer;
+use App\Models\User;
 
 class FakeDistributionDataSeeder extends Seeder
 {
@@ -23,6 +24,7 @@ class FakeDistributionDataSeeder extends Seeder
         $allocationTypes = AllocationType::all();
         $policies = AllocationPolicy::all();
         $farmers = Farmer::limit(100)->get();
+        $users = User::all();
 
         if ($allocationTypes->isEmpty()) {
             $this->command->error('❌ No allocation types found. Please seed allocation types first.');
@@ -113,6 +115,11 @@ class FakeDistributionDataSeeder extends Seeder
                 // 75% received, 25% pending
                 $status = rand(0, 100) < 75 ? 'received' : 'pending';
 
+                // If status is pending, no user_id (not yet distributed)
+                // If status is received, assign user_id (distributed by someone)
+                $userId = $status === 'received' && $users->isNotEmpty() ? $users->random()->id : null;
+                $approvedById = $userId && $users->isNotEmpty() ? $users->random()->id : null;
+
                 $item = DistributionRecordItem::create([
                     'distribution_record_id' => $distribution->id,
                     'farmer_lfid' => $farmer->lfid,
@@ -120,6 +127,8 @@ class FakeDistributionDataSeeder extends Seeder
                     'allocation_policy_id' => $sourceType === 'dss_generated' && $policies->isNotEmpty()
                         ? $policies->random()->id
                         : null,
+                    'user_id' => $userId,
+                    'approved_by' => $approvedById,
                     'status' => $status,
                 ]);
 

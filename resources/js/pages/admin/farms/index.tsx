@@ -38,8 +38,6 @@ export default function FarmsIndex({ farms }: FarmsProps) {
     const [sortField, setSortField] = useState<SortField>('farm_name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
     const [filterFarmer, setFilterFarmer] = useState<string>('all');
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
 
     // Convert farms.data to array (Laravel pagination)
     const farmsArray = farms.data || [];
@@ -55,7 +53,7 @@ export default function FarmsIndex({ farms }: FarmsProps) {
         return Array.from(farmerMap.values());
     }, [farms]);
 
-    // Filter and sort farms
+    // Filter and sort farms (client-side filtering/sorting on current page)
     const filteredFarms = useMemo(() => {
         let result = [...farmsArray];
 
@@ -102,18 +100,6 @@ export default function FarmsIndex({ farms }: FarmsProps) {
         return result;
     }, [farmsArray, searchTerm, sortField, sortOrder, filterFarmer]);
 
-    // Pagination
-    const totalPages = Math.ceil(filteredFarms.length / itemsPerPage);
-    const paginatedFarms = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredFarms.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredFarms, currentPage, itemsPerPage]);
-
-    // Reset to page 1 when filters change
-    useMemo(() => {
-        setCurrentPage(1);
-    }, [searchTerm, filterFarmer]);
-
     const handleSort = (field: SortField) => {
         if (sortField === field) {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -121,12 +107,20 @@ export default function FarmsIndex({ farms }: FarmsProps) {
             setSortField(field);
             setSortOrder('asc');
         }
+        // Navigate to first page when sorting changes
+        router.get('/admin/farms', { page: 1, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: field, order: sortOrder === 'asc' ? 'desc' : 'asc' }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     const resetFilters = () => {
         setSearchTerm('');
         setFilterFarmer('all');
-        setCurrentPage(1);
+        router.get('/admin/farms', { page: 1 }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     const handleDelete = (farmId: number) => {
@@ -143,13 +137,25 @@ export default function FarmsIndex({ farms }: FarmsProps) {
         }
     };
 
-    // Handle server-side pagination navigation
-    const goToPage = (page: number) => {
-        if (page >= 1 && page <= farms.last_page) {
-            setCurrentPage(page);
-            // Optionally redirect to URL with page parameter
-            // router.visit(`/admin/farms?page=${page}`);
-        }
+    // Handle search with debounce
+    const handleSearch = (value: string) => {
+        setSearchTerm(value);
+        // Debounce search to avoid too many requests
+        setTimeout(() => {
+            router.get('/admin/farms', { page: 1, search: value || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }, 300);
+    };
+
+    // Handle farmer filter
+    const handleFarmerFilter = (value: string) => {
+        setFilterFarmer(value);
+        router.get('/admin/farms', { page: 1, search: searchTerm || undefined, farmer_id: value !== 'all' ? value : undefined, sort: sortField, order: sortOrder }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -182,12 +188,12 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                                     <Input
                                         placeholder="Search farms or farmers..."
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e) => handleSearch(e.target.value)}
                                         className="pl-9"
                                     />
                                 </div>
                                 
-                                <Select value={filterFarmer} onValueChange={setFilterFarmer}>
+                                <Select value={filterFarmer} onValueChange={handleFarmerFilter}>
                                     <SelectTrigger className="w-[250px]">
                                         <Filter className="mr-2 h-4 w-4" />
                                         <SelectValue placeholder="Filter by farmer" />
@@ -210,7 +216,7 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                             </div>
 
                             <div className="text-sm text-muted-foreground">
-                                {paginatedFarms.length} of {filteredFarms.length} farm{filteredFarms.length !== 1 ? 's' : ''}
+                                Showing {farmsArray.length} of {farms.total} farm{farms.total !== 1 ? 's' : ''} (Page {farms.current_page} of {farms.last_page})
                             </div>
                         </div>
                     </CardContent>
@@ -224,6 +230,7 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>ID</TableHead>
+                                        <TableHead>FID</TableHead>
                                         <TableHead>
                                             <Button variant="ghost" onClick={() => handleSort('farm_name')} className="-ml-4">
                                                 Farm Name
@@ -247,20 +254,21 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {paginatedFarms.length === 0 ? (
+                                    {filteredFarms.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center">
+                                            <TableCell colSpan={7} className="h-24 text-center">
                                                 No farms found.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        paginatedFarms.map((farm) => (
+                                        filteredFarms.map((farm) => (
                                             <TableRow 
                                                 key={farm.id} 
                                                 className="cursor-pointer hover:bg-muted/50"
                                                 onClick={() => router.visit(`/admin/farms/${farm.id}`)}
                                             >
                                                 <TableCell className="font-medium">{farm.id}</TableCell>
+                                                <TableCell className="font-mono text-sm">{farm.fid || 'N/A'}</TableCell>
                                                 <TableCell className="font-medium">{farm.farm_name}</TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
@@ -320,42 +328,54 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                 </Card>
 
                 {/* Pagination Controls */}
-                {totalPages > 1 && (
+                {farms.last_page > 1 && (
                     <Card>
                         <CardContent className="pt-6">
                             <div className="flex items-center justify-between">
                                 <div className="text-sm text-muted-foreground">
-                                    Page {currentPage} of {totalPages}
+                                    Page {farms.current_page} of {farms.last_page}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
+                                        onClick={() => {
+                                            if (farms.current_page > 1) {
+                                                router.get('/admin/farms', { page: farms.current_page - 1, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
+                                                    preserveState: true,
+                                                    preserveScroll: true,
+                                                });
+                                            }
+                                        }}
+                                        disabled={farms.current_page === 1}
                                     >
                                         Previous
                                     </Button>
                                     
                                     <div className="flex items-center gap-1">
-                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                        {Array.from({ length: Math.min(5, farms.last_page) }, (_, i) => {
                                             let pageNum;
-                                            if (totalPages <= 5) {
+                                            if (farms.last_page <= 5) {
                                                 pageNum = i + 1;
-                                            } else if (currentPage <= 3) {
+                                            } else if (farms.current_page <= 3) {
                                                 pageNum = i + 1;
-                                            } else if (currentPage >= totalPages - 2) {
-                                                pageNum = totalPages - 4 + i;
+                                            } else if (farms.current_page >= farms.last_page - 2) {
+                                                pageNum = farms.last_page - 4 + i;
                                             } else {
-                                                pageNum = currentPage - 2 + i;
+                                                pageNum = farms.current_page - 2 + i;
                                             }
                                             
                                             return (
                                                 <Button
                                                     key={pageNum}
-                                                    variant={currentPage === pageNum ? 'default' : 'outline'}
+                                                    variant={farms.current_page === pageNum ? 'default' : 'outline'}
                                                     size="sm"
-                                                    onClick={() => setCurrentPage(pageNum)}
+                                                    onClick={() => {
+                                                        router.get('/admin/farms', { page: pageNum, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
+                                                            preserveState: true,
+                                                            preserveScroll: true,
+                                                        });
+                                                    }}
                                                     className="w-10"
                                                 >
                                                     {pageNum}
@@ -367,8 +387,15 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                        disabled={currentPage === totalPages}
+                                        onClick={() => {
+                                            if (farms.current_page < farms.last_page) {
+                                                router.get('/admin/farms', { page: farms.current_page + 1, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
+                                                    preserveState: true,
+                                                    preserveScroll: true,
+                                                });
+                                            }
+                                        }}
+                                        disabled={farms.current_page === farms.last_page}
                                     >
                                         Next
                                     </Button>

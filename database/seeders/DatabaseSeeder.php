@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             UnitOfMeasureSeeder::class,
             OrganizationSeeder::class,
             FarmerSeeder::class,
+            FarmAndParcelSeeder::class,
             DamageCategorySeeder::class,
             DamageTypeSeeder::class,
             AllocationTypeSeeder::class,
@@ -31,6 +32,7 @@ class DatabaseSeeder extends Seeder
             DistributionRecordItemSeeder::class,
             AcknowledgementSeeder::class,
             CropDamageRecordSeeder::class,
+            FakeDistributionDataSeeder::class,
         ]);
 
         // User::factory(10)->create();
