@@ -33,6 +33,9 @@ class DatabaseSeeder extends Seeder
             AcknowledgementSeeder::class,
             CropDamageRecordSeeder::class,
             FakeDistributionDataSeeder::class,
+            CropMonitoringCategorySeeder::class,
+            CropMonitoringFolderSeeder::class,
+            FakeCropMonitoringDataSeeder::class,
         ]);
 
         // User::factory(10)->create();
