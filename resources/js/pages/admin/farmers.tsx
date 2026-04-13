@@ -1,8 +1,9 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Commodity, type Farmer, type Organization, type Program, type Variety } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, User, List, LayoutGrid } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, User, List, LayoutGrid, QrCode } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,7 @@ export default function Farmers() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
     const [formData, setFormData] = useState<{
         rsbsa_number: string;
@@ -661,6 +663,20 @@ export default function Farmers() {
                                                     <Pencil className="h-3 w-3 mr-1" />
                                                     Edit
                                                 </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="text-xs"
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation();
+                                                        if (farmer.lfid) {
+                                                            setSelectedFarmer(farmer);
+                                                            setIsQrModalOpen(true);
+                                                        }
+                                                    }}
+                                                >
+                                                    <QrCode className="h-3 w-3" />
+                                                </Button>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -759,6 +775,15 @@ export default function Farmers() {
                                                                 <Pencil className="mr-2 h-4 w-4" />
                                                                 <span>Edit</span>
                                                             </DropdownMenuItem>
+                                                            {farmer.lfid && (
+                                                                <DropdownMenuItem onClick={() => {
+                                                                    setSelectedFarmer(farmer);
+                                                                    setIsQrModalOpen(true);
+                                                                }}>
+                                                                    <QrCode className="mr-2 h-4 w-4" />
+                                                                    <span>View QR</span>
+                                                                </DropdownMenuItem>
+                                                            )}
                                                             <DropdownMenuItem 
                                                                 onClick={() => openDeleteModal(farmer)}
                                                                 className="text-red-600 focus:text-red-600"
@@ -916,6 +941,58 @@ export default function Farmers() {
                             Delete
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* QR Code Modal */}
+            <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <QrCode className="h-5 w-5" />
+                            Farmer QR Code
+                        </DialogTitle>
+                        <DialogDescription>
+                            Scan this QR code to view the farmer's public profile
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center gap-4 py-6">
+                        {selectedFarmer?.lfid && (
+                            <>
+                                <div className="bg-white p-6 rounded-lg border-2 border-muted shadow-sm">
+                                    <QRCodeSVG 
+                                        value={`${window.location.origin}/farmer/profile/${selectedFarmer.lfid}`}
+                                        size={256}
+                                        level="H"
+                                    />
+                                </div>
+                                <div className="text-center space-y-2">
+                                    <p className="font-semibold text-lg">
+                                        {selectedFarmer.first_name} {selectedFarmer.last_name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        LFID: {selectedFarmer.lfid}
+                                    </p>
+                                    {selectedFarmer.rsbsa_number && (
+                                        <p className="text-sm text-muted-foreground">
+                                            RSBSA: {selectedFarmer.rsbsa_number}
+                                        </p>
+                                    )}
+                                </div>
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full"
+                                    onClick={() => {
+                                        const url = `${window.location.origin}/farmer/profile/${selectedFarmer.lfid}`;
+                                        window.open(url, '_blank');
+                                    }}
+                                >
+                                    <QrCode className="h-4 w-4 mr-2" />
+                                    Open Public Profile
+                                </Button>
+                            </>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </AppLayout>

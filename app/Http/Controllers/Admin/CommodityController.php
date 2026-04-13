@@ -20,7 +20,7 @@ class CommodityController extends Controller
         $commodities = Commodity::with('category')->orderBy('name', 'asc')->get();
         $categories = Category::orderBy('name', 'asc')->get(['id', 'name']);
 
-        return Inertia::render('admin/commodities', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/commodities' : 'admin/commodities', [
             'commodities' => $commodities,
             'categories' => $categories,
         ]);

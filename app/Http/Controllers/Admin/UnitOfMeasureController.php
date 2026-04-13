@@ -18,7 +18,7 @@ class UnitOfMeasureController extends Controller
     {
         $unitOfMeasures = UnitOfMeasure::orderBy('name', 'asc')->get();
 
-        return Inertia::render('admin/unit-of-measures', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/unit-of-measures' : 'admin/unit-of-measures', [
             'unitOfMeasures' => $unitOfMeasures,
         ]);
     }

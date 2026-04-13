@@ -23,7 +23,7 @@ class DamageTypeController extends Controller
 
         $damageCategories = DamageCategory::orderBy('damage_category_name', 'asc')->get();
 
-        return Inertia::render('admin/damage-types', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/damage-types' : 'admin/damage-types', [
             'damageTypes' => $damageTypes,
             'damageCategories' => $damageCategories,
         ]);

@@ -20,7 +20,7 @@ class VarietyController extends Controller
         $varieties = Variety::with('commodity')->orderBy('name', 'asc')->get();
         $commodities = Commodity::orderBy('name', 'asc')->get(['id', 'name']);
 
-        return Inertia::render('admin/varieties', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/varieties' : 'admin/varieties', [
             'varieties' => $varieties,
             'commodities' => $commodities,
         ]);

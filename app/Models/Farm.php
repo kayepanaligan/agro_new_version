@@ -13,6 +13,7 @@ class Farm extends Model
         'farmer_id',
         'farm_name',
         'fid',
+        'qr_code',
     ];
 
     public function farmer()
@@ -51,14 +52,26 @@ class Farm extends Model
     }
 
     /**
-     * Boot the model and auto-generate FID on creation
+     * Boot the model and auto-generate FID and QR code on creation
      */
     protected static function boot()
     {
         parent::boot();
 
         static::created(function ($farm) {
+            // Generate FID
             $farm->generateFid();
+            
+            // Generate QR code if FID exists
+            if ($farm->fid) {
+                try {
+                    $qrCodeGenerator = new \App\Services\FarmQrCodeGenerator();
+                    $qrCodePath = $qrCodeGenerator->generate($farm);
+                    $farm->update(['qr_code' => $qrCodePath]);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to generate QR code for farm: ' . $farm->id . ' - ' . $e->getMessage());
+                }
+            }
         });
     }
 }

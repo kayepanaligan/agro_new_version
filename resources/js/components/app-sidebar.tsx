@@ -1,4 +1,4 @@
-import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText, FolderOpen } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText, FolderOpen, FlaskConical } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import OfflineStatusIndicator from '@/components/offline-status-indicator';
@@ -99,26 +99,26 @@ export function AppSidebar() {
     ];
 
     if (isAdmin) {
-        navGroups.push({
-            title: 'Crop Libary',
-            items: [
-                {
-                    title: 'Categories',
-                    url: '/admin/categories',
-                    icon: Tags,
-                },
-                {
-                    title: 'Commodities',
-                    url: '/admin/commodities',
-                    icon: Sprout,
-                },
-                {
-                    title: 'Varieties',
-                    url: '/admin/varieties',
-                    icon: Leaf,
-                },
-            ],
-        });
+        // navGroups.push({
+        //     title: 'Crop Libary',
+        //     items: [
+        //         {
+        //             title: 'Categories',
+        //             url: '/admin/categories',
+        //             icon: Tags,
+        //         },
+        //         {
+        //             title: 'Commodities',
+        //             url: '/admin/commodities',
+        //             icon: Sprout,
+        //         },
+        //         {
+        //             title: 'Varieties',
+        //             url: '/admin/varieties',
+        //             icon: Leaf,
+        //         },
+        //     ],
+        // });
 
         navGroups.push({
             title: 'Farmer Records',
@@ -139,46 +139,46 @@ export function AppSidebar() {
          navGroups.push({
             title: 'Programs & Assistance',
             items: [
-                 {
-                    title: 'Programs',
-                    url: '/admin/programs',
-                    icon: HandCoinsIcon,
-                },
-                {
-                    title: 'Funding Sources',
-                    url: '/admin/funding-sources',
-                    icon: Wallet,
-                },
-                {
-                    title: 'Assistance Categories',
-                    url: '/admin/assistance-categories',
-                    icon: Layers,
-                },
-                {
-                    title: 'Allocation Types',
-                    url: '/admin/allocation-types',
-                    icon: ClipboardList,
-                },
-                {
-                    title: 'Eligible Barangays',
-                    url: '/admin/eligible-barangays',
-                    icon: MapPin,
-                },
-                {
-                    title: 'Eligibility Rules',
-                    url: '/admin/eligibility-rules',
-                    icon: CheckSquare,
-                },
+                //  {
+                //     title: 'Programs',
+                //     url: '/admin/programs',
+                //     icon: HandCoinsIcon,
+                // },
+                // {
+                //     title: 'Funding Sources',
+                //     url: '/admin/funding-sources',
+                //     icon: Wallet,
+                // },
+                // {
+                //     title: 'Assistance Categories',
+                //     url: '/admin/assistance-categories',
+                //     icon: Layers,
+                // },
+                // {
+                //     title: 'Allocation Types',
+                //     url: '/admin/allocation-types',
+                //     icon: ClipboardList,
+                // },
+                // {
+                //     title: 'Eligible Barangays',
+                //     url: '/admin/eligible-barangays',
+                //     icon: MapPin,
+                // },
+                // {
+                //     title: 'Eligibility Rules',
+                //     url: '/admin/eligibility-rules',
+                //     icon: CheckSquare,
+                // },
                 {
                     title: 'Distribution Records',
                     url: '/admin/distribution-records',
                     icon: Truck,
                 },
-                {
-                    title: 'Allocation Policies',
-                    url: '/admin/allocation-policies',
-                    icon: Scale,
-                },
+                // {
+                //     title: 'Allocation Policies',
+                //     url: '/admin/allocation-policies',
+                //     icon: Scale,
+                // },
                
             ],
         });
@@ -186,16 +186,16 @@ export function AppSidebar() {
         navGroups.push({
             title: 'Damage Logs',
             items: [
-                {
-                    title: 'Damage Categories',
-                    url: '/admin/damage-categories',
-                    icon: WormIcon,
-                },
-                {
-                    title: 'Damage Types',
-                    url: '/admin/damage-types',
-                    icon: Rat,
-                },
+                // {
+                //     title: 'Damage Categories',
+                //     url: '/admin/damage-categories',
+                //     icon: WormIcon,
+                // },
+                // {
+                //     title: 'Damage Types',
+                //     url: '/admin/damage-types',
+                //     icon: Rat,
+                // },
                 {
                     title: 'Crop Damage Records',
                     url: '/admin/crop-damage-records',
@@ -208,11 +208,11 @@ export function AppSidebar() {
         navGroups.push({
             title: 'Crop Monitoring',
             items: [
-                {
-                    title: 'Monitoring Categories',
-                    url: '/admin/monitoring-categories',
-                    icon: Tags,
-                },
+                // {
+                //     title: 'Monitoring Categories',
+                //     url: '/admin/monitoring-categories',
+                //     icon: Tags,
+                // },
                 {
                     title: 'Monitoring Folders',
                     url: '/admin/monitoring-folders',
@@ -223,29 +223,139 @@ export function AppSidebar() {
 
        
 
+        // navGroups.push({
+        //     title: 'Supporting Infrastructure',
+        //     items: [
+        //         {
+        //             title: 'Organizations',
+        //             url: '/admin/organizations',
+        //             icon: UsersRound,
+        //         },
+        //         {
+        //             title: 'Unit of Measures',
+        //             url: '/admin/unit-of-measures',
+        //             icon: Ruler,
+        //         },
+        //         {
+        //             title: 'Farmer Eligibilities',
+        //             url: '/admin/farmer-eligibilities',
+        //             icon: FileCheck,
+        //         },
+        //     ],
+        // });
+    }
+
+    if (isSuperAdmin) {
+        navGroups.push({
+            title: 'Crop Library',
+            items: [
+                {
+                    title: 'Categories',
+                    url: '/super-admin/categories',
+                    icon: Tags,
+                },
+                {
+                    title: 'Commodities',
+                    url: '/super-admin/commodities',
+                    icon: Sprout,
+                },
+                {
+                    title: 'Varieties',
+                    url: '/super-admin/varieties',
+                    icon: Leaf,
+                },
+            ],
+        });
+
+        navGroups.push({
+            title: 'Programs & Assistance',
+            items: [
+                {
+                    title: 'Programs',
+                    url: '/super-admin/programs',
+                    icon: HandCoinsIcon,
+                },
+                {
+                    title: 'Funding Sources',
+                    url: '/super-admin/funding-sources',
+                    icon: Wallet,
+                },
+                {
+                    title: 'Assistance Categories',
+                    url: '/super-admin/assistance-categories',
+                    icon: Layers,
+                },
+                {
+                    title: 'Allocation Types',
+                    url: '/super-admin/allocation-types',
+                    icon: ClipboardList,
+                },
+                {
+                    title: 'Eligibility Rules',
+                    url: '/super-admin/eligibility-rules',
+                    icon: CheckSquare,
+                },
+                {
+                    title: 'Allocation Policies',
+                    url: '/super-admin/allocation-policies',
+                    icon: Scale,
+                },
+                {
+                    title: 'Formula Types',
+                    url: '/super-admin/formula-types',
+                    icon: FlaskConical,
+                },
+            ],
+        });
+
+        navGroups.push({
+            title: 'Damage Logs',
+            items: [
+                {
+                    title: 'Damage Categories',
+                    url: '/super-admin/damage-categories',
+                    icon: WormIcon,
+                },
+                {
+                    title: 'Damage Types',
+                    url: '/super-admin/damage-types',
+                    icon: Rat,
+                },
+            ],
+        });
+
+        navGroups.push({
+            title: 'Crop Monitoring',
+            items: [
+                {
+                    title: 'Monitoring Categories',
+                    url: '/super-admin/monitoring-categories',
+                    icon: Tags,
+                },
+            ],
+        });
+
         navGroups.push({
             title: 'Supporting Infrastructure',
             items: [
                 {
                     title: 'Organizations',
-                    url: '/admin/organizations',
+                    url: '/super-admin/organizations',
                     icon: UsersRound,
                 },
                 {
                     title: 'Unit of Measures',
-                    url: '/admin/unit-of-measures',
+                    url: '/super-admin/unit-of-measures',
                     icon: Ruler,
                 },
                 {
                     title: 'Farmer Eligibilities',
-                    url: '/admin/farmer-eligibilities',
+                    url: '/super-admin/farmer-eligibilities',
                     icon: FileCheck,
                 },
             ],
         });
-    }
 
-    if (isSuperAdmin) {
         navGroups.push({
             title: 'Monitoring',
             items: [
@@ -258,6 +368,11 @@ export function AppSidebar() {
                     title: 'Session Monitoring',
                     url: '/super-admin/sessions',
                     icon: Activity,
+                },
+                {
+                    title: 'Audit Logs',
+                    url: '/super-admin/audit-logs',
+                    icon: FileText,
                 },
             ],
         });

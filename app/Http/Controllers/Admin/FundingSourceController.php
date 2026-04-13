@@ -18,7 +18,7 @@ class FundingSourceController extends Controller
     {
         $fundingSources = FundingSource::orderBy('name', 'asc')->get();
 
-        return Inertia::render('admin/funding-sources', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/funding-sources' : 'admin/funding-sources', [
             'fundingSources' => $fundingSources,
         ]);
     }

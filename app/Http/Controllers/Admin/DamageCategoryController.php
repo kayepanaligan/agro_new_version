@@ -19,7 +19,7 @@ class DamageCategoryController extends Controller
             ->withCount('damageTypes')
             ->get();
 
-        return Inertia::render('admin/damage-categories', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/damage-categories' : 'admin/damage-categories', [
             'damageCategories' => $damageCategories,
         ]);
     }

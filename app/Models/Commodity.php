@@ -14,11 +14,20 @@ class Commodity extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id',
         'category_id',
         'name',
         'description',
         'image_path',
     ];
+
+    /**
+     * Get the user who created the commodity.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Get the category that owns the commodity.

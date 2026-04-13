@@ -89,6 +89,7 @@ export interface Farmer {
     rsbsa_number?: string | null;
     lfid?: string | null;
     registration_status?: 'not_registered' | 'for_submission' | 'submitted_to_da' | 'verified' | 'rejected' | null;
+    qr_code?: string | null;
     first_name: string;
     last_name: string;
     middle_name?: string | null;
@@ -249,6 +250,7 @@ export interface Organization {
 export interface Farm {
     id: number;
     fid?: string | null;
+    qr_code?: string | null;
     farmer_id: number;
     farm_name: string;
     created_at: string;
@@ -285,6 +287,8 @@ export interface FarmProfile {
 export interface FarmParcel {
     id: number;
     farm_profile_id: number;
+    fpid?: string | null;
+    qr_code?: string | null;
     parcel_number?: string | null;
     barangay?: string | null;
     city_municipality?: string | null;
@@ -315,6 +319,16 @@ export interface FarmParcel {
     variety?: Variety | null;
     crop_rotations?: CropRotation[];
     farmer_assignments?: FarmerAssignment[];
+    farm?: {
+        id: number;
+        farm_name: string;
+        fid?: string | null;
+        farmer?: {
+            id: number;
+            first_name: string;
+            last_name: string;
+        };
+    };
 }
 
 export interface CropRotation {
@@ -606,12 +620,53 @@ export interface AllocationPolicy {
     allocation_inputs?: any | null;
     eligible_rules?: number[] | null;
     eligible_barangays?: number[] | null;
-    policy_type: 'equal' | 'proportional' | 'priority' | 'weighted' | 'hybrid';
+    policy_type: 'equal' | 'proportional' | 'priority' | 'weighted' | 'hybrid' | 'custom';
     policy_config?: any | null;
+    formula_type_id?: number | null;
+    is_custom: boolean;
+    config_json?: Record<string, any> | null;
+    formula_expression?: string | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;
     allocation_type?: AllocationType | null;
+    formula_type?: FormulaType | null;
+}
+
+export interface Announcement {
+    id: number;
+    title: string;
+    content: string;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    is_active: boolean;
+    published_at: string;
+    expires_at?: string | null;
+    created_by: number;
+    creator?: User;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CropDamageReport {
+    crop_damage_record_item_id: number;
+    farmer_id: number;
+    farm_id: number;
+    damage_type_id: number;
+    damage_severity: 'low' | 'medium' | 'high';
+    status: 'pending' | 'verified' | 'closed';
+    latitude?: number | null;
+    longitude?: number | null;
+    temperature?: number | null;
+    humidity?: number | null;
+    weather_condition?: string | null;
+    wind_speed?: number | null;
+    photo_path?: string | null;
+    notes?: string | null;
+    recorded_date: string;
+    farm?: Farm;
+    damage_type?: DamageType;
+    created_at: string;
+    updated_at: string;
 }
 
 // Offline-First Types
@@ -665,4 +720,29 @@ export interface ReferenceDataCache {
 export function getFullName(user: User): string {
     const parts = [user.first_name, user.middle_name, user.last_name].filter(Boolean);
     return parts.join(' ');
+}
+
+export interface FormulaFactor {
+    field: string;    // e.g. 'eligibility_score'
+    weight: number;   // e.g. 0.5
+    label: string;    // e.g. 'Eligibility Score'
+}
+
+export interface FormulaType {
+    id: number;
+    type: string;     // slug — open string for custom types
+    name: string;
+    is_default: boolean;
+    base_algorithm: 'equal' | 'proportional' | 'priority' | 'weighted' | null;
+    expression_mode: 'builder' | 'advanced';
+    factors: FormulaFactor[] | null;
+    short_description: string;
+    formula_expression: string;
+    logic_notes: string[] | null;
+    example: Record<string, any> | null;
+    use_case: string | null;
+    edge_cases: string[] | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
 }

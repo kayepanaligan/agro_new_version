@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             CropMonitoringCategorySeeder::class,
             CropMonitoringFolderSeeder::class,
             FakeCropMonitoringDataSeeder::class,
+            FormulaTypeSeeder::class,
         ]);
 
         // User::factory(10)->create();

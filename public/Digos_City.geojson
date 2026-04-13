@@ -1,0 +1,1036 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3853, 6.7437],
+              [125.3805, 6.7455],
+              [125.3749, 6.7518],
+              [125.3668, 6.7549],
+              [125.3546, 6.7461],
+              [125.3528, 6.7426],
+              [125.379, 6.7336],
+              [125.3864, 6.7406],
+              [125.3853, 6.7437]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Aplaya",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.1_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.2509, 6.8118],
+              [125.2863, 6.8092],
+              [125.2821, 6.814],
+              [125.277, 6.8164],
+              [125.2729, 6.8255],
+              [125.2745, 6.852],
+              [125.25, 6.8514],
+              [125.2509, 6.8118]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Balabag",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.2_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3327, 6.7987],
+              [125.3409, 6.8001],
+              [125.3651, 6.7999],
+              [125.3336, 6.8551],
+              [125.331, 6.8327],
+              [125.3327, 6.7987]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Binaton",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.3_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3853, 6.7437],
+              [125.3856, 6.7507],
+              [125.3874, 6.7525],
+              [125.39, 6.7525],
+              [125.3913, 6.7547],
+              [125.388, 6.7639],
+              [125.3836, 6.7675],
+              [125.3847, 6.7708],
+              [125.3722, 6.7731],
+              [125.3707, 6.7718],
+              [125.3668, 6.7549],
+              [125.3749, 6.7518],
+              [125.3805, 6.7455],
+              [125.3853, 6.7437]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Cogon",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.4_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3249, 6.74],
+              [125.3277, 6.746],
+              [125.3275, 6.7493],
+              [125.3259, 6.7477],
+              [125.325, 6.7501],
+              [125.324, 6.7591],
+              [125.3271, 6.7608],
+              [125.3253, 6.7644],
+              [125.3285, 6.7688],
+              [125.3276, 6.7743],
+              [125.3111, 6.7771],
+              [125.3146, 6.7697],
+              [125.3147, 6.764],
+              [125.3173, 6.7615],
+              [125.3099, 6.7575],
+              [125.2902, 6.7549],
+              [125.2913, 6.7505],
+              [125.2927, 6.7487],
+              [125.3176, 6.7439],
+              [125.3249, 6.74]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Colorado",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.5_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3528, 6.7426],
+              [125.3492, 6.7313],
+              [125.3733, 6.7272],
+              [125.379, 6.7336],
+              [125.3625, 6.7403],
+              [125.3528, 6.7426]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Dawis",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.6_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3336, 6.8551],
+              [125.328, 6.8627],
+              [125.302, 6.9152],
+              [125.2964, 6.9143],
+              [125.2931, 6.9094],
+              [125.2945, 6.8821],
+              [125.2858, 6.8611],
+              [125.2846, 6.8539],
+              [125.2905, 6.8515],
+              [125.2981, 6.8447],
+              [125.304, 6.8325],
+              [125.3052, 6.8263],
+              [125.3148, 6.8085],
+              [125.325, 6.7958],
+              [125.3327, 6.7987],
+              [125.331, 6.8327],
+              [125.3336, 6.8551]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Dulangan",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.7_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.2863, 6.8092],
+              [125.2919, 6.8075],
+              [125.3045, 6.7923],
+              [125.325, 6.7958],
+              [125.3148, 6.8085],
+              [125.3052, 6.8263],
+              [125.304, 6.8325],
+              [125.2981, 6.8447],
+              [125.2905, 6.8515],
+              [125.2851, 6.8529],
+              [125.2843, 6.8557],
+              [125.2745, 6.852],
+              [125.2729, 6.8255],
+              [125.277, 6.8164],
+              [125.2821, 6.814],
+              [125.2863, 6.8092]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Goma",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.8_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.2927, 6.7487],
+              [125.2973, 6.7414],
+              [125.3134, 6.7351],
+              [125.3128, 6.7331],
+              [125.3229, 6.7317],
+              [125.3346, 6.7264],
+              [125.3349, 6.7318],
+              [125.3222, 6.7418],
+              [125.2927, 6.7487]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Igpit",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.9_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.25, 6.8514],
+              [125.2745, 6.852],
+              [125.2843, 6.8557],
+              [125.2945, 6.8821],
+              [125.2931, 6.9094],
+              [125.2964, 6.9143],
+              [125.302, 6.9152],
+              [125.2966, 6.9372],
+              [125.2972, 6.9662],
+              [125.2583, 6.9622],
+              [125.255, 6.9567],
+              [125.25, 6.8514]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Kapatagan",
+        "NL_NAME_2": "Rizal",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.10_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3489, 6.7803],
+              [125.3596, 6.7797],
+              [125.3777, 6.7815],
+              [125.3724, 6.7877],
+              [125.3613, 6.7887],
+              [125.3564, 6.7884],
+              [125.3489, 6.7803]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Kiagot",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.11_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.2509, 6.8118],
+              [125.2542, 6.7917],
+              [125.2944, 6.7895],
+              [125.2886, 6.7977],
+              [125.2784, 6.7993],
+              [125.2723, 6.8025],
+              [125.267, 6.8089],
+              [125.2676, 6.8111],
+              [125.2509, 6.8118]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Lungag",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.12_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.2676, 6.8111],
+              [125.267, 6.8089],
+              [125.2723, 6.8025],
+              [125.2784, 6.7993],
+              [125.2886, 6.7977],
+              [125.3013, 6.7795],
+              [125.3061, 6.7749],
+              [125.3111, 6.7771],
+              [125.3041, 6.7879],
+              [125.3045, 6.7923],
+              [125.2919, 6.8075],
+              [125.2676, 6.8111]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Mahayahay",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.13_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3111, 6.7771],
+              [125.2995, 6.7734],
+              [125.2789, 6.7748],
+              [125.2812, 6.7681],
+              [125.2902, 6.7549],
+              [125.3099, 6.7575],
+              [125.3173, 6.7615],
+              [125.3147, 6.764],
+              [125.3146, 6.7697],
+              [125.3111, 6.7771]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Matti",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.14_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3327, 6.7987],
+              [125.325, 6.7958],
+              [125.3291, 6.7923],
+              [125.3335, 6.78],
+              [125.3489, 6.7803],
+              [125.356, 6.7878],
+              [125.3506, 6.7901],
+              [125.3496, 6.7922],
+              [125.3504, 6.7999],
+              [125.3327, 6.7987]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Ruparan",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.15_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3276, 6.7743],
+              [125.3335, 6.78],
+              [125.3279, 6.794],
+              [125.325, 6.7958],
+              [125.3045, 6.7923],
+              [125.3041, 6.7879],
+              [125.3111, 6.7771],
+              [125.3276, 6.7743]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "San Agustin",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.16_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3528, 6.7426],
+              [125.3519, 6.7449],
+              [125.3426, 6.7518],
+              [125.3426, 6.7438],
+              [125.3349, 6.7318],
+              [125.3346, 6.7264],
+              [125.3433, 6.7279],
+              [125.3492, 6.7313],
+              [125.3528, 6.7426]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "San Jose",
+        "NL_NAME_2": "Balutakay",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.17_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3249, 6.74],
+              [125.3349, 6.7318],
+              [125.3426, 6.7438],
+              [125.3426, 6.7518],
+              [125.3275, 6.7493],
+              [125.3277, 6.746],
+              [125.3249, 6.74]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "San Miguel",
+        "NL_NAME_2": "Odaca",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.18_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.2542, 6.7917],
+              [125.2789, 6.7748],
+              [125.2995, 6.7734],
+              [125.3061, 6.7749],
+              [125.2944, 6.7895],
+              [125.2542, 6.7917]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "San Roque",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.19_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3847, 6.7708],
+              [125.3842, 6.7761],
+              [125.3872, 6.7792],
+              [125.3777, 6.7815],
+              [125.3596, 6.7797],
+              [125.3576, 6.7691],
+              [125.3597, 6.7634],
+              [125.3668, 6.7549],
+              [125.3707, 6.7718],
+              [125.3722, 6.7731],
+              [125.3847, 6.7708]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Sinawilan",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.20_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3504, 6.7999],
+              [125.3496, 6.7922],
+              [125.3524, 6.7889],
+              [125.3724, 6.7877],
+              [125.3651, 6.7999],
+              [125.3504, 6.7999]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Soong",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.21_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3275, 6.7493],
+              [125.3426, 6.7518],
+              [125.3418, 6.7622],
+              [125.3263, 6.7636],
+              [125.3271, 6.7608],
+              [125.324, 6.7591],
+              [125.3259, 6.7477],
+              [125.3275, 6.7493]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Tiguman",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.22_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3263, 6.7636],
+              [125.3418, 6.7622],
+              [125.3452, 6.774],
+              [125.3489, 6.7803],
+              [125.3335, 6.78],
+              [125.3276, 6.7743],
+              [125.3285, 6.7688],
+              [125.3253, 6.7644],
+              [125.3263, 6.7636]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Tres de Mayo",
+        "NL_NAME_2": "NA",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.23_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3492, 6.7798],
+              [125.3452, 6.774],
+              [125.3432, 6.7665],
+              [125.3597, 6.7634],
+              [125.3576, 6.7691],
+              [125.3596, 6.7797],
+              [125.3492, 6.7798]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Zone 1",
+        "NL_NAME_2": "Poblacion",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.24_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3597, 6.7634],
+              [125.3445, 6.7667],
+              [125.342, 6.7649],
+              [125.3421, 6.7635],
+              [125.3577, 6.7563],
+              [125.3668, 6.7551],
+              [125.3597, 6.7634]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Zone 2",
+        "NL_NAME_2": "Poblacion",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.25_1",
+        "description": "PHL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [125.3668, 6.7549],
+              [125.3577, 6.7563],
+              [125.3421, 6.7635],
+              [125.3421, 6.7525],
+              [125.3519, 6.7449],
+              [125.3528, 6.7426],
+              [125.3546, 6.7461],
+              [125.3668, 6.7549]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "GID_3": "Philippines",
+        "GID_0": "PHL.28_1",
+        "COUNTRY": "Davao del Sur",
+        "GID_1": "NA",
+        "NAME_1": "PHL.28.3_1",
+        "NL_NAME_1": "Digos City",
+        "GID_2": "NA",
+        "NAME_2": "Zone 3",
+        "NL_NAME_2": "Poblacion",
+        "NAME_3": "NA",
+        "VARNAME_3": "Barangay",
+        "NL_NAME_3": "Village",
+        "TYPE_3": "NA",
+        "ENGTYPE_3": "NA",
+        "name": "PHL.28.3.26_1",
+        "description": "PHL"
+      }
+    }
+  ]
+}

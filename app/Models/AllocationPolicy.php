@@ -19,6 +19,10 @@ class AllocationPolicy extends Model
         'eligible_barangays',
         'policy_type',
         'policy_config',
+        'formula_type_id',
+        'is_custom',
+        'config_json',
+        'formula_expression',
         'is_active',
     ];
 
@@ -28,11 +32,13 @@ class AllocationPolicy extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'allocation_inputs' => 'array',
-        'eligible_rules' => 'array',
+        'allocation_inputs'  => 'array',
+        'eligible_rules'     => 'array',
         'eligible_barangays' => 'array',
-        'policy_config' => 'array',
-        'is_active' => 'boolean',
+        'policy_config'      => 'array',
+        'config_json'        => 'array',
+        'is_custom'          => 'boolean',
+        'is_active'          => 'boolean',
     ];
 
     /**
@@ -41,5 +47,13 @@ class AllocationPolicy extends Model
     public function allocationType(): BelongsTo
     {
         return $this->belongsTo(AllocationType::class);
+    }
+
+    /**
+     * Get the formula type definition for this policy.
+     */
+    public function formulaType(): BelongsTo
+    {
+        return $this->belongsTo(FormulaType::class);
     }
 }

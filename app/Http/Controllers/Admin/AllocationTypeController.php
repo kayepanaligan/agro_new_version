@@ -32,7 +32,7 @@ class AllocationTypeController extends Controller
         $barangays = Barangay::where('is_active', true)->orderBy('name')->get();
         $farmerEligibilities = FarmerEligibility::where('is_active', true)->get();
 
-        return Inertia::render('admin/allocation-types', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/allocation-types' : 'admin/allocation-types', [
             'allocationTypes' => $allocationTypes,
             'programs' => $programs,
             'unitsOfMeasure' => $unitsOfMeasure,

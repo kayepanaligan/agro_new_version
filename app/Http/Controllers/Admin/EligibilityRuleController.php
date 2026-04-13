@@ -21,7 +21,7 @@ class EligibilityRuleController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return Inertia::render('admin/eligibility-rules', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/eligibility-rules' : 'admin/eligibility-rules', [
             'eligibilityRules' => $eligibilityRules,
             'allocationTypes' => AllocationType::orderBy('name', 'asc')->get(),
             'farmerAttributes' => $this->getFarmerAttributes(),

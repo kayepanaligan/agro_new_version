@@ -16,7 +16,7 @@ class CropMonitoringCategoryController extends Controller
             ->orderBy('category_name')
             ->get();
 
-        return Inertia::render('admin/monitoring-categories', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/monitoring-categories' : 'admin/monitoring-categories', [
             'categories' => $categories,
         ]);
     }

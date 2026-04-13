@@ -27,6 +27,7 @@ class User extends Authenticatable
         'gender',
         'dob',
         'email',
+        'lfid',
         'avatar',
         'contact_number',
         'street',
@@ -75,6 +76,14 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Get the farmer record associated with this user.
+     */
+    public function farmer(): BelongsTo
+    {
+        return $this->belongsTo(Farmer::class, 'lfid', 'lfid');
     }
 
     /**

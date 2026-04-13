@@ -14,6 +14,7 @@ class Farmer extends Model
         'picture_id',
         'lfid',
         'registration_status',
+        'qr_code',
     ];
 
     // Relationships to new normalized tables

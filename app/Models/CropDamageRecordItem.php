@@ -11,17 +11,30 @@ class CropDamageRecordItem extends Model
 
     protected $fillable = [
         'crop_damage_record_id',
-        'photo_path',
+        'farmer_id',
         'farm_id',
+        'photo_path',
         'commodity_name',
         'variety_name',
         'damage_type_id',
         'damage_severity',
         'status',
+        'latitude',
+        'longitude',
+        'temperature',
+        'humidity',
+        'weather_condition',
+        'wind_speed',
         'notes',
     ];
 
-    protected $casts = [];
+    protected $casts = [
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'temperature' => 'decimal:2',
+        'humidity' => 'decimal:2',
+        'wind_speed' => 'decimal:2',
+    ];
 
     public function cropDamageRecord(): BelongsTo
     {
@@ -36,5 +49,10 @@ class CropDamageRecordItem extends Model
     public function damageType(): BelongsTo
     {
         return $this->belongsTo(DamageType::class, 'damage_type_id', 'damage_type_id');
+    }
+
+    public function farmer(): BelongsTo
+    {
+        return $this->belongsTo(Farmer::class);
     }
 }

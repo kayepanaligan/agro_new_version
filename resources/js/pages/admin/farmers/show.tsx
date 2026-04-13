@@ -1,7 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Farmer } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Mail, MapPin, Phone, User, Users, Home, FileText, Briefcase, GraduationCap, Heart, Shield, Award, Package, Sprout, TrendingDown } from 'lucide-react';
+import { ArrowLeft, Calendar, Mail, MapPin, Phone, User, Users, Home, FileText, Briefcase, GraduationCap, Heart, Shield, Award, Package, Sprout, TrendingDown, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -104,6 +105,18 @@ export default function FarmerProfile() {
                                 <Link href={`/admin/farmers/${farmer.id}/edit`}>
                                     <Button>Edit Profile</Button>
                                 </Link>
+                                {farmer.lfid && (
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => {
+                                            const url = `${window.location.origin}/farmer/profile/${farmer.lfid}`;
+                                            window.open(url, '_blank');
+                                        }}
+                                    >
+                                        <QrCode className="h-4 w-4 mr-2" />
+                                        View QR Profile
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </div>

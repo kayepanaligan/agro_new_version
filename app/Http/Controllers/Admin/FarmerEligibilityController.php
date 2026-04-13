@@ -18,7 +18,7 @@ class FarmerEligibilityController extends Controller
     {
         $farmerEligibilities = FarmerEligibility::orderBy('name')->get();
 
-        return Inertia::render('admin/farmer-eligibilities', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/farmer-eligibilities' : 'admin/farmer-eligibilities', [
             'farmerEligibilities' => $farmerEligibilities,
             'farmerAttributes' => $this->getFarmerAttributes(),
         ]);

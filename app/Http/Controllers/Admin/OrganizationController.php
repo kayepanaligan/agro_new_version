@@ -18,7 +18,7 @@ class OrganizationController extends Controller
     {
         $organizations = Organization::orderBy('name', 'asc')->get();
 
-        return Inertia::render('admin/organizations', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/organizations' : 'admin/organizations', [
             'organizations' => $organizations,
         ]);
     }

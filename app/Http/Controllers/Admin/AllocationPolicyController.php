@@ -23,7 +23,7 @@ class AllocationPolicyController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return Inertia::render('admin/allocation-policies', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/allocation-policies' : 'admin/allocation-policies', [
             'allocationPolicies' => $allocationPolicies,
         ]);
     }
@@ -33,7 +33,7 @@ class AllocationPolicyController extends Controller
      */
     public function getFormData(): Response
     {
-        return Inertia::render('admin/allocation-policies', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/allocation-policies' : 'admin/allocation-policies', [
             'allocationTypes' => AllocationType::orderBy('name', 'asc')->get(),
             'eligibilityRules' => EligibilityRule::orderBy('created_at', 'desc')->get(),
             'barangays' => Barangay::where('is_active', true)->orderBy('name', 'asc')->get(),

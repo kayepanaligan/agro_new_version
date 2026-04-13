@@ -11,6 +11,7 @@ use App\Models\Organization;
 use App\Models\Program;
 use App\Models\Variety;
 use App\Services\LfidGenerator;
+use App\Services\QrCodeGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -199,6 +200,11 @@ class FarmerController extends Controller
             
             if ($lfid) {
                 $farmer->update(['lfid' => $lfid]);
+                
+                // Generate QR code after LFID is created
+                $qrCodeGenerator = new QrCodeGenerator();
+                $qrCodePath = $qrCodeGenerator->generate($farmer);
+                $farmer->update(['qr_code' => $qrCodePath]);
             }
         }
 

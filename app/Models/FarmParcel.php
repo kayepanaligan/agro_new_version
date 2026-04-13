@@ -28,6 +28,7 @@ class FarmParcel extends Model
         'is_organic_practitioner',
         'remarks',
         'fpid',
+        'qr_code',
     ];
 
     protected $casts = [
@@ -78,7 +79,7 @@ class FarmParcel extends Model
     }
 
     /**
-     * Boot the model and auto-generate FPID on creation
+     * Boot the model and auto-generate FPID and QR code on creation
      */
     protected static function boot()
     {
@@ -86,6 +87,17 @@ class FarmParcel extends Model
 
         static::created(function ($parcel) {
             $parcel->generateFpid();
+            
+            // Generate QR code if FPID exists
+            if ($parcel->fpid) {
+                try {
+                    $qrCodeGenerator = new \App\Services\FarmParcelQrCodeGenerator();
+                    $qrCodePath = $qrCodeGenerator->generate($parcel);
+                    $parcel->update(['qr_code' => $qrCodePath]);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to generate QR code for farm parcel: ' . $parcel->id . ' - ' . $e->getMessage());
+                }
+            }
         });
     }
 }

@@ -1,8 +1,9 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Farmer, type Farm } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Plus, Search, Filter, Trash2, Eye } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Plus, Search, Filter, Trash2, Eye, QrCode } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -38,6 +46,8 @@ export default function FarmsIndex({ farms }: FarmsProps) {
     const [sortField, setSortField] = useState<SortField>('farm_name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
     const [filterFarmer, setFilterFarmer] = useState<string>('all');
+    const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+    const [selectedFarm, setSelectedFarm] = useState<any>(null);
 
     // Convert farms.data to array (Laravel pagination)
     const farmsArray = farms.data || [];
@@ -293,23 +303,38 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                                                 <TableCell>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm" 
+                                                                className="h-8 w-8 p-0"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => router.visit(`/admin/farms/${farm.id}`)}>
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.visit(`/admin/farms/${farm.id}`); }}>
                                                                 <Eye className="mr-2 h-4 w-4" />
                                                                 <span>View</span>
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => router.visit(`/admin/farms/${farm.id}/edit`)}>
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.visit(`/admin/farms/${farm.id}/edit`); }}>
                                                                 <Pencil className="mr-2 h-4 w-4" />
                                                                 <span>Edit</span>
                                                             </DropdownMenuItem>
+                                                            {farm.fid && (
+                                                                <DropdownMenuItem onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setSelectedFarm(farm);
+                                                                    setIsQrModalOpen(true);
+                                                                }}>
+                                                                    <QrCode className="mr-2 h-4 w-4" />
+                                                                    <span>View QR</span>
+                                                                </DropdownMenuItem>
+                                                            )}
                                                             <DropdownMenuItem 
-                                                                onClick={() => handleDelete(farm.id)}
+                                                                onClick={(e) => { e.stopPropagation(); handleDelete(farm.id); }}
                                                                 className="text-red-600 focus:text-red-600"
                                                             >
                                                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -405,6 +430,56 @@ export default function FarmsIndex({ farms }: FarmsProps) {
                     </Card>
                 )}
             </div>
+
+            {/* QR Code Modal */}
+            <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <QrCode className="h-5 w-5" />
+                            Farm QR Code
+                        </DialogTitle>
+                        <DialogDescription>
+                            Scan this QR code to view the farm's public profile
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center gap-4 py-6">
+                        {selectedFarm?.fid && (
+                            <>
+                                <div className="bg-white p-6 rounded-lg border-2 border-muted shadow-sm">
+                                    <QRCodeSVG 
+                                        value={`${window.location.origin}/farm/profile/${selectedFarm.fid}`}
+                                        size={256}
+                                        level="H"
+                                    />
+                                </div>
+                                <div className="text-center space-y-2">
+                                    <p className="font-semibold text-lg">
+                                        {selectedFarm.farm_name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        FID: {selectedFarm.fid}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Owner: {selectedFarm.farmer.first_name} {selectedFarm.farmer.last_name}
+                                    </p>
+                                </div>
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full"
+                                    onClick={() => {
+                                        const url = `${window.location.origin}/farm/profile/${selectedFarm.fid}`;
+                                        window.open(url, '_blank');
+                                    }}
+                                >
+                                    <QrCode className="h-4 w-4 mr-2" />
+                                    Open Public Profile
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

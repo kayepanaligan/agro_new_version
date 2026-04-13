@@ -19,7 +19,7 @@ class ProgramController extends Controller
     {
         $programs = Program::with('fundingSource')->orderBy('program_name', 'asc')->get();
 
-        return Inertia::render('admin/programs', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/programs' : 'admin/programs', [
             'programs' => $programs,
             'fundingSources' => FundingSource::orderBy('name', 'asc')->get(),
         ]);

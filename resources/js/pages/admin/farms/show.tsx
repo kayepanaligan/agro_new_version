@@ -1,12 +1,21 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Farm, type Farmer, type FarmParcel } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, User, MapPin, Calendar, Award, Home, FileText } from 'lucide-react';
+import { ArrowLeft, User, MapPin, Calendar, Award, Home, FileText, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,6 +31,9 @@ export default function FarmProfile() {
             farm_parcels: (FarmParcel & {})[];
         };
     }>().props;
+
+    const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+    const [selectedParcel, setSelectedParcel] = useState<any>(null);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -158,9 +170,24 @@ export default function FarmProfile() {
                                                     <h4 className="font-semibold">
                                                         Parcel #{parcel.parcel_number || index + 1}
                                                     </h4>
-                                                    <Badge variant="outline">
-                                                        {parcel.farm_type ? parcel.farm_type.replace(/_/g, ' ') : 'Not specified'}
-                                                    </Badge>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant="outline">
+                                                            {parcel.farm_type ? parcel.farm_type.replace(/_/g, ' ') : 'Not specified'}
+                                                        </Badge>
+                                                        {parcel.fpid && (
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm" 
+                                                                className="h-7 w-7 p-0"
+                                                                onClick={() => {
+                                                                    setSelectedParcel(parcel);
+                                                                    setIsQrModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <QrCode className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 
                                                 <div className="space-y-1 text-sm">
@@ -222,6 +249,59 @@ export default function FarmProfile() {
                     </div>
                 </div>
             </div>
+
+            {/* QR Code Modal */}
+            <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <QrCode className="h-5 w-5" />
+                            Farm Parcel QR Code
+                        </DialogTitle>
+                        <DialogDescription>
+                            Scan this QR code to view the farm parcel's public profile
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center gap-4 py-6">
+                        {selectedParcel?.fpid && (
+                            <>
+                                <div className="bg-white p-6 rounded-lg border-2 border-muted shadow-sm">
+                                    <QRCodeSVG 
+                                        value={`${window.location.origin}/farm-parcel/profile/${selectedParcel.fpid}`}
+                                        size={256}
+                                        level="H"
+                                    />
+                                </div>
+                                <div className="text-center space-y-2">
+                                    <p className="font-semibold text-lg">
+                                        Parcel #{selectedParcel.parcel_number || 'N/A'}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        FPID: {selectedParcel.fpid}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Farm: {farm.farm_name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Owner: {farm.farmer.first_name} {farm.farmer.last_name}
+                                    </p>
+                                </div>
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full"
+                                    onClick={() => {
+                                        const url = `${window.location.origin}/farm-parcel/profile/${selectedParcel.fpid}`;
+                                        window.open(url, '_blank');
+                                    }}
+                                >
+                                    <QrCode className="h-4 w-4 mr-2" />
+                                    Open Public Profile
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

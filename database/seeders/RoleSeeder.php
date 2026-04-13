@@ -31,6 +31,11 @@ class RoleSeeder extends Seeder
             ['description' => 'Technical user with field access']
         );
 
+        $farmerRole = Role::firstOrCreate(
+            ['name' => 'farmer'],
+            ['description' => 'Farmer with limited self-service access']
+        );
+
         // Create fake users for each role (only if they don't exist)
         User::firstOrCreate(
             ['email' => 'superadmin@agroprofiler.com'],

@@ -22,7 +22,7 @@ class AssistanceCategoryController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        return Inertia::render('admin/assistance-categories', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/assistance-categories' : 'admin/assistance-categories', [
             'assistanceCategories' => $assistanceCategories,
             'programs' => Program::orderBy('program_name', 'asc')->get(),
             'barangays' => Barangay::where('is_active', true)->orderBy('name', 'asc')->get(),
@@ -34,7 +34,7 @@ class AssistanceCategoryController extends Controller
      */
     public function getFormData(): Response
     {
-        return Inertia::render('admin/assistance-categories', [
+        return Inertia::render(request()->is('super-admin/*') ? 'super_admin/assistance-categories' : 'admin/assistance-categories', [
             'programs' => Program::orderBy('program_name', 'asc')->get(),
             'barangays' => Barangay::where('is_active', true)->orderBy('name', 'asc')->get(),
         ]);
