@@ -101,9 +101,11 @@ export default function GeographicMap({ data, title }: GeographicMapProps) {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <GeoJSON data={geoJsonData} style={style} onEachFeature={onEachFeature} />
+          
         </MapContainer>
+       
       </MapWrapper>
-      <div className="mt-4 flex items-center gap-2 text-sm">
+    <div className="mt-4 flex items-center gap-2 text-sm">
         <span className="font-semibold">Legend:</span>
         <div className="flex items-center gap-1">
           <div className="h-4 w-4" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}></div>
@@ -119,5 +121,6 @@ export default function GeographicMap({ data, title }: GeographicMapProps) {
         </div>
       </div>
     </div>
+     
   );
 }

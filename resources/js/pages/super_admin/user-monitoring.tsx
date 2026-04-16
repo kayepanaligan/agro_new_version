@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type User } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, Check, Clock, Eye, MoreHorizontal, Pencil, Search, Trash2, X } from 'lucide-react';
+import { Head, router, usePage, Link, useForm } from '@inertiajs/react';
+import { ArrowUpDown, Check, Clock, Eye, MoreHorizontal, Pencil, Search, Trash2, X, Key, Shield, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,6 +18,18 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { getFullName } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -32,15 +44,33 @@ type SortOrder = 'asc' | 'desc';
 
 interface UserWithFullDetails extends User {
     full_name: string;
+    custom_privileges: Array<{
+        id: number;
+        name: string;
+        display_name: string;
+        module: string;
+        granted: boolean;
+    }>;
+    role_permissions: Array<{
+        id: number;
+        name: string;
+        display_name: string;
+        module: string;
+    }>;
+    custom_privileges_count: number;
+    role_permissions_count: number;
 }
 
 export default function UserMonitoring() {
-    const { users } = usePage<{ users: UserWithFullDetails[] }>().props;
+    const { users, permissions } = usePage<{ users: UserWithFullDetails[]; permissions?: Record<string, Array<{id: number; name: string; display_name: string; description: string}>> }>().props;
     const [searchTerm, setSearchTerm] = useState('');
     const [sortField, setSortField] = useState<SortField>('created_at');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [sessionFilter, setSessionFilter] = useState<string>('all');
+    const [selectedUser, setSelectedUser] = useState<UserWithFullDetails | null>(null);
+    const [showPrivilegesDialog, setShowPrivilegesDialog] = useState(false);
+    const [newPrivilege, setNewPrivilege] = useState({ permission_id: '', granted: true, remarks: '' });
 
     // Filter and sort users
     const filteredUsers = useMemo(() => {
@@ -130,6 +160,32 @@ export default function UserMonitoring() {
                 preserveScroll: true,
             });
         }
+    };
+
+    const handleViewPrivileges = (user: UserWithFullDetails) => {
+        setSelectedUser(user);
+        setNewPrivilege({ permission_id: '', granted: true, remarks: '' });
+        setShowPrivilegesDialog(true);
+    };
+
+    const handleAssignPrivilege = () => {
+        if (!selectedUser || !newPrivilege.permission_id) return;
+        
+        router.post(`/super-admin/privileges/${selectedUser.id}/assign`, {
+            permission_id: parseInt(newPrivilege.permission_id),
+            granted: newPrivilege.granted,
+            remarks: newPrivilege.remarks,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setNewPrivilege({ permission_id: '', granted: true, remarks: '' });
+                // Refresh the selected user data
+                const updatedUser = users.find(u => u.id === selectedUser.id);
+                if (updatedUser) {
+                    setSelectedUser(updatedUser);
+                }
+            },
+        });
     };
 
     const getStatusBadge = (status: string) => {
@@ -301,6 +357,10 @@ export default function UserMonitoring() {
                                                                 <Pencil className="mr-2 h-4 w-4" />
                                                                 <span>Update</span>
                                                             </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewPrivileges(user); }}>
+                                                                <Key className="mr-2 h-4 w-4" />
+                                                                <span>View Privileges</span>
+                                                            </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
                                                             {user.registration_status !== 'approved' && (
                                                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleQuickApprove(user.id); }}>
@@ -334,6 +394,197 @@ export default function UserMonitoring() {
                     </div>
                 </div>
             </div>
+
+            {/* Privileges Dialog */}
+            <Dialog open={showPrivilegesDialog} onOpenChange={setShowPrivilegesDialog}>
+                <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Key className="h-5 w-5" />
+                            Manage Privileges - {selectedUser?.full_name}
+                        </DialogTitle>
+                        <DialogDescription>
+                            View and assign custom privileges to this user
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedUser && (
+                        <div className="space-y-6 mt-4">
+                            {/* User Info */}
+                            <div className="flex items-center gap-4 p-4 bg-accent/50 rounded-lg">
+                                <Avatar className="h-12 w-12">
+                                    <AvatarImage src={selectedUser.avatar || undefined} />
+                                    <AvatarFallback>
+                                        {selectedUser.first_name[0]}{selectedUser.last_name[0]}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <div className="font-semibold text-lg">{selectedUser.full_name}</div>
+                                    <div className="text-sm text-muted-foreground">{selectedUser.email}</div>
+                                </div>
+                                {selectedUser.role && (
+                                    <Badge variant="outline" className="ml-auto">
+                                        <Shield className="h-3 w-3 mr-1" />
+                                        {selectedUser.role.name}
+                                    </Badge>
+                                )}
+                            </div>
+
+                            {/* Assign New Privilege Form */}
+                            <div className="p-4 border rounded-lg bg-primary/5">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <Plus className="h-5 w-5 text-primary" />
+                                    Assign New Privilege
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div className="md:col-span-2">
+                                        <Label htmlFor="permission-select">Permission</Label>
+                                        <Select 
+                                            value={newPrivilege.permission_id} 
+                                            onValueChange={(value) => setNewPrivilege({...newPrivilege, permission_id: value})}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a permission" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {permissions && Object.entries(permissions).map(([module, perms]) => (
+                                                    <div key={module}>
+                                                        <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">{module}</div>
+                                                        {perms.map((perm) => (
+                                                            <SelectItem key={perm.id} value={perm.id.toString()}>
+                                                                {perm.display_name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </div>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label>Status</Label>
+                                        <div className="flex items-center gap-2 h-10">
+                                            <Switch 
+                                                checked={newPrivilege.granted}
+                                                onCheckedChange={(checked) => setNewPrivilege({...newPrivilege, granted: checked})}
+                                            />
+                                            <Label className="text-sm">
+                                                {newPrivilege.granted ? 'Granted' : 'Denied'}
+                                            </Label>
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <Label htmlFor="remarks">Remarks (Optional)</Label>
+                                        <Textarea 
+                                            id="remarks"
+                                            placeholder="Add notes about this privilege..."
+                                            value={newPrivilege.remarks}
+                                            onChange={(e) => setNewPrivilege({...newPrivilege, remarks: e.target.value})}
+                                            className="h-10"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    <Button 
+                                        onClick={handleAssignPrivilege}
+                                        disabled={!newPrivilege.permission_id}
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Assign Privilege
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Current Custom Privileges */}
+                            <div>
+                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                    <Key className="h-4 w-4 text-primary" />
+                                    Current Custom Privileges ({selectedUser.custom_privileges.length})
+                                </h3>
+                                {selectedUser.custom_privileges.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {selectedUser.custom_privileges.map((priv) => (
+                                            <div 
+                                                key={priv.id} 
+                                                className="flex items-center justify-between p-3 rounded-lg border"
+                                            >
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-sm">{priv.display_name}</div>
+                                                    <div className="text-xs text-muted-foreground">{priv.module} • {priv.name}</div>
+                                                </div>
+                                                <Badge 
+                                                    className={priv.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
+                                                >
+                                                    {priv.granted ? 'Granted' : 'Denied'}
+                                                </Badge>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 bg-accent/30 rounded-lg">
+                                        <Key className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                                        <p className="text-sm text-muted-foreground mb-2">No custom privileges assigned</p>
+                                        <p className="text-xs text-muted-foreground">Use the form above to assign privileges</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Separator />
+
+                            {/* Role Permissions */}
+                            <div>
+                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                    <Shield className="h-4 w-4 text-blue-600" />
+                                    Role Permissions ({selectedUser.role_permissions.length})
+                                </h3>
+                                {selectedUser.role_permissions.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                                        {selectedUser.role_permissions.map((perm) => (
+                                            <div 
+                                                key={perm.id} 
+                                                className="flex items-center justify-between p-3 rounded-lg border bg-blue-50/50"
+                                            >
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-sm">{perm.display_name}</div>
+                                                    <div className="text-xs text-muted-foreground">{perm.module}</div>
+                                                </div>
+                                                <Badge variant="outline" className="text-blue-600 border-blue-300">
+                                                    Inherited
+                                                </Badge>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 bg-accent/30 rounded-lg">
+                                        <Shield className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                                        <p className="text-sm text-muted-foreground">No role permissions</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Summary */}
+                            <div className="p-4 bg-accent/50 rounded-lg">
+                                <h4 className="font-semibold mb-3">Summary</h4>
+                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                    <div>
+                                        <div className="text-muted-foreground">Custom Privileges</div>
+                                        <div className="text-2xl font-bold text-primary">{selectedUser.custom_privileges_count}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-muted-foreground">Role Permissions</div>
+                                        <div className="text-2xl font-bold text-blue-600">{selectedUser.role_permissions_count}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-muted-foreground">Total Effective</div>
+                                        <div className="text-2xl font-bold">{selectedUser.custom_privileges_count + selectedUser.role_permissions_count}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

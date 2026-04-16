@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type User } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, BadgeCheck, Calendar, Camera, Clock, Mail, MapPin, Phone, UserRound, Users } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Calendar, Camera, Clock, Mail, MapPin, Phone, UserRound, Users, Key, Shield } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,21 @@ interface UserProfile extends User {
         name: string;
         description?: string | null;
     };
+    custom_privileges?: Array<{
+        id: number;
+        name: string;
+        display_name: string;
+        module: string;
+        granted: boolean;
+    }>;
+    role_permissions?: Array<{
+        id: number;
+        name: string;
+        display_name: string;
+        module: string;
+    }>;
+    custom_privileges_count?: number;
+    role_permissions_count?: number;
 }
 
 export default function UserProfilePage() {
@@ -245,6 +260,125 @@ export default function UserProfilePage() {
                                 )}
                             </CardContent>
                         </Card>
+                    </div>
+
+                    {/* Privileges Section */}
+                    <div className="border-t p-6">
+                        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                            <Key className="h-6 w-6 text-primary" />
+                            Privileges & Permissions
+                        </h2>
+                        
+                        <div className="grid gap-6 md:grid-cols-2">
+                            {/* Custom Privileges */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-lg">
+                                        <Key className="h-5 w-5 text-primary" />
+                                        Custom Privileges
+                                        <Badge variant="outline" className="ml-auto">
+                                            {user.custom_privileges?.length || 0}
+                                        </Badge>
+                                    </CardTitle>
+                                    <CardDescription>
+                                        User-specific privilege overrides
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {user.custom_privileges && user.custom_privileges.length > 0 ? (
+                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                            {user.custom_privileges.map((priv) => (
+                                                <div key={priv.id} className="flex items-center justify-between p-3 rounded-lg border">
+                                                    <div className="flex-1">
+                                                        <div className="font-medium text-sm">{priv.display_name}</div>
+                                                        <div className="text-xs text-muted-foreground">{priv.module}</div>
+                                                    </div>
+                                                    <Badge 
+                                                        className={priv.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
+                                                    >
+                                                        {priv.granted ? 'Granted' : 'Denied'}
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8">
+                                            <Key className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                                            <p className="text-sm text-muted-foreground mb-2">No custom privileges</p>
+                                            <Button variant="outline" size="sm" asChild>
+                                                <Link href="/super-admin/users">Manage Privileges</Link>
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Role Permissions */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-lg">
+                                        <Shield className="h-5 w-5 text-blue-600" />
+                                        Role Permissions
+                                        <Badge variant="outline" className="ml-auto">
+                                            {user.role_permissions?.length || 0}
+                                        </Badge>
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Inherited from {user.role.name} role
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {user.role_permissions && user.role_permissions.length > 0 ? (
+                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                            {user.role_permissions.map((perm) => (
+                                                <div key={perm.id} className="flex items-center justify-between p-3 rounded-lg border bg-blue-50/50">
+                                                    <div className="flex-1">
+                                                        <div className="font-medium text-sm">{perm.display_name}</div>
+                                                        <div className="text-xs text-muted-foreground">{perm.module}</div>
+                                                    </div>
+                                                    <Badge variant="outline" className="text-blue-600 border-blue-300">
+                                                        Inherited
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8">
+                                            <Shield className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                                            <p className="text-sm text-muted-foreground">No role permissions</p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Summary Cards */}
+                        <div className="mt-6 grid grid-cols-3 gap-4">
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <div className="text-center">
+                                        <div className="text-3xl font-bold text-primary">{user.custom_privileges_count || 0}</div>
+                                        <div className="text-sm text-muted-foreground mt-1">Custom Privileges</div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <div className="text-center">
+                                        <div className="text-3xl font-bold text-blue-600">{user.role_permissions_count || 0}</div>
+                                        <div className="text-sm text-muted-foreground mt-1">Role Permissions</div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <div className="text-center">
+                                        <div className="text-3xl font-bold">{(user.custom_privileges_count || 0) + (user.role_permissions_count || 0)}</div>
+                                        <div className="text-sm text-muted-foreground mt-1">Total Effective</div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 </div>
             </div>

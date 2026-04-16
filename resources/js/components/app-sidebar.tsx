@@ -1,4 +1,4 @@
-import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText, FolderOpen, FlaskConical } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText, FolderOpen, FlaskConical, Shield, ClipboardCheck, Key, Calendar } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import OfflineStatusIndicator from '@/components/offline-status-indicator';
@@ -221,6 +221,28 @@ export function AppSidebar() {
             ],
         });
 
+        // Task & Report Management
+        navGroups.push({
+            title: 'Task & Report Management',
+            items: [
+                {
+                    title: 'Task Management',
+                    url: '/admin/tasks',
+                    icon: ClipboardCheck,
+                },
+                {
+                    title: 'Technician Reports',
+                    url: '/admin/technician-reports',
+                    icon: FileText,
+                },
+                {
+                    title: 'Activity Calendar',
+                    url: '/admin/calendar',
+                    icon: Calendar,
+                },
+            ],
+        });
+
        
 
         // navGroups.push({
@@ -357,13 +379,29 @@ export function AppSidebar() {
         });
 
         navGroups.push({
-            title: 'Monitoring',
+            title: 'Privilege Management',
             items: [
+                {
+                    title: 'Role Management',
+                    url: '/super-admin/roles',
+                    icon: Shield,
+                },
+                {
+                    title: 'User Privileges',
+                    url: '/super-admin/privileges',
+                    icon: Key,
+                },
                 {
                     title: 'User Monitoring',
                     url: '/super-admin/users',
                     icon: Users,
                 },
+            ],
+        });
+
+        navGroups.push({
+            title: 'Monitoring',
+            items: [
                 {
                     title: 'Session Monitoring',
                     url: '/super-admin/sessions',

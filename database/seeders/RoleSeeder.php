@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -35,6 +36,9 @@ class RoleSeeder extends Seeder
             ['name' => 'farmer'],
             ['description' => 'Farmer with limited self-service access']
         );
+
+        // Assign permissions to roles
+        $this->assignPermissionsToRoles($superAdminRole, $adminRole, $technicianRole, $farmerRole);
 
         // Create fake users for each role (only if they don't exist)
         User::firstOrCreate(
@@ -96,5 +100,39 @@ class RoleSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+    }
+
+    /**
+     * Assign permissions to roles.
+     */
+    private function assignPermissionsToRoles(Role $superAdminRole, Role $adminRole, Role $technicianRole, Role $farmerRole): void
+    {
+        // Super Admin: All permissions
+        $allPermissions = Permission::all();
+        $superAdminRole->permissions()->syncWithoutDetaching($allPermissions->pluck('id')->toArray());
+
+        // Admin: Most permissions except user management delete and full system control
+        $adminPermissions = Permission::whereNotIn('name', [
+            'users.delete',
+        ])->get();
+        $adminRole->permissions()->syncWithoutDetaching($adminPermissions->pluck('id')->toArray());
+
+        // Technician: Field operation permissions
+        $technicianPermissions = Permission::whereIn('name', [
+            'farmers.view', 'farmers.create',
+            'farms.view', 'farms.create',
+            'crop_monitoring.view', 'crop_monitoring.create',
+            'crop_damage.view', 'crop_damage.create',
+            'distribution.view', 'distribution.create',
+            'tasks.view', 'tasks.update',
+            'reports.view',
+        ])->get();
+        $technicianRole->permissions()->syncWithoutDetaching($technicianPermissions->pluck('id')->toArray());
+
+        // Farmer: View own records only
+        $farmerPermissions = Permission::whereIn('name', [
+            'farmers.view',
+        ])->get();
+        $farmerRole->permissions()->syncWithoutDetaching($farmerPermissions->pluck('id')->toArray());
     }
 }

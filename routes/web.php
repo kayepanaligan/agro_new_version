@@ -196,6 +196,30 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/announcements', [App\Http\Controllers\Admin\AnnouncementController::class, 'store'])->name('admin.announcements.store');
         Route::put('/announcements/{announcement}', [App\Http\Controllers\Admin\AnnouncementController::class, 'update'])->name('admin.announcements.update');
         Route::delete('/announcements/{announcement}', [App\Http\Controllers\Admin\AnnouncementController::class, 'destroy'])->name('admin.announcements.destroy');
+
+        // Calendar Route
+        Route::get('/calendar', [App\Http\Controllers\Admin\CalendarController::class, 'index'])->name('admin.calendar');
+
+        // Task Management Routes
+        Route::middleware(['permission:tasks.view'])->group(function () {
+            Route::get('/tasks', [App\Http\Controllers\Admin\TaskManagementController::class, 'index'])->name('admin.tasks');
+            Route::get('/tasks/create', [App\Http\Controllers\Admin\TaskManagementController::class, 'create'])->name('admin.tasks.create');
+            Route::post('/tasks', [App\Http\Controllers\Admin\TaskManagementController::class, 'store'])->name('admin.tasks.store');
+            Route::get('/tasks/{task}', [App\Http\Controllers\Admin\TaskManagementController::class, 'show'])->name('admin.tasks.show');
+            Route::get('/tasks/{task}/edit', [App\Http\Controllers\Admin\TaskManagementController::class, 'edit'])->name('admin.tasks.edit');
+            Route::put('/tasks/{task}', [App\Http\Controllers\Admin\TaskManagementController::class, 'update'])->name('admin.tasks.update');
+            Route::post('/tasks/{task}/verify', [App\Http\Controllers\Admin\TaskManagementController::class, 'verify'])->name('admin.tasks.verify');
+            Route::post('/tasks/{task}/reject', [App\Http\Controllers\Admin\TaskManagementController::class, 'reject'])->name('admin.tasks.reject');
+        });
+
+        // Technician Reports Routes
+        Route::middleware(['permission:reports.view'])->group(function () {
+            Route::get('/technician-reports', [App\Http\Controllers\Admin\TechnicianReportController::class, 'index'])->name('admin.technician-reports');
+            Route::get('/technician-reports/{report}', [App\Http\Controllers\Admin\TechnicianReportController::class, 'show'])->name('admin.technician-reports.show');
+            Route::post('/technician-reports/{report}/verify', [App\Http\Controllers\Admin\TechnicianReportController::class, 'verify'])->name('admin.technician-reports.verify');
+            Route::post('/technician-reports/{report}/reject', [App\Http\Controllers\Admin\TechnicianReportController::class, 'reject'])->name('admin.technician-reports.reject');
+            Route::post('/technician-reports/bulk-verify', [App\Http\Controllers\Admin\TechnicianReportController::class, 'bulkVerify'])->name('admin.technician-reports.bulk-verify');
+        });
     });
 
     // Super Admin Routes
@@ -203,6 +227,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/users', [App\Http\Controllers\SuperAdmin\UserManagementController::class, 'index'])->name('super-admin.users');
         Route::get('/users/{user}', [App\Http\Controllers\SuperAdmin\UserManagementController::class, 'show'])->name('super-admin.users.show');
         Route::post('/users/{user}/status', [App\Http\Controllers\SuperAdmin\UserManagementController::class, 'updateStatus'])->name('super-admin.users.status');
+        Route::post('/users', [App\Http\Controllers\SuperAdmin\UserManagementController::class, 'store'])->name('super-admin.users.store');
+        Route::put('/users/{user}', [App\Http\Controllers\SuperAdmin\UserManagementController::class, 'update'])->name('super-admin.users.update');
+        Route::post('/users/{user}/role', [App\Http\Controllers\SuperAdmin\UserManagementController::class, 'updateRole'])->name('super-admin.users.role');
+        Route::post('/users/{user}/territory', [App\Http\Controllers\SuperAdmin\UserManagementController::class, 'assignTerritory'])->name('super-admin.users.territory');
+        
+        // Role Management Routes (Privilege Management)
+        Route::get('/roles', [App\Http\Controllers\SuperAdmin\RoleManagementController::class, 'index'])->name('super-admin.roles');
+        Route::get('/roles/create', [App\Http\Controllers\SuperAdmin\RoleManagementController::class, 'create'])->name('super-admin.roles.create');
+        Route::post('/roles', [App\Http\Controllers\SuperAdmin\RoleManagementController::class, 'store'])->name('super-admin.roles.store');
+        Route::get('/roles/{role}', [App\Http\Controllers\SuperAdmin\RoleManagementController::class, 'show'])->name('super-admin.roles.show');
+        Route::get('/roles/{role}/edit', [App\Http\Controllers\SuperAdmin\RoleManagementController::class, 'edit'])->name('super-admin.roles.edit');
+        Route::put('/roles/{role}', [App\Http\Controllers\SuperAdmin\RoleManagementController::class, 'update'])->name('super-admin.roles.update');
+        Route::delete('/roles/{role}', [App\Http\Controllers\SuperAdmin\RoleManagementController::class, 'destroy'])->name('super-admin.roles.destroy');
+        
+        // User Privilege Management Routes
+        Route::get('/privileges', [App\Http\Controllers\SuperAdmin\PrivilegeManagementController::class, 'index'])->name('super-admin.privileges');
+        Route::get('/privileges/{user}', [App\Http\Controllers\SuperAdmin\PrivilegeManagementController::class, 'show'])->name('super-admin.privileges.show');
+        Route::post('/privileges/{user}/assign', [App\Http\Controllers\SuperAdmin\PrivilegeManagementController::class, 'assign'])->name('super-admin.privileges.assign');
+        Route::post('/privileges/{user}/bulk-assign', [App\Http\Controllers\SuperAdmin\PrivilegeManagementController::class, 'bulkAssign'])->name('super-admin.privileges.bulk-assign');
+        Route::delete('/privileges/{user}/{privilege}', [App\Http\Controllers\SuperAdmin\PrivilegeManagementController::class, 'remove'])->name('super-admin.privileges.remove');
         
         // Session Monitoring Routes
         Route::get('/sessions', [App\Http\Controllers\SuperAdmin\SessionController::class, 'index'])->name('super-admin.sessions');
