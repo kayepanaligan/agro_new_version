@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Commodity, type Variety } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, Sprout, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -249,35 +249,63 @@ export default function Varieties() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Varieties" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="p-6">
-                        <h1 className="mb-2 text-3xl font-bold">Varieties</h1>
-                        <p className="text-muted-foreground">Manage product varieties and cultivars</p>
-                    </div>
 
-                    <div className="border-t p-6">
-                        {/* Header with Add button */}
-                        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="relative flex-1 max-w-sm">
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+
+                {/* Page Header */}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+                            <Sprout className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Varieties</h1>
+                            <p className="text-sm text-muted-foreground">Manage product varieties and cultivars</p>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="mt-3 sm:mt-0 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Variety
+                    </Button>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {[
+                        { label: 'Total Varieties', value: varieties.length, accent: 'border-l-emerald-500' },
+                        { label: 'With Commodity', value: varieties.filter((v) => v.commodity).length, accent: 'border-l-blue-400' },
+                        { label: 'No Commodity', value: varieties.filter((v) => !v.commodity).length, accent: 'border-l-amber-400' },
+                        { label: 'Commodities', value: new Set(varieties.map((v) => v.commodity_id).filter(Boolean)).size, accent: 'border-l-purple-400' },
+                    ].map((stat) => (
+                        <div
+                            key={stat.label}
+                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
+                        >
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Table Card */}
+                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                            <div className="relative w-full max-w-xs">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     placeholder="Search varieties..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-9"
+                                    className="pl-9 h-9 text-sm"
                                 />
                             </div>
-
-                            <Button onClick={() => setIsCreateModalOpen(true)}>
-                                Add Variety
-                            </Button>
-                        </div>
-
-                        {/* Filters */}
-                        <div className="mb-4 flex items-center gap-2">
                             <Select value={commodityFilter} onValueChange={setCommodityFilter}>
-                                <SelectTrigger className="w-[200px]">
+                                <SelectTrigger className="w-[180px] h-9 text-sm">
                                     <SelectValue placeholder="Filter by commodity" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -290,138 +318,151 @@ export default function Varieties() {
                                 </SelectContent>
                             </Select>
                         </div>
-
-                        {/* Results count */}
-                        <div className="mb-4 text-sm text-muted-foreground">
-                            Showing {paginatedVarieties.length} of {filteredVarieties.length} varieties
-                        </div>
-
-                        {/* Table */}
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[100px]">ID</TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('name')} className="-ml-4">
-                                                Name
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('commodity')} className="-ml-4">
-                                                Commodity
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Created</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredVarieties.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center">
-                                                No varieties found. Click "Add Variety" to create one.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        paginatedVarieties.map((variety) => (
-                                            <TableRow key={variety.id}>
-                                                <TableCell className="font-medium">{variety.id}</TableCell>
-                                                <TableCell className="font-medium">{variety.name}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant="secondary">{variety.commodity?.name || 'No Commodity'}</Badge>
-                                                </TableCell>
-                                                <TableCell>{variety.description || '-'}</TableCell>
-                                                <TableCell>{new Date(variety.created_at).toLocaleDateString()}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => openEditModal(variety)}>
-                                                                <Pencil className="mr-2 h-4 w-4" />
-                                                                <span>Edit</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                onClick={() => openDeleteModal(variety)}
-                                                                className="text-red-600 focus:text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                <span>Delete</span>
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {filteredVarieties.length === varieties.length
+                                ? `${varieties.length} varieties`
+                                : `${filteredVarieties.length} of ${varieties.length} varieties`}
+                        </span>
                     </div>
 
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="border-t p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground">
-                                    Page {currentPage} of {totalPages}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                    >
-                                        Previous
-                                    </Button>
-                                    
-                                    {/* Page number buttons */}
-                                    <div className="flex items-center gap-1">
-                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                            let pageNum;
-                                            if (totalPages <= 5) {
-                                                pageNum = i + 1;
-                                            } else if (currentPage <= 3) {
-                                                pageNum = i + 1;
-                                            } else if (currentPage >= totalPages - 2) {
-                                                pageNum = totalPages - 4 + i;
-                                            } else {
-                                                pageNum = currentPage - 2 + i;
-                                            }
-                                            
-                                            return (
-                                                <Button
-                                                    key={pageNum}
-                                                    variant={currentPage === pageNum ? 'default' : 'outline'}
-                                                    size="sm"
-                                                    onClick={() => setCurrentPage(pageNum)}
-                                                    className="w-10"
-                                                >
-                                                    {pageNum}
-                                                </Button>
-                                            );
-                                        })}
-                                    </div>
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                    <TableHead className="w-16 text-xs font-semibold uppercase tracking-wide text-muted-foreground">ID</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <button
+                                            onClick={() => handleSort('name')}
+                                            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                                        >
+                                            Name
+                                            <ArrowUpDown className="h-3.5 w-3.5" />
+                                        </button>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <button
+                                            onClick={() => handleSort('commodity')}
+                                            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                                        >
+                                            Commodity
+                                            <ArrowUpDown className="h-3.5 w-3.5" />
+                                        </button>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground max-w-xs">Description</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Created</TableHead>
+                                    <TableHead className="w-16 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedVarieties.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-40 text-center">
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <Sprout className="h-8 w-8 opacity-30" />
+                                                <p className="text-sm font-medium">No varieties found</p>
+                                                <p className="text-xs">
+                                                    {searchTerm ? 'Try a different search term.' : 'Click "New Variety" to get started.'}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    paginatedVarieties.map((variety) => (
+                                        <TableRow key={variety.id} className="hover:bg-muted/30 transition-colors">
+                                            <TableCell className="text-xs text-muted-foreground font-mono">{variety.id}</TableCell>
+                                            <TableCell className="font-medium text-sm">{variety.name}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary" className="text-xs">{variety.commodity?.name || 'No Commodity'}</Badge>
+                                            </TableCell>
+                                            <TableCell className="max-w-xs">
+                                                <span className="text-sm text-muted-foreground line-clamp-2">
+                                                    {variety.description || '—'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {new Date(variety.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-36">
+                                                        <DropdownMenuItem
+                                                            onClick={() => openEditModal(variety)}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            <Pencil className="mr-2 h-3.5 w-3.5" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            onClick={() => openDeleteModal(variety)}
+                                                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                        >
+                                                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
 
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between border-t px-6 py-4">
+                            <p className="text-xs text-muted-foreground">
+                                Page {currentPage} of {totalPages}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum: number;
+                                    if (totalPages <= 5) pageNum = i + 1;
+                                    else if (currentPage <= 3) pageNum = i + 1;
+                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                    else pageNum = currentPage - 2 + i;
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                                            size="sm"
+                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    );
+                                })}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
                             </div>
                         </div>
                     )}
@@ -429,24 +470,24 @@ export default function Varieties() {
             </div>
 
             {/* Create Modal */}
-            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { 
-                setIsCreateModalOpen(open); 
-                if (!open) {
-                    resetForm();
-                    // Clear any focused elements to prevent button lock
-                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
-                }
-            }}>
-                <DialogContent>
+            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { setIsCreateModalOpen(open); if (!open) resetForm(); }}>
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Create Variety</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                                <Sprout className="h-4 w-4" />
+                            </span>
+                            New Variety
+                        </DialogTitle>
                         <DialogDescription>
-                            Add a new variety. Fill in the details below.
+                            Add a new product variety. Fields marked with <span className="text-red-500">*</span> are required.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="create-commodity">Commodity</Label>
+                            <Label htmlFor="create-commodity">
+                                Commodity <span className="text-red-500">*</span>
+                            </Label>
                             <Select value={formData.commodity_id} onValueChange={(value) => setFormData({ ...formData, commodity_id: value })}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select commodity" />
@@ -461,7 +502,9 @@ export default function Varieties() {
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="create-name">Name</Label>
+                            <Label htmlFor="create-name">
+                                Name <span className="text-red-500">*</span>
+                            </Label>
                             <Input
                                 id="create-name"
                                 value={formData.name}
@@ -471,11 +514,15 @@ export default function Varieties() {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="create-description">Description</Label>
-                            <Input
+                            <textarea
                                 id="create-description"
                                 value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="e.g., Sweet, crisp carrots"
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                    setFormData({ ...formData, description: e.target.value })
+                                }
+                                placeholder="Brief description of the variety"
+                                rows={3}
+                                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                             />
                         </div>
                     </div>
@@ -483,7 +530,11 @@ export default function Varieties() {
                         <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleCreate}>
+                        <Button
+                            onClick={handleCreate}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            disabled={!formData.name.trim() || !formData.commodity_id}
+                        >
                             Create Variety
                         </Button>
                     </DialogFooter>
@@ -491,24 +542,24 @@ export default function Varieties() {
             </Dialog>
 
             {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={(open) => { 
-                setIsEditModalOpen(open); 
-                if (!open) {
-                    resetForm();
-                    // Clear any focused elements to prevent button lock
-                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
-                }
-            }}>
-                <DialogContent>
+            <Dialog open={isEditModalOpen} onOpenChange={(open) => { setIsEditModalOpen(open); if (!open) resetForm(); }}>
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Edit Variety</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                                <Pencil className="h-4 w-4" />
+                            </span>
+                            Edit Variety
+                        </DialogTitle>
                         <DialogDescription>
-                            Update variety information. Make your changes below.
+                            Update the details for <span className="font-medium text-foreground">{selectedVariety?.name}</span>.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-commodity">Commodity</Label>
+                            <Label htmlFor="edit-commodity">
+                                Commodity <span className="text-red-500">*</span>
+                            </Label>
                             <Select value={formData.commodity_id} onValueChange={(value) => setFormData({ ...formData, commodity_id: value })}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select commodity" />
@@ -523,7 +574,9 @@ export default function Varieties() {
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-name">Name</Label>
+                            <Label htmlFor="edit-name">
+                                Name <span className="text-red-500">*</span>
+                            </Label>
                             <Input
                                 id="edit-name"
                                 value={formData.name}
@@ -532,10 +585,15 @@ export default function Varieties() {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-description">Description</Label>
-                            <Input
+                            <textarea
                                 id="edit-description"
                                 value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                    setFormData({ ...formData, description: e.target.value })
+                                }
+                                placeholder="Brief description of the variety"
+                                rows={3}
+                                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                             />
                         </div>
                     </div>
@@ -543,35 +601,39 @@ export default function Varieties() {
                         <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleUpdate}>
-                            Update Variety
+                        <Button
+                            onClick={handleUpdate}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            disabled={!formData.name.trim() || !formData.commodity_id}
+                        >
+                            Save Changes
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => {
-                setIsDeleteModalOpen(open);
-                if (!open) {
-                    setSelectedVariety(null);
-                    // Clear any focused elements to prevent button lock
-                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
-                }
-            }}>
-                <DialogContent>
+            {/* Delete Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => { setIsDeleteModalOpen(open); if (!open) setSelectedVariety(null); }}>
+                <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
-                        <DialogTitle>Delete Variety</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete "{selectedVariety?.name}"? This action cannot be undone.
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-red-100 text-red-600">
+                                <Trash2 className="h-4 w-4" />
+                            </span>
+                            Delete Variety
+                        </DialogTitle>
+                        <DialogDescription className="pt-1">
+                            This will permanently delete{' '}
+                            <span className="font-medium text-foreground">"{selectedVariety?.name}"</span>.
+                            This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter>
+                    <DialogFooter className="gap-2 sm:gap-0">
                         <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
                             Cancel
                         </Button>
                         <Button variant="destructive" onClick={handleDelete}>
-                            Delete
+                            Delete Variety
                         </Button>
                     </DialogFooter>
                 </DialogContent>

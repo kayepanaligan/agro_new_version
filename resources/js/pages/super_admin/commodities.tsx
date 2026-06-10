@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Category, type Commodity } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, Upload, X, Image as ImageIcon, Package, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -414,35 +414,63 @@ export default function Commodities() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Commodities" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="p-6">
-                        <h1 className="mb-2 text-3xl font-bold">Commodities</h1>
-                        <p className="text-muted-foreground">Manage agricultural products and commodities</p>
-                    </div>
 
-                    <div className="border-t p-6">
-                        {/* Header with Add button */}
-                        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="relative flex-1 max-w-sm">
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+
+                {/* Page Header */}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+                            <Package className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Commodities</h1>
+                            <p className="text-sm text-muted-foreground">Manage agricultural products and commodities</p>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="mt-3 sm:mt-0 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Commodity
+                    </Button>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {[
+                        { label: 'Total Commodities', value: commodities.length, accent: 'border-l-emerald-500' },
+                        { label: 'With Images', value: commodities.filter((c) => c.image_path).length, accent: 'border-l-blue-400' },
+                        { label: 'No Images', value: commodities.filter((c) => !c.image_path).length, accent: 'border-l-amber-400' },
+                        { label: 'Categories', value: new Set(commodities.map((c) => c.category_id).filter(Boolean)).size, accent: 'border-l-purple-400' },
+                    ].map((stat) => (
+                        <div
+                            key={stat.label}
+                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
+                        >
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Table Card */}
+                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                            <div className="relative w-full max-w-xs">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     placeholder="Search commodities..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-9"
+                                    className="pl-9 h-9 text-sm"
                                 />
                             </div>
-
-                            <Button onClick={() => setIsCreateModalOpen(true)}>
-                                Add Commodity
-                            </Button>
-                        </div>
-
-                        {/* Filters */}
-                        <div className="mb-4 flex items-center gap-2">
                             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                                <SelectTrigger className="w-[200px]">
+                                <SelectTrigger className="w-[180px] h-9 text-sm">
                                     <SelectValue placeholder="Filter by category" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -455,152 +483,165 @@ export default function Commodities() {
                                 </SelectContent>
                             </Select>
                         </div>
-
-                        {/* Results count */}
-                        <div className="mb-4 text-sm text-muted-foreground">
-                            Showing {paginatedCommodities.length} of {filteredCommodities.length} commodities
-                        </div>
-
-                        {/* Table */}
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[100px]">ID</TableHead>
-                                        <TableHead>Image</TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('name')} className="-ml-4">
-                                                Name
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('category')} className="-ml-4">
-                                                Category
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Created</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredCommodities.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="h-24 text-center">
-                                                No commodities found. Click "Add Commodity" to create one.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        paginatedCommodities.map((commodity) => (
-                                            <TableRow key={commodity.id}>
-                                                <TableCell className="font-medium">{commodity.id}</TableCell>
-                                                <TableCell>
-                                                    {commodity.image_path ? (
-                                                        <img
-                                                            src={`/storage/${commodity.image_path}?t=${new Date().getTime()}`}
-                                                            alt={commodity.name}
-                                                            className="h-12 w-12 rounded object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
-                                                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                                                        </div>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="font-medium">{commodity.name}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant="secondary">{commodity.category?.name || 'No Category'}</Badge>
-                                                </TableCell>
-                                                <TableCell>{commodity.description || '-'}</TableCell>
-                                                <TableCell>{new Date(commodity.created_at).toLocaleDateString()}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => openEditModal(commodity)}>
-                                                                <Pencil className="mr-2 h-4 w-4" />
-                                                                <span>Edit</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                onClick={() => openDeleteModal(commodity)}
-                                                                className="text-red-600 focus:text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                <span>Delete</span>
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {filteredCommodities.length === commodities.length
+                                ? `${commodities.length} commodities`
+                                : `${filteredCommodities.length} of ${commodities.length} commodities`}
+                        </span>
                     </div>
 
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="border-t p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground">
-                                    Page {currentPage} of {totalPages}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                    >
-                                        Previous
-                                    </Button>
-                                    
-                                    {/* Page number buttons */}
-                                    <div className="flex items-center gap-1">
-                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                            let pageNum;
-                                            if (totalPages <= 5) {
-                                                pageNum = i + 1;
-                                            } else if (currentPage <= 3) {
-                                                pageNum = i + 1;
-                                            } else if (currentPage >= totalPages - 2) {
-                                                pageNum = totalPages - 4 + i;
-                                            } else {
-                                                pageNum = currentPage - 2 + i;
-                                            }
-                                            
-                                            return (
-                                                <Button
-                                                    key={pageNum}
-                                                    variant={currentPage === pageNum ? 'default' : 'outline'}
-                                                    size="sm"
-                                                    onClick={() => setCurrentPage(pageNum)}
-                                                    className="w-10"
-                                                >
-                                                    {pageNum}
-                                                </Button>
-                                            );
-                                        })}
-                                    </div>
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                    <TableHead className="w-16 text-xs font-semibold uppercase tracking-wide text-muted-foreground">ID</TableHead>
+                                    <TableHead className="w-20 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Image</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <button
+                                            onClick={() => handleSort('name')}
+                                            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                                        >
+                                            Name
+                                            <ArrowUpDown className="h-3.5 w-3.5" />
+                                        </button>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <button
+                                            onClick={() => handleSort('category')}
+                                            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                                        >
+                                            Category
+                                            <ArrowUpDown className="h-3.5 w-3.5" />
+                                        </button>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground max-w-xs">Description</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Created</TableHead>
+                                    <TableHead className="w-16 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedCommodities.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="h-40 text-center">
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <Package className="h-8 w-8 opacity-30" />
+                                                <p className="text-sm font-medium">No commodities found</p>
+                                                <p className="text-xs">
+                                                    {searchTerm ? 'Try a different search term.' : 'Click "New Commodity" to get started.'}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    paginatedCommodities.map((commodity) => (
+                                        <TableRow key={commodity.id} className="hover:bg-muted/30 transition-colors">
+                                            <TableCell className="text-xs text-muted-foreground font-mono">{commodity.id}</TableCell>
+                                            <TableCell>
+                                                {commodity.image_path ? (
+                                                    <img
+                                                        src={`/storage/${commodity.image_path}?t=${new Date().getTime()}`}
+                                                        alt={commodity.name}
+                                                        className="h-10 w-10 rounded object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                                                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="font-medium text-sm">{commodity.name}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary" className="text-xs">{commodity.category?.name || 'No Category'}</Badge>
+                                            </TableCell>
+                                            <TableCell className="max-w-xs">
+                                                <span className="text-sm text-muted-foreground line-clamp-2">
+                                                    {commodity.description || '—'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {new Date(commodity.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-36">
+                                                        <DropdownMenuItem
+                                                            onClick={() => openEditModal(commodity)}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            <Pencil className="mr-2 h-3.5 w-3.5" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            onClick={() => openDeleteModal(commodity)}
+                                                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                        >
+                                                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
 
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between border-t px-6 py-4">
+                            <p className="text-xs text-muted-foreground">
+                                Page {currentPage} of {totalPages}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum: number;
+                                    if (totalPages <= 5) pageNum = i + 1;
+                                    else if (currentPage <= 3) pageNum = i + 1;
+                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                    else pageNum = currentPage - 2 + i;
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                                            size="sm"
+                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    );
+                                })}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
                             </div>
                         </div>
                     )}
@@ -608,25 +649,25 @@ export default function Commodities() {
             </div>
 
             {/* Create Modal */}
-            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { 
-                setIsCreateModalOpen(open); 
-                if (!open) {
-                    resetForm();
-                    // Clear any focused elements to prevent button lock
-                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
-                }
-            }}>
-                <DialogContent className="max-w-2xl">
+            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { setIsCreateModalOpen(open); if (!open) resetForm(); }}>
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Create Commodity</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                                <Package className="h-4 w-4" />
+                            </span>
+                            New Commodity
+                        </DialogTitle>
                         <DialogDescription>
-                            Add a new commodity. Fill in the details below.
+                            Add a new agricultural commodity. Fields marked with <span className="text-red-500">*</span> are required.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="create-category">Category</Label>
+                                <Label htmlFor="create-category">
+                                    Category <span className="text-red-500">*</span>
+                                </Label>
                                 <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select category" />
@@ -641,25 +682,30 @@ export default function Commodities() {
                                 </Select>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="create-name">Name</Label>
+                                <Label htmlFor="create-name">
+                                    Name <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="create-name"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="e.g., Carrot"
+                                    placeholder="e.g., Rice"
                                 />
                             </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="create-description">Description</Label>
-                            <Input
+                            <textarea
                                 id="create-description"
                                 value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="e.g., Fresh orange carrots"
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                    setFormData({ ...formData, description: e.target.value })
+                                }
+                                placeholder="Brief description of the commodity"
+                                rows={3}
+                                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                             />
                         </div>
-                        
                         <ImageUploadArea
                             label="Product Image"
                             imageFile={formData.image}
@@ -671,7 +717,11 @@ export default function Commodities() {
                         <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleCreate}>
+                        <Button
+                            onClick={handleCreate}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            disabled={!formData.name.trim() || !formData.category_id}
+                        >
                             Create Commodity
                         </Button>
                     </DialogFooter>
@@ -679,25 +729,25 @@ export default function Commodities() {
             </Dialog>
 
             {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={(open) => { 
-                setIsEditModalOpen(open); 
-                if (!open) {
-                    resetForm();
-                    // Clear any focused elements to prevent button lock
-                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
-                }
-            }}>
-                <DialogContent className="max-w-2xl">
+            <Dialog open={isEditModalOpen} onOpenChange={(open) => { setIsEditModalOpen(open); if (!open) resetForm(); }}>
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Edit Commodity</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                                <Pencil className="h-4 w-4" />
+                            </span>
+                            Edit Commodity
+                        </DialogTitle>
                         <DialogDescription>
-                            Update commodity information. Make your changes below.
+                            Update the details for <span className="font-medium text-foreground">{selectedCommodity?.name}</span>.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="edit-category">Category</Label>
+                                <Label htmlFor="edit-category">
+                                    Category <span className="text-red-500">*</span>
+                                </Label>
                                 <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select category" />
@@ -712,7 +762,9 @@ export default function Commodities() {
                                 </Select>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="edit-name">Name</Label>
+                                <Label htmlFor="edit-name">
+                                    Name <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="edit-name"
                                     value={formData.name}
@@ -722,13 +774,17 @@ export default function Commodities() {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-description">Description</Label>
-                            <Input
+                            <textarea
                                 id="edit-description"
                                 value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                    setFormData({ ...formData, description: e.target.value })
+                                }
+                                placeholder="Brief description of the commodity"
+                                rows={3}
+                                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                             />
                         </div>
-                        
                         <ImageUploadArea
                             label="Product Image"
                             imageFile={formData.image}
@@ -740,35 +796,39 @@ export default function Commodities() {
                         <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleUpdate}>
-                            Update Commodity
+                        <Button
+                            onClick={handleUpdate}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            disabled={!formData.name.trim() || !formData.category_id}
+                        >
+                            Save Changes
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => {
-                setIsDeleteModalOpen(open);
-                if (!open) {
-                    setSelectedCommodity(null);
-                    // Clear any focused elements to prevent button lock
-                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
-                }
-            }}>
-                <DialogContent>
+            {/* Delete Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => { setIsDeleteModalOpen(open); if (!open) setSelectedCommodity(null); }}>
+                <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
-                        <DialogTitle>Delete Commodity</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete "{selectedCommodity?.name}"? This action cannot be undone.
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-red-100 text-red-600">
+                                <Trash2 className="h-4 w-4" />
+                            </span>
+                            Delete Commodity
+                        </DialogTitle>
+                        <DialogDescription className="pt-1">
+                            This will permanently delete{' '}
+                            <span className="font-medium text-foreground">"{selectedCommodity?.name}"</span>.
+                            This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter>
+                    <DialogFooter className="gap-2 sm:gap-0">
                         <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
                             Cancel
                         </Button>
                         <Button variant="destructive" onClick={handleDelete}>
-                            Delete
+                            Delete Commodity
                         </Button>
                     </DialogFooter>
                 </DialogContent>

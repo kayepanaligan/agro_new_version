@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type DamageCategory, type DamageType } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Plus, Search, Trash2, Image as ImageIcon } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Plus, Search, Trash2, Image as ImageIcon, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 import { Badge } from '@/components/ui/badge';
