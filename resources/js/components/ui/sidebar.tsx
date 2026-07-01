@@ -38,6 +38,8 @@ type SidebarContext = {
     setOpenMobile: (open: boolean) => void;
     isMobile: boolean;
     toggleSidebar: () => void;
+    hideSidebar: () => void;
+    showSidebar: () => void;
     customWidth: number | null;
     setCustomWidth: (width: number | null) => void;
     isResizing: boolean;
@@ -127,16 +129,31 @@ const SidebarProvider = React.forwardRef<
         [setOpenProp, open, setSidebarMode],
     );
 
-    // Helper to cycle the sidebar: expanded → collapsed → hidden → expanded
+    // Toggle between expanded and collapsed only
     const toggleSidebar = React.useCallback(() => {
         if (isMobile) {
             return setOpenMobile((open) => !open);
         }
         setSidebarMode((prev) => {
             if (prev === 'expanded') return 'collapsed';
-            if (prev === 'collapsed') return 'hidden';
             return 'expanded';
         });
+    }, [isMobile, setOpenMobile, setSidebarMode]);
+
+    // Hide the sidebar completely
+    const hideSidebar = React.useCallback(() => {
+        if (isMobile) {
+            return setOpenMobile(false);
+        }
+        setSidebarMode('hidden');
+    }, [isMobile, setOpenMobile, setSidebarMode]);
+
+    // Show the sidebar (restore from hidden)
+    const showSidebar = React.useCallback(() => {
+        if (isMobile) {
+            return setOpenMobile(true);
+        }
+        setSidebarMode('expanded');
     }, [isMobile, setOpenMobile, setSidebarMode]);
 
     // Listen for mobile navigation events
@@ -178,12 +195,14 @@ const SidebarProvider = React.forwardRef<
             openMobile,
             setOpenMobile,
             toggleSidebar,
+            hideSidebar,
+            showSidebar,
             customWidth,
             setCustomWidth,
             isResizing,
             setIsResizing,
         }),
-        [sidebarMode, open, setOpen, setSidebarMode, isMobile, openMobile, setOpenMobile, toggleSidebar, customWidth, setCustomWidth, isResizing, setIsResizing],
+        [sidebarMode, open, setOpen, setSidebarMode, isMobile, openMobile, setOpenMobile, toggleSidebar, hideSidebar, showSidebar, customWidth, setCustomWidth, isResizing, setIsResizing],
     );
 
     return (

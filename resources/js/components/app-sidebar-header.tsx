@@ -1,6 +1,6 @@
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ThemePicker } from '@/components/theme-picker';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useSidebar } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -9,7 +9,7 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { type SharedData, getFullName } from '@/types';
 import { usePage } from '@inertiajs/react';
-import { Search, MessageSquare, ChevronDown, Calendar } from 'lucide-react';
+import { Search, MessageSquare, ChevronDown, Calendar, PanelLeft, PanelLeftClose, PanelLeftOpen, PanelRight } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,9 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
     const isAdmin = auth.user.role?.name === 'admin';
     const [searchOpen, setSearchOpen] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
+    const { state, toggleSidebar, hideSidebar, showSidebar } = useSidebar();
+    const isHidden = state === 'hidden';
+    const isCollapsed = state === 'collapsed';
 
     useEffect(() => {
         if (searchOpen && searchRef.current) {
@@ -32,7 +35,63 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
     return (
         <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4 header-glass">
             <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
+                {isHidden ? (
+                    <TooltipProvider delayDuration={0}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={showSidebar}
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-primary/10 hover:text-primary"
+                                >
+                                    <PanelLeftOpen className="h-4 w-4" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right"><p>Show Sidebar</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                ) : (
+                    <div className="glass-surface flex items-center rounded-lg p-0.5">
+                        {/* Collapse / Expand toggle */}
+                        <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={toggleSidebar}
+                                        className={cn(
+                                            'flex h-7 w-7 items-center justify-center rounded-md transition-colors',
+                                            'hover:bg-primary/15 hover:text-primary',
+                                            isCollapsed && 'bg-primary/10 text-primary',
+                                        )}
+                                    >
+                                        {isCollapsed
+                                            ? <PanelRight className="h-3.5 w-3.5" />
+                                            : <PanelLeft className="h-3.5 w-3.5" />
+                                        }
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>{isCollapsed ? 'Expand' : 'Collapse'}</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Thin divider */}
+                        <div className="mx-0.5 h-4 w-px bg-border dark:bg-foreground/25" />
+
+                        {/* Hide sidebar */}
+                        <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={hideSidebar}
+                                        className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-primary/15 hover:text-primary"
+                                    >
+                                        <PanelLeftClose className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Hide Sidebar</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                )}
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
             
