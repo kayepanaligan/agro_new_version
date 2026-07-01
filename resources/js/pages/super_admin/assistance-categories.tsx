@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type AssistanceCategory, type BreadcrumbItem, type Program, type Barangay } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, Layers, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, Layers, Plus, Heart, Users, Calendar, TrendingUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -193,6 +197,19 @@ export default function AssistanceCategories() {
         }));
     };
 
+    const handleExportCsv = () => {
+        const headers = ['ID', 'Name', 'Description', 'Program', 'Barangays', 'Created'];
+        const rows = filteredCategories.map((c) => [
+            c.id,
+            c.name,
+            c.description || '',
+            c.program?.program_name || '',
+            (c.barangay_ids || []).length === 0 ? 'All' : (c.barangay_ids || []).length.toString(),
+            new Date(c.created_at).toLocaleDateString(),
+        ]);
+        exportToCsv('assistance-categories', headers, rows);
+    };
+
     const sharedTextareaClass =
         'flex min-h-[88px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none';
 
@@ -289,45 +306,30 @@ export default function AssistanceCategories() {
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
 
                 {/* Page Header */}
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                            <Layers className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Assistance Categories</h1>
-                            <p className="text-sm text-muted-foreground">Define kinds of support distributed within programs</p>
-                        </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Assistance Categories</h1>
+                        <p className="text-sm text-muted-foreground">Define kinds of support distributed within programs</p>
                     </div>
-                    <Button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="mt-3 sm:mt-0 bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Category
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Category
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {[
-                        { label: 'Total Categories', value: assistanceCategories.length, accent: 'border-l-primary' },
-                        { label: 'With Program', value: assistanceCategories.filter((c) => c.program_id).length, accent: 'border-l-blue-400' },
-                        { label: 'Limited Barangays', value: assistanceCategories.filter((c) => (c.barangay_ids || []).length > 0).length, accent: 'border-l-amber-400' },
-                        { label: 'All Barangays', value: assistanceCategories.filter((c) => (c.barangay_ids || []).length === 0).length, accent: 'border-l-purple-400' },
-                    ].map((stat) => (
-                        <div
-                            key={stat.label}
-                            className={`glass-card rounded-lg p-4 border-l-4 ${stat.accent}`}
-                        >
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                        </div>
-                    ))}
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Categories" value={assistanceCategories.length} icon={Layers} />
+                    <KpiCard label="With Program" value={assistanceCategories.filter((c) => c.program_id).length} icon={Heart} />
+                    <KpiCard label="Limited Barangays" value={assistanceCategories.filter((c) => (c.barangay_ids || []).length > 0).length} icon={Users} />
+                    <KpiCard label="All Barangays" value={assistanceCategories.filter((c) => (c.barangay_ids || []).length === 0).length} icon={Calendar} />
                 </div>
 
                 {/* Table Card */}
-                <div className="glass-card rounded-xl overflow-hidden">
+                <div className="glass-card rounded-2xl overflow-hidden">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="relative w-full max-w-xs">
@@ -459,48 +461,8 @@ export default function AssistanceCategories() {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t px-6 py-4">
-                            <p className="text-xs text-muted-foreground">
-                                Page {currentPage} of {totalPages}
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum: number;
-                                    if (totalPages <= 5) pageNum = i + 1;
-                                    else if (currentPage <= 3) pageNum = i + 1;
-                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                                    else pageNum = currentPage - 2 + i;
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            variant={currentPage === pageNum ? 'default' : 'outline'}
-                                            size="sm"
-                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-primary hover:bg-primary/90 border-primary' : ''}`}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                        <div className="border-t p-4">
+                            <Pagination currentPage={currentPage} lastPage={totalPages} total={filteredCategories.length} perPage={itemsPerPage} onPageChange={setCurrentPage} />
                         </div>
                     )}
                 </div>

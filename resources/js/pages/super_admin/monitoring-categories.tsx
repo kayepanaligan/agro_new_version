@@ -9,7 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Search, ArrowUpDown, FolderKanban } from 'lucide-react';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { exportToCsv, exportToPdf } from '@/lib/export';
+import { Plus, Pencil, Trash2, Search, ArrowUpDown, FolderKanban, FileText, Users, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -104,53 +107,27 @@ export default function MonitoringCategories({ categories }: Props) {
             return 0;
         });
 
+    const handleExportCsv = () => {
+        const headers = ['ID', 'Category Name', 'Description', 'Folders', 'Created'];
+        const rows = filteredAndSortedCategories.map(c => [
+            c.crop_monitoring_category_id, c.category_name, c.description || '', c.folders_count || 0, new Date(c.created_at).toLocaleDateString(),
+        ]);
+        exportToCsv('monitoring-categories', headers, rows);
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Monitoring Categories" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 {/* Page Header */}
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                        <FolderKanban className="h-5 w-5" />
-                    </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Monitoring Categories</h1>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Monitoring Categories</h1>
                         <p className="text-sm text-muted-foreground">Manage crop monitoring category types</p>
                     </div>
-                </div>
-
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {[
-                        { label: 'Total Categories', value: categories.length, accent: 'border-l-primary' },
-                        { label: 'With Folders', value: categories.filter((c) => (c.folders_count || 0) > 0).length, accent: 'border-l-blue-400' },
-                        { label: 'No Folders', value: categories.filter((c) => (c.folders_count || 0) === 0).length, accent: 'border-l-amber-400' },
-                        { label: 'Total Folders', value: categories.reduce((sum, c) => sum + (c.folders_count || 0), 0), accent: 'border-l-purple-400' },
-                    ].map((stat) => (
-                        <div
-                            key={stat.label}
-                            className={`glass-card rounded-lg p-4 border-l-4 ${stat.accent}`}
-                        >
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Table Card */}
-                <div className="glass-card rounded-xl overflow-hidden">
-                    {/* Toolbar */}
-                    <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="relative w-full max-w-xs">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                placeholder="Search categories..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9"
-                            />
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
                         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                             <DialogTrigger asChild>
                                 <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -208,10 +185,35 @@ export default function MonitoringCategories({ categories }: Props) {
                             </DialogContent>
                         </Dialog>
                     </div>
+                </div>
 
-                    <span className="px-6 text-xs text-muted-foreground">
-                        {filteredAndSortedCategories.length} of {categories.length} categorie{categories.length !== 1 ? 's' : 'y'}
-                    </span>
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Categories" value={categories.length} icon={FolderKanban} />
+                    <KpiCard label="With Folders" value={categories.filter((c) => (c.folders_count || 0) > 0).length} icon={FileText} />
+                    <KpiCard label="No Folders" value={categories.filter((c) => (c.folders_count || 0) === 0).length} icon={Users} />
+                    <KpiCard label="Total Folders" value={categories.reduce((sum, c) => sum + (c.folders_count || 0), 0)} icon={TrendingUp} />
+                </div>
+
+                {/* Table Card */}
+                <div className="glass-card rounded-2xl overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="relative w-full max-w-xs">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Search categories..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-9 h-9"
+                            />
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {filteredAndSortedCategories.length === categories.length
+                                ? `${categories.length} categories`
+                                : `${filteredAndSortedCategories.length} of ${categories.length} categories`}
+                        </span>
+                    </div>
 
                     {/* Table */}
                     <div className="overflow-x-auto">

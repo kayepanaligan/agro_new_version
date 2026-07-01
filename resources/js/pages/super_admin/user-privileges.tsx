@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -115,20 +114,22 @@ export default function UserPrivileges({ user, permissions, userPrivileges, role
         <AppLayout>
             <Head title={`Privileges - ${user.full_name}`} />
             
-            <div className="p-6 space-y-6">
+            <div className="flex h-full flex-1 flex-col gap-5 p-4 md:p-6">
                 {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Link href="/super-admin/privileges">
-                        <Button variant="outline" size="icon">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                    </Link>
-                    <div className="flex-1">
-                        <h1 className="text-3xl font-bold tracking-tight">{user.full_name}</h1>
-                        <p className="text-muted-foreground mt-1">{user.email}</p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link href="/super-admin/privileges">
+                            <Button variant="outline" size="icon" className="h-9 w-9">
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{user.full_name}</h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">{user.email}</p>
+                        </div>
                     </div>
                     {user.role && (
-                        <Badge variant="outline" className="flex items-center gap-1 px-4 py-2">
+                        <Badge variant="outline" className="flex items-center gap-1 px-4 py-2 w-fit">
                             <Shield className="h-4 w-4" />
                             {user.role.name}
                         </Badge>
@@ -139,14 +140,14 @@ export default function UserPrivileges({ user, permissions, userPrivileges, role
                     {/* Left Column - Permission Assignment */}
                     <div className="lg:col-span-2 space-y-6">
                         {Object.entries(permissions).map(([module, modulePermissions]) => (
-                            <Card key={module}>
-                                <CardHeader>
-                                    <CardTitle className="text-lg">{module}</CardTitle>
-                                    <CardDescription>
+                            <div key={module} className="glass-card rounded-2xl p-6">
+                                <div className="mb-4">
+                                    <h2 className="text-lg font-semibold">{module}</h2>
+                                    <p className="text-sm text-muted-foreground">
                                         {modulePermissions.length} permissions
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
+                                    </p>
+                                </div>
+                                <div>
                                     <div className="space-y-4">
                                         {modulePermissions.map((permission) => {
                                             const status = getPermissionStatus(permission);
@@ -176,24 +177,24 @@ export default function UserPrivileges({ user, permissions, userPrivileges, role
                                             );
                                         })}
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         ))}
                     </div>
 
                     {/* Right Column - Privilege History */}
                     <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
+                        <div className="glass-card rounded-2xl p-6">
+                            <div className="mb-4">
+                                <h2 className="flex items-center gap-2 text-lg font-semibold">
                                     <Key className="h-5 w-5" />
                                     Privilege History
-                                </CardTitle>
-                                <CardDescription>
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
                                     Recent privilege changes
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
+                                </p>
+                            </div>
+                            <div>
                                 <div className="space-y-4 max-h-[600px] overflow-y-auto">
                                     {privilegeHistory.map((history) => (
                                         <div key={history.id} className="pb-4 border-b last:border-b-0 last:pb-0">
@@ -228,14 +229,12 @@ export default function UserPrivileges({ user, permissions, userPrivileges, role
                                         </div>
                                     )}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Legend</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Legend</h2>
+                            <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <Badge className="bg-green-100 text-green-700">Granted (Override)</Badge>
                                 </div>
@@ -269,8 +268,8 @@ export default function UserPrivileges({ user, permissions, userPrivileges, role
                                 <p className="text-xs text-muted-foreground ml-1">
                                     Not granted by role or override
                                 </p>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

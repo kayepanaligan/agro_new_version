@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type User } from '@/types';
 import { Head, router, usePage, Link, useForm } from '@inertiajs/react';
-import { ArrowUpDown, Check, Clock, Eye, MoreHorizontal, Pencil, Search, Trash2, X, Key, Shield, Plus, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, Check, Clock, Eye, MoreHorizontal, Pencil, Search, Trash2, X, Key, Shield, Plus, Users, UserCheck, UserX, Activity } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -31,6 +31,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { getFullName } from '@/types';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -168,6 +172,20 @@ export default function UserMonitoring() {
         }
     };
 
+    const handleExportCsv = () => {
+        const headers = ['ID', 'Name', 'Email', 'Role', 'Status', 'Session', 'Registered'];
+        const rows = filteredUsers.map((u) => [
+            u.id,
+            getFullName(u),
+            u.email,
+            u.role?.name || 'No Role',
+            u.registration_status || 'pending',
+            u.is_active_session ? 'Active' : 'Inactive',
+            new Date(u.created_at).toLocaleDateString(),
+        ]);
+        exportToCsv('users', headers, rows);
+    };
+
     const handleViewPrivileges = (user: UserWithFullDetails) => {
         setSelectedUser(user);
         setNewPrivilege({ permission_id: '', granted: true, remarks: '' });
@@ -225,38 +243,26 @@ export default function UserMonitoring() {
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
 
                 {/* Page Header */}
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
-                            <Users className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">User Monitoring</h1>
-                            <p className="text-sm text-muted-foreground">Review and manage user registrations and activities</p>
-                        </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">User Monitoring</h1>
+                        <p className="text-sm text-muted-foreground">Review and manage user registrations and activities</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
                     </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {[
-                        { label: 'Total Users', value: users.length, accent: 'border-l-emerald-500' },
-                        { label: 'Approved', value: users.filter((u) => u.registration_status === 'approved').length, accent: 'border-l-blue-400' },
-                        { label: 'Pending', value: users.filter((u) => u.registration_status === 'pending').length, accent: 'border-l-amber-400' },
-                        { label: 'Active Now', value: users.filter((u) => u.is_active_session).length, accent: 'border-l-purple-400' },
-                    ].map((stat) => (
-                        <div
-                            key={stat.label}
-                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
-                        >
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                        </div>
-                    ))}
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Users" value={users.length} icon={Users} />
+                    <KpiCard label="Approved" value={users.filter((u) => u.registration_status === 'approved').length} icon={UserCheck} />
+                    <KpiCard label="Pending" value={users.filter((u) => u.registration_status === 'pending').length} icon={Clock} />
+                    <KpiCard label="Active Now" value={users.filter((u) => u.is_active_session).length} icon={Activity} />
                 </div>
 
                 {/* Table Card */}
-                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                <div className="glass-card rounded-2xl overflow-hidden">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="relative w-full max-w-xs">
@@ -426,48 +432,8 @@ export default function UserMonitoring() {
             
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t px-6 py-4">
-                            <p className="text-xs text-muted-foreground">
-                                Page {currentPage} of {totalPages}
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum: number;
-                                    if (totalPages <= 5) pageNum = i + 1;
-                                    else if (currentPage <= 3) pageNum = i + 1;
-                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                                    else pageNum = currentPage - 2 + i;
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            variant={currentPage === pageNum ? 'default' : 'outline'}
-                                            size="sm"
-                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                        <div className="border-t p-4">
+                            <Pagination currentPage={currentPage} lastPage={totalPages} total={filteredUsers.length} perPage={itemsPerPage} onPageChange={setCurrentPage} />
                         </div>
                     )}
                 </div>

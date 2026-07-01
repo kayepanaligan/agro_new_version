@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, Calendar, Eye, FileText, Filter, Search, User, X, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, Calendar, Eye, FileText, Filter, Search, User, X, ClipboardList, RefreshCw, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,6 +20,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -138,6 +142,26 @@ export default function AuditLogs() {
         setIsDetailModalOpen(true);
     };
 
+    const handleExportCsv = () => {
+        const headers = ['Timestamp', 'User', 'Event', 'Module', 'Description', 'IP Address'];
+        const rows = auditLogs.data.map((log) => [
+            formatDate(log.created_at),
+            log.user?.full_name || 'Unknown',
+            log.event,
+            getModuleName(log.module),
+            log.description,
+            log.ip_address || '-',
+        ]);
+        exportToCsv('audit-logs', headers, rows);
+    };
+
+    const handlePageChange = (page: number) => {
+        router.get('/super-admin/audit-logs', { ...filters, page }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
     const getEventBadge = (event: string) => {
         const config: Record<string, { color: string; label: string }> = {
             created: { color: 'bg-emerald-600', label: 'Created' },
@@ -176,38 +200,26 @@ export default function AuditLogs() {
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
 
                 {/* Page Header */}
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
-                            <ClipboardList className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Audit Logs</h1>
-                            <p className="text-sm text-muted-foreground">Monitor all user activities and system transactions</p>
-                        </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Audit Logs</h1>
+                        <p className="text-sm text-muted-foreground">Monitor all user activities and system transactions</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
                     </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {[
-                        { label: 'Total Logs', value: auditLogs.total, accent: 'border-l-emerald-500' },
-                        { label: 'Created', value: auditLogs.data.filter((l) => l.event === 'created').length, accent: 'border-l-blue-400' },
-                        { label: 'Updated', value: auditLogs.data.filter((l) => l.event === 'updated').length, accent: 'border-l-amber-400' },
-                        { label: 'Unique Users', value: new Set(auditLogs.data.filter((l) => l.user).map((l) => l.user!.id)).size, accent: 'border-l-purple-400' },
-                    ].map((stat) => (
-                        <div
-                            key={stat.label}
-                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
-                        >
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                        </div>
-                    ))}
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Logs" value={auditLogs.total} icon={ClipboardList} />
+                    <KpiCard label="Created" value={auditLogs.data.filter((l) => l.event === 'created').length} icon={FileText} />
+                    <KpiCard label="Updated" value={auditLogs.data.filter((l) => l.event === 'updated').length} icon={RefreshCw} />
+                    <KpiCard label="Unique Users" value={new Set(auditLogs.data.filter((l) => l.user).map((l) => l.user!.id)).size} icon={Users} />
                 </div>
                 
                 {/* Table Card */}
-                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                <div className="glass-card rounded-2xl overflow-hidden">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 border-b px-6 py-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -386,77 +398,8 @@ export default function AuditLogs() {
 
                     {/* Pagination */}
                     {auditLogs.last_page > 1 && (
-                        <div className="flex items-center justify-between border-t px-6 py-4">
-                            <p className="text-xs text-muted-foreground">
-                                Page {auditLogs.current_page} of {auditLogs.last_page}
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                        const page = auditLogs.current_page - 1;
-                                        if (page >= 1) {
-                                            router.get(`/super-admin/audit-logs`, { ...filters, page }, {
-                                                preserveState: true,
-                                                preserveScroll: true,
-                                            });
-                                        }
-                                    }}
-                                    disabled={auditLogs.current_page === 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                
-                                {Array.from({ length: Math.min(5, auditLogs.last_page) }, (_, i) => {
-                                    let pageNum: number;
-                                    if (auditLogs.last_page <= 5) {
-                                        pageNum = i + 1;
-                                    } else if (auditLogs.current_page <= 3) {
-                                        pageNum = i + 1;
-                                    } else if (auditLogs.current_page >= auditLogs.last_page - 2) {
-                                        pageNum = auditLogs.last_page - 4 + i;
-                                    } else {
-                                        pageNum = auditLogs.current_page - 2 + i;
-                                    }
-
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            variant={auditLogs.current_page === pageNum ? 'default' : 'outline'}
-                                            size="sm"
-                                            className={`h-8 w-8 p-0 text-xs ${auditLogs.current_page === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
-                                            onClick={() => {
-                                                router.get(`/super-admin/audit-logs`, { ...filters, page: pageNum }, {
-                                                    preserveState: true,
-                                                    preserveScroll: true,
-                                                });
-                                            }}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
-
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                        const page = auditLogs.current_page + 1;
-                                        if (page <= auditLogs.last_page) {
-                                            router.get(`/super-admin/audit-logs`, { ...filters, page }, {
-                                                preserveState: true,
-                                                preserveScroll: true,
-                                            });
-                                        }
-                                    }}
-                                    disabled={auditLogs.current_page === auditLogs.last_page}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                        <div className="border-t p-4">
+                            <Pagination currentPage={auditLogs.current_page} lastPage={auditLogs.last_page} total={auditLogs.total} perPage={auditLogs.data.length} onPageChange={handlePageChange} />
                         </div>
                     )}
                 </div>

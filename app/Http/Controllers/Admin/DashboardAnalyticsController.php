@@ -20,12 +20,12 @@ class DashboardAnalyticsController extends Controller
     /**
      * Display the admin dashboard with analytics data.
      */
-    public function index(Request $request)
+    public function index(Request $request, string $view = 'admin/dashboard')
     {
         $dateStart = $request->input('date_start');
         $dateEnd = $request->input('date_end');
 
-        return Inertia::render('admin/dashboard', [
+        return Inertia::render($view, [
             'analytics' => [
                 'kpis' => $this->getKpis($dateStart, $dateEnd),
                 'demographics' => $this->getDemographicsData($dateStart, $dateEnd),

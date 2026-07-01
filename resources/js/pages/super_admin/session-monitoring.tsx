@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, Clock, Globe, Laptop, LogOut, MoreHorizontal, Monitor, Power, Search, ShieldCheck, Smartphone, Tablet, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, Clock, Globe, Laptop, LogOut, MoreHorizontal, Monitor, Power, Search, ShieldCheck, Smartphone, Tablet, Activity, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +19,10 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getFullName } from '@/types';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -154,6 +158,21 @@ export default function SessionMonitoring() {
         }
     };
 
+    const handleExportCsv = () => {
+        const headers = ['User', 'Email', 'IP Address', 'Device', 'Browser', 'OS', 'Last Activity', 'Status'];
+        const rows = filteredSessions.map((s) => [
+            s.user?.full_name || 'Unknown',
+            s.user?.email || '',
+            s.ip_address || 'N/A',
+            s.device,
+            s.browser,
+            s.os,
+            formatLastActivity(s.last_activity),
+            s.is_active ? 'Active' : 'Inactive',
+        ]);
+        exportToCsv('sessions', headers, rows);
+    };
+
     const getStatusBadge = (isActive: boolean) => {
         return isActive ? (
             <Badge className="bg-emerald-600 flex items-center gap-1">
@@ -212,46 +231,34 @@ export default function SessionMonitoring() {
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
 
                 {/* Page Header */}
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
-                            <Activity className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Session Monitoring</h1>
-                            <p className="text-sm text-muted-foreground">Monitor and manage active user sessions across the platform</p>
-                        </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Session Monitoring</h1>
+                        <p className="text-sm text-muted-foreground">Monitor and manage active user sessions across the platform</p>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={handleTerminateAllOtherSessions}
-                        className="mt-3 sm:mt-0 text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                        <Power className="mr-2 h-4 w-4" />
-                        Terminate Others
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Button
+                            variant="outline"
+                            onClick={handleTerminateAllOtherSessions}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                            <Power className="mr-2 h-4 w-4" />
+                            Terminate Others
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {[
-                        { label: 'Total Sessions', value: sessions.length, accent: 'border-l-emerald-500' },
-                        { label: 'Active Sessions', value: sessions.filter((s) => s.is_active).length, accent: 'border-l-blue-400' },
-                        { label: 'Unique Users', value: new Set(sessions.map((s) => s.user_id)).size, accent: 'border-l-amber-400' },
-                        { label: 'Mobile Devices', value: sessions.filter((s) => s.device === 'Mobile').length, accent: 'border-l-purple-400' },
-                    ].map((stat) => (
-                        <div
-                            key={stat.label}
-                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
-                        >
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                        </div>
-                    ))}
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Sessions" value={sessions.length} icon={Monitor} />
+                    <KpiCard label="Active Sessions" value={sessions.filter((s) => s.is_active).length} icon={Activity} />
+                    <KpiCard label="Unique Users" value={new Set(sessions.map((s) => s.user_id)).size} icon={Users} />
+                    <KpiCard label="Mobile Devices" value={sessions.filter((s) => s.device === 'Mobile').length} icon={Smartphone} />
                 </div>
 
                 {/* Table Card */}
-                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                <div className="glass-card rounded-2xl overflow-hidden">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="relative w-full max-w-xs">
@@ -437,48 +444,8 @@ export default function SessionMonitoring() {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t px-6 py-4">
-                            <p className="text-xs text-muted-foreground">
-                                Page {currentPage} of {totalPages}
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum: number;
-                                    if (totalPages <= 5) pageNum = i + 1;
-                                    else if (currentPage <= 3) pageNum = i + 1;
-                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                                    else pageNum = currentPage - 2 + i;
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            variant={currentPage === pageNum ? 'default' : 'outline'}
-                                            size="sm"
-                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                        <div className="border-t p-4">
+                            <Pagination currentPage={currentPage} lastPage={totalPages} total={filteredSessions.length} perPage={itemsPerPage} onPageChange={setCurrentPage} />
                         </div>
                     )}
                 </div>

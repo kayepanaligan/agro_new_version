@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type AllocationType, type BreadcrumbItem, type Program, type UnitOfMeasure, type Category, type Commodity, type Variety, type Barangay, type FarmerEligibility } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, ListChecks, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, ListChecks, Plus, DollarSign, Calendar } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -196,42 +199,49 @@ export default function AllocationTypes() {
         setIsDeleteModalOpen(true);
     };
 
+    const handleExportCsv = () => {
+        const headers = ['ID', 'Name', 'Description', 'Amount', 'Program', 'Unit'];
+        const rows = filteredAllocations.map((a) => [
+            a.id,
+            a.name,
+            a.description || '',
+            a.amount.toLocaleString(),
+            a.program?.program_name || '',
+            a.unit_of_measurement?.code || '',
+        ]);
+        exportToCsv('allocation-types', headers, rows);
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Allocation Types" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 {/* Page Header */}
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                        <ListChecks className="h-5 w-5" />
-                    </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Allocation Types</h1>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Allocation Types</h1>
                         <p className="text-sm text-muted-foreground">Manage allocation types for distribution</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Allocation Type
+                        </Button>
                     </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {[
-                        { label: 'Total Types', value: allocationTypes.length, accent: 'border-l-primary' },
-                        { label: 'With Programs', value: allocationTypes.filter((a) => a.program_id).length, accent: 'border-l-blue-400' },
-                        { label: 'Average Amount', value: allocationTypes.length ? Math.round(allocationTypes.reduce((sum, a) => sum + a.amount, 0) / allocationTypes.length).toLocaleString() : 0, accent: 'border-l-amber-400' },
-                        { label: 'Unique Units', value: new Set(allocationTypes.map((a) => a.unit_of_measurement_id)).size, accent: 'border-l-purple-400' },
-                    ].map((stat) => (
-                        <div
-                            key={stat.label}
-                            className={`glass-card rounded-lg p-4 border-l-4 ${stat.accent}`}
-                        >
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                        </div>
-                    ))}
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Types" value={allocationTypes.length} icon={ListChecks} />
+                    <KpiCard label="With Programs" value={allocationTypes.filter((a) => a.program_id).length} icon={DollarSign} />
+                    <KpiCard label="Average Amount" value={allocationTypes.length ? Math.round(allocationTypes.reduce((sum, a) => sum + a.amount, 0) / allocationTypes.length).toLocaleString() : 0} icon={Calendar} />
+                    <KpiCard label="Unique Units" value={new Set(allocationTypes.map((a) => a.unit_of_measurement_id)).size} icon={ListChecks} />
                 </div>
 
                 {/* Table Card */}
-                <div className="glass-card rounded-xl overflow-hidden">
+                <div className="glass-card rounded-2xl overflow-hidden">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 border-b px-6 py-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -244,10 +254,6 @@ export default function AllocationTypes() {
                                     className="pl-9"
                                 />
                             </div>
-                            <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Allocation Type
-                            </Button>
                         </div>
 
                         <span className="text-xs text-muted-foreground">

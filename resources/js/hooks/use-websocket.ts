@@ -14,6 +14,11 @@ interface EventCallback {
     callback: (data: any) => void;
 }
 
+interface SubscriptionEntry {
+    channel: any; // Echo channel object
+    event: string; // event name without leading dot
+}
+
 /**
  * Custom hook for WebSocket connections using Laravel Reverb
  * 
@@ -35,7 +40,7 @@ interface EventCallback {
 export function useWebSocket(options: UseWebSocketOptions = {}) {
     const { enabled = true, onConnect, onDisconnect, onError } = options;
     const echoRef = useRef<ReturnType<typeof initializeEcho> | null>(null);
-    const subscriptionsRef = useRef<Map<string, any>>(new Map());
+    const subscriptionsRef = useRef<Map<string, SubscriptionEntry>>(new Map());
     const callbacksRef = useRef<EventCallback[]>([]);
 
     // Initialize Echo connection
@@ -55,8 +60,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
                 callbacksRef.current.forEach(({ event, channel, callback }) => {
                     const key = `${channel}:${event}`;
                     if (!subscriptionsRef.current.has(key)) {
-                        const subscription = echo.channel(channel).listen(`.${event}`, callback);
-                        subscriptionsRef.current.set(key, subscription);
+                        const ch = echo.channel(channel);
+                        ch.listen(`.${event}`, callback);
+                        subscriptionsRef.current.set(key, { channel: ch, event });
                     }
                 });
             }
@@ -67,8 +73,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
         return () => {
             if (echoRef.current) {
-                subscriptionsRef.current.forEach((subscription) => {
-                    subscription.stopListening();
+                subscriptionsRef.current.forEach((entry) => {
+                    try {
+                        entry.channel.stopListening(`.${entry.event}`);
+                    } catch {
+                        // Channel may already be cleaned up
+                    }
                 });
                 subscriptionsRef.current.clear();
                 
@@ -93,12 +103,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
         // Stop existing subscription if any
         if (subscriptionsRef.current.has(key)) {
-            subscriptionsRef.current.get(key).stopListening();
+            try {
+                const existing = subscriptionsRef.current.get(key)!;
+                existing.channel.stopListening(`.${existing.event}`);
+            } catch {
+                // Ignore errors from already-cleaned channels
+            }
         }
 
         // Create new subscription
-        const subscription = echoRef.current.channel(channel).listen(`.${event}`, callback);
-        subscriptionsRef.current.set(key, subscription);
+        const ch = echoRef.current.channel(channel);
+        ch.listen(`.${event}`, callback);
+        subscriptionsRef.current.set(key, { channel: ch, event });
 
         return () => unsubscribe(channel, event);
     }, []);
@@ -108,7 +124,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         const key = `${channel}:${event}`;
         
         if (subscriptionsRef.current.has(key)) {
-            subscriptionsRef.current.get(key).stopListening();
+            try {
+                const entry = subscriptionsRef.current.get(key)!;
+                entry.channel.stopListening(`.${entry.event}`);
+            } catch {
+                // Channel may already be cleaned up
+            }
             subscriptionsRef.current.delete(key);
         }
 
@@ -120,8 +141,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
     // Unsubscribe from all channels
     const unsubscribeAll = useCallback(() => {
-        subscriptionsRef.current.forEach((subscription) => {
-            subscription.stopListening();
+        subscriptionsRef.current.forEach((entry) => {
+            try {
+                entry.channel.stopListening(`.${entry.event}`);
+            } catch {
+                // Channel may already be cleaned up
+            }
         });
         subscriptionsRef.current.clear();
         callbacksRef.current = [];

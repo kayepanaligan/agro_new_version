@@ -1,8 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Eye, Edit, Trash2, Shield, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Shield, Search, Users, Lock, Key } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 import {
     Table,
     TableBody,
@@ -78,6 +82,19 @@ export default function RoleManagement({ roles }: RoleManagementProps) {
         }
     };
 
+    const handleExportCsv = () => {
+        const headers = ['ID', 'Role Name', 'Description', 'Permissions', 'Users', 'Created'];
+        const rows = filteredRoles.map((r) => [
+            r.id,
+            r.name,
+            r.description || '',
+            r.permissions_count,
+            r.users_count,
+            new Date(r.created_at).toLocaleDateString(),
+        ]);
+        exportToCsv('roles', headers, rows);
+    };
+
     const getRoleBadgeColor = (roleName: string) => {
         switch (roleName) {
             case 'super admin':
@@ -100,47 +117,32 @@ export default function RoleManagement({ roles }: RoleManagementProps) {
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
 
                 {/* Page Header */}
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
-                            <Shield className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Role Management</h1>
-                            <p className="text-sm text-muted-foreground">Manage roles and permissions for system access control</p>
-                        </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Role Management</h1>
+                        <p className="text-sm text-muted-foreground">Manage roles and permissions for system access control</p>
                     </div>
-                    <Button
-                        asChild
-                        className="mt-3 sm:mt-0 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                    >
-                        <Link href={route('super-admin.roles.create')}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            New Role
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                            <Link href={route('super-admin.roles.create')}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Role
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {[
-                        { label: 'Total Roles', value: roles.length, accent: 'border-l-emerald-500' },
-                        { label: 'Super Admins', value: roles.filter((r) => r.name === 'super admin').length, accent: 'border-l-red-500' },
-                        { label: 'Total Permissions', value: roles.reduce((sum, r) => sum + r.permissions_count, 0), accent: 'border-l-blue-400' },
-                        { label: 'Total Users', value: roles.reduce((sum, r) => sum + r.users_count, 0), accent: 'border-l-amber-400' },
-                    ].map((stat) => (
-                        <div
-                            key={stat.label}
-                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
-                        >
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                        </div>
-                    ))}
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Roles" value={roles.length} icon={Shield} />
+                    <KpiCard label="Super Admins" value={roles.filter((r) => r.name === 'super admin').length} icon={Lock} />
+                    <KpiCard label="Total Permissions" value={roles.reduce((sum, r) => sum + r.permissions_count, 0)} icon={Key} />
+                    <KpiCard label="Total Users" value={roles.reduce((sum, r) => sum + r.users_count, 0)} icon={Users} />
                 </div>
 
                 {/* Table Card */}
-                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                <div className="glass-card rounded-2xl overflow-hidden">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="relative w-full max-w-xs">
@@ -259,48 +261,8 @@ export default function RoleManagement({ roles }: RoleManagementProps) {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t px-6 py-4">
-                            <p className="text-xs text-muted-foreground">
-                                Page {currentPage} of {totalPages}
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum: number;
-                                    if (totalPages <= 5) pageNum = i + 1;
-                                    else if (currentPage <= 3) pageNum = i + 1;
-                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                                    else pageNum = currentPage - 2 + i;
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            variant={currentPage === pageNum ? 'default' : 'outline'}
-                                            size="sm"
-                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                        <div className="border-t p-4">
+                            <Pagination currentPage={currentPage} lastPage={totalPages} total={filteredRoles.length} perPage={itemsPerPage} onPageChange={setCurrentPage} />
                         </div>
                     )}
                 </div>

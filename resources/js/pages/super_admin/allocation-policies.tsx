@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type AllocationPolicy, type AllocationType } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, FileText, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, FileText, Plus, Shield, Link2, TrendingUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Allocation Policies', href: '/super-admin/allocation-policies' }];
 
@@ -55,6 +59,14 @@ export default function AllocationPolicies() {
         return <Badge variant={variants[type] || 'secondary'}>{type}</Badge>;
     };
 
+    const handleExportCsv = () => {
+        const headers = ['ID', 'Allocation Type', 'Policy Type', 'Status', 'Created'];
+        const rows = filteredPolicies.map(p => [
+            p.id, p.allocation_type?.name || '', p.policy_type, p.is_active ? 'Active' : 'Inactive', new Date(p.created_at).toLocaleDateString(),
+        ]);
+        exportToCsv('allocation-policies', headers, rows);
+    };
+
     const FormFields = ({ prefix }: { prefix: string }) => (
         <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -95,45 +107,30 @@ export default function AllocationPolicies() {
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
 
                 {/* Page Header */}
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                            <FileText className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Allocation Policies</h1>
-                            <p className="text-sm text-muted-foreground">DSS logic for recommended allocations</p>
-                        </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Allocation Policies</h1>
+                        <p className="text-sm text-muted-foreground">DSS logic for recommended allocations</p>
                     </div>
-                    <Button
-                        onClick={handleQuickAdd}
-                        className="mt-3 sm:mt-0 bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Policy
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Button onClick={handleQuickAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Policy
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {[
-                        { label: 'Total Policies', value: allocationPolicies.length, accent: 'border-l-primary' },
-                        { label: 'Active', value: allocationPolicies.filter((p) => p.is_active).length, accent: 'border-l-blue-400' },
-                        { label: 'Inactive', value: allocationPolicies.filter((p) => !p.is_active).length, accent: 'border-l-amber-400' },
-                        { label: 'Equal Policy', value: allocationPolicies.filter((p) => p.policy_type === 'equal').length, accent: 'border-l-purple-400' },
-                    ].map((stat) => (
-                        <div
-                            key={stat.label}
-                            className={`glass-card rounded-lg p-4 border-l-4 ${stat.accent}`}
-                        >
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                        </div>
-                    ))}
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Policies" value={allocationPolicies.length} icon={FileText} />
+                    <KpiCard label="Active" value={allocationPolicies.filter((p) => p.is_active).length} icon={Shield} />
+                    <KpiCard label="Inactive" value={allocationPolicies.filter((p) => !p.is_active).length} icon={Link2} />
+                    <KpiCard label="Equal Policy" value={allocationPolicies.filter((p) => p.policy_type === 'equal').length} icon={TrendingUp} />
                 </div>
 
                 {/* Table Card */}
-                <div className="glass-card rounded-xl overflow-hidden">
+                <div className="glass-card rounded-2xl overflow-hidden">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="relative w-full max-w-xs">
@@ -231,48 +228,14 @@ export default function AllocationPolicies() {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t px-6 py-4">
-                            <p className="text-xs text-muted-foreground">
-                                Page {currentPage} of {totalPages}
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum: number;
-                                    if (totalPages <= 5) pageNum = i + 1;
-                                    else if (currentPage <= 3) pageNum = i + 1;
-                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                                    else pageNum = currentPage - 2 + i;
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            variant={currentPage === pageNum ? 'default' : 'outline'}
-                                            size="sm"
-                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-primary hover:bg-primary/90 border-primary' : ''}`}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                        <div className="border-t p-4">
+                            <Pagination
+                                currentPage={currentPage}
+                                lastPage={totalPages}
+                                total={filteredPolicies.length}
+                                perPage={itemsPerPage}
+                                onPageChange={setCurrentPage}
+                            />
                         </div>
                     )}
                 </div>

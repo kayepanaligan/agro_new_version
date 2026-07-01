@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Eye, Edit, CheckCircle, XCircle, Filter, LayoutGrid, List, ClipboardList, Clock, AlertTriangle, Users } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
@@ -130,6 +131,8 @@ const STATUS_LABELS: Record<string, string> = {
 const PIE_COLORS = ['hsl(var(--primary))', '#3b82f6', '#eab308', '#ef4444', '#8b5cf6', '#22c55e'];
 
 export default function Tasks({ tasks, technicians, filters, productivity }: TasksProps) {
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+
     const handleFilter = (key: string, value: string) => {
         const params = new URLSearchParams();
         if (value && value !== 'all') {
@@ -279,6 +282,30 @@ export default function Tasks({ tasks, technicians, filters, productivity }: Tas
                                         </p>
                                     </div>
                                 </div>
+                                <div className="flex items-center gap-1 rounded-lg border p-1">
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+                                            viewMode === 'list'
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                        title="List view"
+                                    >
+                                        <List className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+                                            viewMode === 'grid'
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                        title="Grid view"
+                                    >
+                                        <LayoutGrid className="h-4 w-4" />
+                                    </button>
+                                </div>
                             </div>
 
                             {tasks.data.length === 0 ? (
@@ -293,7 +320,8 @@ export default function Tasks({ tasks, technicians, filters, productivity }: Tas
                                 </div>
                             ) : (
                                 <>
-                                    {/* List View */}
+                                    {viewMode === 'list' ? (
+                                    /* List View */
                                     <div className="overflow-x-auto">
                                         <Table>
                                             <TableHeader>
@@ -363,8 +391,8 @@ export default function Tasks({ tasks, technicians, filters, productivity }: Tas
                                             </TableBody>
                                         </Table>
                                     </div>
-
-                                    {/* Grid View */}
+                                    ) : (
+                                    /* Grid View */
                                     <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
                                         {tasks.data.map((task) => (
                                             <Link key={`grid-${task.id}`} href={route('admin.tasks.show', task.id)}>
@@ -405,6 +433,7 @@ export default function Tasks({ tasks, technicians, filters, productivity }: Tas
                                             </Link>
                                         ))}
                                     </div>
+                                    )}
                                 </>
                             )}
                         </div>

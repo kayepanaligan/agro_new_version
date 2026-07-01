@@ -18,7 +18,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Redirect based on user role
         if ($user->role && $user->role->name === 'super admin') {
-            return Inertia::render('super_admin/dashboard');
+            return app(\App\Http\Controllers\Admin\DashboardAnalyticsController::class)->index($request, 'super_admin/dashboard');
         } elseif ($user->role && $user->role->name === 'admin') {
             return app(\App\Http\Controllers\Admin\DashboardAnalyticsController::class)->index($request);
         } elseif ($user->role && $user->role->name === 'farmer') {

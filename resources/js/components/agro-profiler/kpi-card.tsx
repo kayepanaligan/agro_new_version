@@ -16,7 +16,7 @@ export function KpiCard({ label, value, icon: Icon, trend, className }: KpiCardP
     return (
         <div
             className={cn(
-                'glass-card relative overflow-hidden rounded-2xl p-5 transition-all hover:shadow-md',
+                'glass-card relative overflow-hidden rounded-2xl p-5',
                 className
             )}
         >
