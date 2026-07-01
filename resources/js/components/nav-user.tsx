@@ -11,21 +11,22 @@ export function NavUser() {
     const { auth } = usePage<SharedData>().props;
     const { state } = useSidebar();
     const isMobile = useIsMobile();
+    const isCollapsed = state === 'collapsed' || state === 'hidden';
 
     return (
         <SidebarMenu>
             <SidebarMenuItem>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton size="lg" className="text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent group">
+                        <SidebarMenuButton size="lg" className={`text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent group ${isCollapsed ? 'justify-center px-0' : ''}`}>
                             <UserInfo user={auth.user} />
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            {!isCollapsed && <ChevronsUpDown className="ml-auto size-4" />}
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
                         align="end"
-                        side={isMobile ? 'bottom' : state === 'collapsed' ? 'left' : 'bottom'}
+                        side={isMobile ? 'bottom' : (state === 'collapsed' || state === 'hidden') ? 'left' : 'bottom'}
                     >
                         <UserMenuContent user={auth.user} />
                     </DropdownMenuContent>

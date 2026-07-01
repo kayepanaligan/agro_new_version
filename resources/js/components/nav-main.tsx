@@ -6,16 +6,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 export function NavMain({ title, items = [] }: { title?: string; items: NavItem[] }) {
     const page = usePage();
     const { state } = useSidebar();
-    const isCollapsed = state === 'collapsed';
+    const isCollapsed = state === 'collapsed' || state === 'hidden';
 
     const isActiveLink = (itemUrl: string) => {
         return page.url === itemUrl || page.url.startsWith(itemUrl + '/');
     };
     
     return (
-        <SidebarGroup className={`px-2 py-0 ${isCollapsed ? 'space-y-2' : ''}`}>
+        <SidebarGroup className={`py-0 ${isCollapsed ? 'px-1 space-y-2' : 'px-2'}`}>
             {title && <SidebarGroupLabel>{title}</SidebarGroupLabel>}
-            <SidebarMenu className={isCollapsed ? 'gap-2' : ''}>
+            <SidebarMenu className={isCollapsed ? 'gap-2 items-center' : ''}>
                 {items.map((item) => {
                     const active = isActiveLink(item.url);
                     const activeClasses = active
@@ -36,9 +36,9 @@ export function NavMain({ title, items = [] }: { title?: string; items: NavItem[
                                             <Link 
                                                 href={item.url} 
                                                 prefetch 
-                                                className="flex items-center justify-center w-full h-full pointer-events-auto"
+                                                className="flex items-center justify-center w-full h-full"
                                             >
-                                                {item.icon && <item.icon className={`h-5 w-5 ${active ? 'text-primary' : ''}`} />}
+                                                {item.icon && <item.icon className={`h-5 w-5 shrink-0 ${active ? 'text-primary' : ''}`} />}
                                             </Link>
                                         </SidebarMenuButton>
                                     </TooltipTrigger>

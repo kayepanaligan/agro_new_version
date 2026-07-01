@@ -11,7 +11,7 @@ export function NavFooter({
     items: NavItem[];
 }) {
     const { state } = useSidebar();
-    const isCollapsed = state === 'collapsed';
+    const isCollapsed = state === 'collapsed' || state === 'hidden';
     
     return (
         <SidebarGroup {...props} className={`group-data-[collapsible=icon]:p-0 ${className || ''}`}>

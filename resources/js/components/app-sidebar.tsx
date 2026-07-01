@@ -2,7 +2,7 @@ import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, Gra
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import OfflineStatusIndicator from '@/components/offline-status-indicator';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarResizeHandle, useSidebar } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage, router } from '@inertiajs/react';
@@ -18,6 +18,8 @@ export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
     const isSuperAdmin = auth.user.role?.name === 'super admin';
     const isAdmin = auth.user.role?.name === 'admin';
+    const { state } = useSidebar();
+    const isCollapsed = state === 'collapsed' || state === 'hidden';
     const scrollAreaContainerRef = useRef<HTMLDivElement>(null);
     const SCROLL_STORAGE_KEY = 'sidebar_scroll_position';
 
@@ -462,7 +464,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch>
+                            <Link href="/dashboard" prefetch className="flex items-center justify-center">
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -470,20 +472,33 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="overflow-hidden">
-                <ScrollArea className="h-full px-2 py-0" ref={scrollAreaContainerRef}>
-                    {navGroups.map((group) => (
-                        <NavMain key={group.title} title={group.title} items={group.items} />
-                    ))}
-                </ScrollArea>
+            <SidebarContent>
+                {isCollapsed ? (
+                    <div className="h-full py-0" ref={scrollAreaContainerRef as any}>
+                        {navGroups.map((group) => (
+                            <NavMain key={group.title} title={group.title} items={group.items} />
+                        ))}
+                    </div>
+                ) : (
+                    <ScrollArea className="h-full px-2 py-0" ref={scrollAreaContainerRef}>
+                        {navGroups.map((group) => (
+                            <NavMain key={group.title} title={group.title} items={group.items} />
+                        ))}
+                    </ScrollArea>
+                )}
             </SidebarContent>
 
             <SidebarFooter>
-                <div className="px-4 py-2 border-t">
-                    <OfflineStatusIndicator />
-                </div>
+                {!isCollapsed && (
+                    <div className="px-4 py-2 border-t">
+                        <OfflineStatusIndicator />
+                    </div>
+                )}
                 <NavUser />
             </SidebarFooter>
+
+            {/* Resize handle only visible in expanded mode */}
+            {state === 'expanded' && <SidebarResizeHandle />}
         </Sidebar>
     );
 }
