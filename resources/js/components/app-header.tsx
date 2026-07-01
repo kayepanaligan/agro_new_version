@@ -7,11 +7,13 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuT
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { RealTimeNotifications } from '@/components/real-time-notifications';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
-import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
+import { type BreadcrumbItem, type NavItem, type SharedData, getFullName } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Menu, Search, MessageSquare, ChevronDown } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -46,6 +48,16 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
     const getInitials = useInitials();
+    const [searchOpen, setSearchOpen] = useState(false);
+    const searchRef = useRef<HTMLInputElement>(null);
+    const fullName = getFullName(auth.user);
+
+    useEffect(() => {
+        if (searchOpen && searchRef.current) {
+            searchRef.current.focus();
+        }
+    }, [searchOpen]);
+
     return (
         <>
             <div className="border-sidebar-border/80 border-b">
@@ -124,46 +136,70 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                         </NavigationMenu>
                     </div>
 
-                    <div className="ml-auto flex items-center space-x-2">
-                        <div className="relative flex items-center space-x-1">
-                            <Button variant="ghost" size="icon" className="group h-9 w-9 cursor-pointer">
-                                <Search className="!size-5 opacity-80 group-hover:opacity-100" />
-                            </Button>
-                            <div className="hidden lg:flex">
-                                {rightNavItems.map((item) => (
-                                    <TooltipProvider key={item.title} delayDuration={0}>
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <a
-                                                    href={item.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="group text-accent-foreground ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring ml-1 inline-flex h-9 w-9 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                                                >
-                                                    <span className="sr-only">{item.title}</span>
-                                                    {item.icon && <Icon iconNode={item.icon} className="size-5 opacity-80 group-hover:opacity-100" />}
-                                                </a>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{item.title}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                ))}
-                            </div>
+                    <div className="ml-auto flex items-center gap-3">
+                        {/* Search Bar */}
+                        <div className={cn(
+                            'relative transition-all duration-300',
+                            searchOpen ? 'w-64' : 'w-9'
+                        )}>
+                            {searchOpen ? (
+                                <div className="glass-surface flex items-center rounded-xl">
+                                    <Search className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" />
+                                    <input
+                                        ref={searchRef}
+                                        type="text"
+                                        placeholder="Search anything..."
+                                        className="h-9 w-full bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
+                                        onBlur={() => setSearchOpen(false)}
+                                    />
+                                    <kbd className="mr-2 rounded-md border bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">ESC</kbd>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setSearchOpen(true)}
+                                    className="glass-surface flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-primary/10 hover:text-primary"
+                                >
+                                    <Search className="h-4 w-4" />
+                                </button>
+                            )}
                         </div>
+
+                        {/* Action Icons Container */}
+                        <div className="glass-surface flex items-center gap-1 rounded-xl px-1.5 py-1">
+                            {/* Messages */}
+                            <TooltipProvider delayDuration={0}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-primary/10 hover:text-primary">
+                                            <MessageSquare className="h-4 w-4" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Messages</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            {/* Notifications */}
+                            <RealTimeNotifications compact />
+                        </div>
+
+                        {/* User Profile Dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="size-10 rounded-full p-1">
-                                    <Avatar className="size-8 overflow-hidden rounded-full">
-                                        <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
-                                        <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                            {getInitials(auth.user.name)}
+                                <button className="glass-surface flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-primary/10">
+                                    <Avatar className="h-7 w-7 overflow-hidden rounded-full">
+                                        <AvatarImage src={auth.user.avatar} alt={fullName} />
+                                        <AvatarFallback className="rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                                            {getInitials(fullName)}
                                         </AvatarFallback>
                                     </Avatar>
-                                </Button>
+                                    <div className="hidden flex-col items-start lg:flex">
+                                        <span className="text-xs font-semibold leading-tight">{fullName}</span>
+                                        <span className="text-[10px] leading-tight text-muted-foreground">{auth.user.email}</span>
+                                    </div>
+                                    <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground lg:block" />
+                                </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end">
+                            <DropdownMenuContent className="w-60" align="end">
                                 <UserMenuContent user={auth.user} />
                             </DropdownMenuContent>
                         </DropdownMenu>

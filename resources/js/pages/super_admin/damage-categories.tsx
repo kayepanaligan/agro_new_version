@@ -213,7 +213,7 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
                 {/* Page Header */}
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                             <AlertTriangle className="h-5 w-5" />
                         </div>
                         <div>
@@ -223,7 +223,7 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
                     </div>
                     <Button
                         onClick={openCreateModal}
-                        className="mt-3 sm:mt-0 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                        className="mt-3 sm:mt-0 bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         New Category
@@ -233,14 +233,14 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     {[
-                        { label: 'Total Categories', value: damageCategories.length, accent: 'border-l-emerald-500' },
+                        { label: 'Total Categories', value: damageCategories.length, accent: 'border-l-primary' },
                         { label: 'With Types', value: damageCategories.filter((c) => (c.damage_types_count || 0) > 0).length, accent: 'border-l-blue-400' },
                         { label: 'No Types', value: damageCategories.filter((c) => (c.damage_types_count || 0) === 0).length, accent: 'border-l-amber-400' },
                         { label: 'Total Damage Types', value: damageCategories.reduce((sum, c) => sum + (c.damage_types_count || 0), 0), accent: 'border-l-purple-400' },
                     ].map((stat) => (
                         <div
                             key={stat.label}
-                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
+                            className={`glass-card rounded-lg p-4 border-l-4 ${stat.accent}`}
                         >
                             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
                             <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
@@ -249,7 +249,7 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
                 </div>
 
                 {/* Table Card */}
-                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                <div className="glass-card rounded-xl overflow-hidden">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="relative w-full max-w-xs">
@@ -388,7 +388,7 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
                                             key={pageNum}
                                             variant={currentPage === pageNum ? 'default' : 'outline'}
                                             size="sm"
-                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
+                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-primary hover:bg-primary/90 border-primary' : ''}`}
                                             onClick={() => setCurrentPage(pageNum)}
                                         >
                                             {pageNum}
@@ -431,7 +431,7 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
                         </Button>
                         <Button
                             onClick={handleCreate}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
                             disabled={!formData.damage_category_name.trim()}
                         >
                             Create Category
@@ -461,7 +461,7 @@ export default function DamageCategories({ damageCategories }: DamageCategoriesP
                         </Button>
                         <Button
                             onClick={handleUpdate}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
                             disabled={!formData.damage_category_name.trim()}
                         >
                             Save Changes

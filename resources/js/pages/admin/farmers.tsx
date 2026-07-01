@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Commodity, type Farmer, type Organization, type Program, type Variety } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, User, List, LayoutGrid, QrCode } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, User, List, LayoutGrid, QrCode, Users, UserCheck, UserX, Clock, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -28,6 +28,15 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { NarrativeCard } from '@/components/agro-profiler/narrative-card';
+import { DashboardDateFilter, type DateRange } from '@/components/agro-profiler/dashboard-date-filter';
+import { exportToCsv, exportToPdf } from '@/lib/export';
+import BarChart from '@/components/charts/BarChart';
+import PieChart from '@/components/charts/PieChart';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ComprehensiveFarmerForm from './farmers/forms/comprehensive-farmer-form';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -482,75 +491,202 @@ export default function Farmers() {
         setSelectedFarmer(null);
     };
 
+    // KPI counts
+    const kpiCounts = useMemo(() => {
+        const total = farmers.length;
+        const verified = farmers.filter(f => f.registration_status === 'verified').length;
+        const pending = farmers.filter(f => f.registration_status === 'for_submission' || f.registration_status === 'submitted_to_da').length;
+        const rejected = farmers.filter(f => f.registration_status === 'rejected').length;
+        return { total, verified, pending, rejected };
+    }, [farmers]);
+
+    const handleExportCsv = () => {
+        const headers = ['LFID', 'Last Name', 'First Name', 'Middle Name', 'Sex', 'RSBSA', 'Contact', 'Status'];
+        const rows = filteredFarmers.map(f => [
+            f.lfid || '', f.last_name, f.first_name, f.middle_name || '', f.sex, f.rsbsa_number || '',
+            f.contact_number || '', f.registration_status || 'not registered',
+        ]);
+        exportToCsv('farmers', headers, rows);
+    };
+
+    // Analytics date filter
+    const [analyticsDateRange, setAnalyticsDateRange] = useState<DateRange | null>(null);
+
+    // Analytics computed from farmer data (filtered by date range)
+    const farmerAnalytics = useMemo(() => {
+        // Filter farmers by date range if set
+        const filtered = analyticsDateRange
+            ? farmers.filter(f => {
+                const created = f.created_at ? f.created_at.substring(0, 10) : '';
+                return created >= analyticsDateRange.start && created <= analyticsDateRange.end;
+            })
+            : farmers;
+
+        const gender = filtered.reduce((acc, f) => {
+            const key = f.sex || 'Unknown';
+            const existing = acc.find(a => a.name === key);
+            if (existing) existing.count++;
+            else acc.push({ name: key, count: 1 });
+            return acc;
+        }, [] as { name: string; count: number }[]);
+
+        const civilStatus = filtered.reduce((acc, f) => {
+            const key = f.civil_status || 'Unknown';
+            const existing = acc.find(a => a.name === key);
+            if (existing) existing.count++;
+            else acc.push({ name: key, count: 1 });
+            return acc;
+        }, [] as { name: string; count: number }[]);
+
+        const p4ps = [
+            { name: '4Ps Beneficiary', count: filtered.filter(f => f.is_4ps_beneficiary).length },
+            { name: 'Non-Beneficiary', count: filtered.filter(f => !f.is_4ps_beneficiary).length },
+        ];
+
+        const ipStatus = [
+            { name: 'Indigenous Peoples', count: filtered.filter(f => f.is_ip).length },
+            { name: 'Non-IP', count: filtered.filter(f => !f.is_ip).length },
+        ];
+
+        const registrationStatus = [
+            { name: 'Verified', count: filtered.filter(f => f.registration_status === 'verified').length },
+            { name: 'For Submission', count: filtered.filter(f => f.registration_status === 'for_submission').length },
+            { name: 'Submitted to DA', count: filtered.filter(f => f.registration_status === 'submitted_to_da').length },
+            { name: 'Rejected', count: filtered.filter(f => f.registration_status === 'rejected').length },
+        ].filter(d => d.count > 0);
+
+        // Barangay distribution
+        const barangayDist = filtered.reduce((acc, f) => {
+            const key = f.barangay || 'Unknown';
+            const existing = acc.find(a => a.name === key);
+            if (existing) existing.count++;
+            else acc.push({ name: key, count: 1 });
+            return acc;
+        }, [] as { name: string; count: number }[]).sort((a, b) => b.count - a.count);
+
+        // Age distribution (approximate from birthdate)
+        const now = new Date();
+        const ageGroups = { '18-25': 0, '26-35': 0, '36-45': 0, '46-55': 0, '56-65': 0, '65+': 0 };
+        filtered.forEach(f => {
+            if (!f.birthdate) return;
+            const age = Math.floor((now.getTime() - new Date(f.birthdate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+            if (age <= 25) ageGroups['18-25']++;
+            else if (age <= 35) ageGroups['26-35']++;
+            else if (age <= 45) ageGroups['36-45']++;
+            else if (age <= 55) ageGroups['46-55']++;
+            else if (age <= 65) ageGroups['56-65']++;
+            else ageGroups['65+']++;
+        });
+        const ageDistribution = Object.entries(ageGroups).map(([name, count]) => ({ name, count }));
+
+        // Livelihood from household primary_livelihood
+        const livelihoodDist = filtered.reduce((acc, f) => {
+            const key = f.household?.primary_livelihood || 'Not specified';
+            const existing = acc.find(a => a.name === key);
+            if (existing) existing.count++;
+            else acc.push({ name: key, count: 1 });
+            return acc;
+        }, [] as { name: string; count: number }[]).sort((a, b) => b.count - a.count);
+
+        // Narrative
+        const total = filtered.length;
+        const verifiedCount = filtered.filter(f => f.registration_status === 'verified').length;
+        const femaleCount = filtered.filter(f => f.sex === 'Female').length;
+        const ipCount = filtered.filter(f => f.is_ip).length;
+        const p4psCount = filtered.filter(f => f.is_4ps_beneficiary).length;
+        const topBarangay = barangayDist[0];
+        const topLivelihood = livelihoodDist[0];
+        let narrative = `The farmer registry contains ${total.toLocaleString()} registered farmers. `;
+        narrative += `${verifiedCount} farmers have been verified (${Math.round((verifiedCount / Math.max(total, 1)) * 100)}% verification rate). `;
+        narrative += `${femaleCount} (${Math.round((femaleCount / Math.max(total, 1)) * 100)}%) are female. `;
+        if (ipCount > 0) narrative += `${ipCount} belong to indigenous peoples communities. `;
+        if (p4psCount > 0) narrative += `${p4psCount} are 4Ps beneficiaries. `;
+        if (topBarangay) narrative += `The barangay with the most farmers is ${topBarangay.name} with ${topBarangay.count} registered. `;
+        if (topLivelihood) narrative += `The predominant livelihood is ${topLivelihood.name}.`;
+
+        return { gender, civilStatus, p4ps, ipStatus, registrationStatus, barangayDist, ageDistribution, livelihoodDist, narrative, filteredCount: filtered.length };
+    }, [farmers, analyticsDateRange]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Farmers" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="p-6">
-                        <h1 className="mb-2 text-3xl font-bold">Farmers</h1>
-                        <p className="text-muted-foreground">Manage farmer registry and information</p>
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
+                {/* Page Header */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Farmers</h1>
+                        <p className="text-sm text-muted-foreground">Manage farmer registry and information</p>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Button onClick={() => setIsCreateModalOpen(true)}>
+                            Add Farmer
+                        </Button>
+                    </div>
+                </div>
 
-                    <div className="border-t p-6">
-                        {/* Header with Add button */}
-                        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="flex flex-col gap-4 md:flex-row md:items-center flex-1">
-                                <div className="relative flex-1 max-w-sm">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search farmers..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-9"
-                                    />
-                                </div>
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Farmers" value={kpiCounts.total} icon={Users} />
+                    <KpiCard label="Verified" value={kpiCounts.verified} icon={UserCheck} />
+                    <KpiCard label="Pending" value={kpiCounts.pending} icon={Clock} />
+                    <KpiCard label="Rejected" value={kpiCounts.rejected} icon={UserX} />
+                </div>
+
+                {/* Tabs */}
+                <Tabs defaultValue="farmers" className="flex flex-col gap-4">
+                    <TabsList className="glass-surface w-fit">
+                        <TabsTrigger value="farmers" className="gap-2"><Users className="h-4 w-4" />Farmers</TabsTrigger>
+                        <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="h-4 w-4" />Reports & Analytics</TabsTrigger>
+                    </TabsList>
+
+                    {/* Farmers Tab */}
+                    <TabsContent value="farmers" className="flex flex-col gap-5">
+                <div className="glass-card rounded-2xl">
+                    <div className="space-y-3 border-b p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="relative max-w-sm flex-1">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search farmers..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="h-9 pl-9"
+                                />
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button 
-                                    variant={viewMode === 'card' ? 'default' : 'outline'} 
-                                    size="sm" 
-                                    onClick={() => {
-                                        setViewMode('card');
-                                        localStorage.setItem('farmerViewMode', 'card');
-                                    }}
+                                <Button
+                                    variant={viewMode === 'card' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => { setViewMode('card'); localStorage.setItem('farmerViewMode', 'card'); }}
                                     className="h-9 w-9 p-0"
                                 >
                                     <LayoutGrid className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                    variant={viewMode === 'list' ? 'default' : 'outline'} 
-                                    size="sm" 
-                                    onClick={() => {
-                                        setViewMode('list');
-                                        localStorage.setItem('farmerViewMode', 'list');
-                                    }}
+                                <Button
+                                    variant={viewMode === 'list' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => { setViewMode('list'); localStorage.setItem('farmerViewMode', 'list'); }}
                                     className="h-9 w-9 p-0"
                                 >
                                     <List className="h-4 w-4" />
                                 </Button>
-                                <Button onClick={() => setIsCreateModalOpen(true)}>
-                                    Add Farmer
-                                </Button>
                             </div>
                         </div>
-
-                        {/* Results count */}
-                        <div className="mb-4 text-sm text-muted-foreground">
-                            Showing {paginatedFarmers.length} of {filteredFarmers.length} farmers
-                        </div>
+                    </div>
 
                         {/* Card View */}
                         {viewMode === 'card' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 {paginatedFarmers.map((farmer) => (
-                                    <Card key={farmer.lfid} className="group cursor-pointer transition-all hover:shadow-lg hover:border-primary/50">
-                                        <CardContent className="p-4 space-y-4">
+                                    <div key={farmer.lfid} className="glass-surface group relative cursor-pointer overflow-hidden rounded-xl transition-all hover:shadow-lg hover:border-primary/50">
+                                        <div className="absolute inset-0 bg-primary/[0.02] dark:bg-primary/[0.05]" />
+                                        <div className="relative p-4 space-y-4">
                                             {/* Header with Photo and Actions */}
                                             <div className="flex items-start justify-between">
                                                 <div 
                                                     className="flex items-center gap-3 flex-1 cursor-pointer"
-                                                    onClick={() => router.get(`/admin/farmers/${farmer.lfid}`)}
+                                                    onClick={() => router.get(`/admin/farmers/${farmer.id}`)}
                                                 >
                                                     <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-muted border-2 border-muted group-hover:border-primary/30 transition-colors">
                                                         {farmer.picture_id ? (
@@ -579,7 +715,7 @@ export default function Farmers() {
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.get(`/admin/farmers/${farmer.lfid}`); }}>
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.get(`/admin/farmers/${farmer.id}`); }}>
                                                             <User className="mr-2 h-4 w-4" />
                                                             View Profile
                                                         </DropdownMenuItem>
@@ -589,7 +725,7 @@ export default function Farmers() {
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem 
                                                             onClick={(e) => { e.stopPropagation(); openDeleteModal(farmer); }}
-                                                            className="text-red-600 focus:text-red-600"
+                                                            className="text-destructive focus:text-destructive"
                                                         >
                                                             <Trash2 className="mr-2 h-4 w-4" />
                                                             Delete
@@ -649,7 +785,7 @@ export default function Farmers() {
                                                     size="sm" 
                                                     variant="outline" 
                                                     className="flex-1 text-xs"
-                                                    onClick={(e) => { e.stopPropagation(); router.get(`/admin/farmers/${farmer.lfid}`); }}
+                                                    onClick={(e) => { e.stopPropagation(); router.get(`/admin/farmers/${farmer.id}`); }}
                                                 >
                                                     <User className="h-3 w-3 mr-1" />
                                                     View Profile
@@ -678,8 +814,8 @@ export default function Farmers() {
                                                     <QrCode className="h-3 w-3" />
                                                 </Button>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -764,7 +900,7 @@ export default function Farmers() {
                                                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground/60 hover:text-foreground hover:bg-muted">
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
@@ -786,7 +922,7 @@ export default function Farmers() {
                                                             )}
                                                             <DropdownMenuItem 
                                                                 onClick={() => openDeleteModal(farmer)}
-                                                                className="text-red-600 focus:text-red-600"
+                                                                className="text-destructive focus:text-destructive"
                                                             >
                                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                                 <span>Delete</span>
@@ -801,65 +937,63 @@ export default function Farmers() {
                             </Table>
                         </div>
                         )}
-                    </div>
 
                     {/* Pagination Controls */}
                     {totalPages > 1 && (
-                        <div className="border-t p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground">
-                                    Page {currentPage} of {totalPages}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                    >
-                                        Previous
-                                    </Button>
-                                    
-                                    <div className="flex items-center gap-1">
-                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                            let pageNum;
-                                            if (totalPages <= 5) {
-                                                pageNum = i + 1;
-                                            } else if (currentPage <= 3) {
-                                                pageNum = i + 1;
-                                            } else if (currentPage >= totalPages - 2) {
-                                                pageNum = totalPages - 4 + i;
-                                            } else {
-                                                pageNum = currentPage - 2 + i;
-                                            }
-                                            
-                                            return (
-                                                <Button
-                                                    key={pageNum}
-                                                    variant={currentPage === pageNum ? 'default' : 'outline'}
-                                                    size="sm"
-                                                    onClick={() => setCurrentPage(pageNum)}
-                                                    className="w-10"
-                                                >
-                                                    {pageNum}
-                                                </Button>
-                                            );
-                                        })}
-                                    </div>
-
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </div>
+                        <div className="border-t p-4">
+                            <Pagination
+                                currentPage={currentPage}
+                                lastPage={totalPages}
+                                total={filteredFarmers.length}
+                                perPage={itemsPerPage}
+                                onPageChange={setCurrentPage}
+                            />
                         </div>
                     )}
                 </div>
+                    </TabsContent>
+
+                    {/* Reports & Analytics Tab */}
+                    <TabsContent value="analytics" className="flex flex-col gap-5">
+                        {/* Analytics Date Filter */}
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm text-muted-foreground">
+                                {analyticsDateRange
+                                    ? `Showing ${farmerAnalytics.filteredCount} of ${farmers.length} farmers in selected period`
+                                    : `Showing all ${farmers.length} farmers`}
+                            </p>
+                            <DashboardDateFilter
+                                dateRange={analyticsDateRange}
+                                onApply={setAnalyticsDateRange}
+                            />
+                        </div>
+                        <NarrativeCard
+                            narrative={farmerAnalytics.narrative}
+                            highlights={[
+                                { text: 'total', value: farmerAnalytics.filteredCount.toLocaleString() },
+                                { text: 'verified', value: farmers.filter(f => f.registration_status === 'verified').length.toString() },
+                            ]}
+                        />
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Demographics Overview</h2>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                <BarChart data={farmerAnalytics.livelihoodDist} title="Main Livelihood" />
+                                <PieChart data={farmerAnalytics.gender} title="Gender Distribution" />
+                                <PieChart data={farmerAnalytics.civilStatus} title="Civil Status" />
+                                <PieChart data={farmerAnalytics.p4ps} title="4Ps Beneficiaries" />
+                                <PieChart data={farmerAnalytics.ipStatus} title="IP vs Non-IP" />
+                                <BarChart data={farmerAnalytics.ageDistribution} title="Age Distribution" />
+                            </div>
+                        </div>
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Registration & Location</h2>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <BarChart data={farmerAnalytics.registrationStatus} title="Registration Status" />
+                                <BarChart data={farmerAnalytics.barangayDist.slice(0, 10)} title="Top 10 Barangays" />
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </div>
 
             {/* Create Modal */}

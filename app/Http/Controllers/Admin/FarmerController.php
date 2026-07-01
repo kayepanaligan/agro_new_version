@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\FarmerCreated;
+use App\Events\FarmerUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Commodity;
@@ -167,12 +169,75 @@ class FarmerController extends Controller
                 });
         }
 
+        // Get points summary
+        $totalPoints = $farmer->farmerPoints()->verified()->sum('points');
+        $activitiesCount = $farmer->farmerPoints()->verified()->count();
+        $thisMonthPoints = $farmer->farmerPoints()->verified()->thisMonth()->sum('points');
+        
+        // Determine tier based on total points
+        $currentTier = 'Seedling';
+        if ($totalPoints >= 1000) {
+            $currentTier = 'Gold';
+        } elseif ($totalPoints >= 500) {
+            $currentTier = 'Silver';
+        } elseif ($totalPoints >= 200) {
+            $currentTier = 'Bronze';
+        }
+
+        $pointsSummary = [
+            'total_points' => $totalPoints,
+            'current_tier' => $currentTier,
+            'activities_count' => $activitiesCount,
+            'this_month_points' => $thisMonthPoints,
+        ];
+
+        // Get points history
+        $pointsHistory = $farmer->farmerPoints()
+            ->with('farmer')
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function($point) {
+                return [
+                    'id' => $point->id,
+                    'activity_name' => $point->activity_name,
+                    'description' => $point->description,
+                    'category' => $point->category,
+                    'points' => $point->points,
+                    'status' => $point->status,
+                    'icon' => $point->icon,
+                    'is_manual' => $point->is_manual,
+                    'created_at' => $point->created_at,
+                ];
+            });
+
+        // Get reward redemption history
+        $rewardHistory = $farmer->rewardRedemptions()
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($redemption) {
+                return [
+                    'id' => $redemption->id,
+                    'reward_type' => $redemption->reward_type,
+                    'reward_name' => $redemption->reward_name,
+                    'points_cost' => $redemption->points_cost,
+                    'status' => $redemption->status,
+                    'voucher_code' => $redemption->voucher_code,
+                    'valid_until' => $redemption->valid_until,
+                    'approved_at' => $redemption->approved_at,
+                    'created_at' => $redemption->created_at,
+                ];
+            });
+
         return Inertia::render('admin/farmers/show', [
             'farmer' => array_merge($farmer->toArray(), [
                 'household_members_count' => $householdMembersCount,
                 'crops_planted' => $cropsPlanted,
                 'allocation_history' => $allocationHistory,
                 'crop_damage_history' => $cropDamageHistory,
+                'points_summary' => $pointsSummary,
+                'points_history' => $pointsHistory,
+                'reward_history' => $rewardHistory,
             ]),
         ]);
     }
@@ -208,6 +273,9 @@ class FarmerController extends Controller
             }
         }
 
+        // Broadcast real-time event
+        event(new FarmerCreated($farmer));
+
         return back()->with('success', 'Farmer created successfully.');
     }
 
@@ -226,6 +294,9 @@ class FarmerController extends Controller
         }
 
         $farmer->update($validated);
+
+        // Broadcast real-time event
+        event(new FarmerUpdated($farmer));
 
         return back()->with('success', 'Farmer updated successfully.');
     }

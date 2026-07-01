@@ -2,7 +2,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type CropMonitoringFolder, type CropMonitoringCategory, type Commodity, type Variety } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -19,8 +18,29 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, FolderOpen, LayoutGrid, List, Search, Calendar, Users, Pencil, Eye, MoreHorizontal, PictureInPicture } from 'lucide-react';
-import { useState } from 'react';
+import { 
+    Plus, 
+    FolderOpen, 
+    LayoutGrid, 
+    List, 
+    Search, 
+    Calendar, 
+    Users, 
+    Pencil, 
+    Eye, 
+    MoreHorizontal, 
+    PictureInPicture,
+    ClipboardList,
+    Layers,
+    FolderTree,
+    RefreshCw,
+    Trash2
+} from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -35,6 +55,7 @@ interface Props {
         links: any[];
         current_page: number;
         last_page: number;
+        total?: number;
     };
     categories: CropMonitoringCategory[];
     commodities: Commodity[];
@@ -70,11 +91,11 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
         variety_id: '',
     });
 
-    // Get varieties for selected commodity
-    const getVarietiesForCommodity = (commodityId: string) => {
-        // This would need to be passed from backend or fetched via API
-        return [] as Variety[];
-    };
+    // KPI computations
+    const totalFolders = folders.total || folders.data.length;
+    const totalUpdates = folders.data.reduce((sum, f) => sum + (f.items_count || 0), 0);
+    const uniqueCategories = new Set(folders.data.map((f) => f.category_id)).size;
+    const totalPages = folders.last_page || 1;
 
     const handleFilter = () => {
         router.get(route('admin.monitoring-folders.index'), {
@@ -125,122 +146,161 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
         }
     };
 
+    const handleRefresh = () => router.reload();
+
+    const handleExportCsv = () => {
+        const headers = ['ID', 'Folder Name', 'Category', 'Commodity', 'Updates', 'Last Updated'];
+        const rows = folders.data.map((f) => [
+            f.crop_monitoring_folder_id,
+            f.folder_name,
+            f.category?.category_name || '-',
+            f.commodity?.name || '-',
+            f.items_count || 0,
+            new Date(f.updated_at).toLocaleDateString(),
+        ]);
+        exportToCsv('monitoring-folders', headers, rows);
+    };
+
+    const handlePageChange = (page: number) => {
+        router.get(route('admin.monitoring-folders.index'), {
+            page: page,
+            search: searchTerm,
+            category_id: selectedCategory,
+            commodity_id: selectedCommodity,
+        }, {
+            preserveState: true,
+        });
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Monitoring Folders" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="flex items-center justify-between px-4 pt-4">
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
+                {/* Page Header */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Monitoring Folders</h1>
-                        <p className="text-muted-foreground">Organize and track crop monitoring activities</p>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Monitoring Folders</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Organize and track crop monitoring activities across commodities
+                        </p>
                     </div>
-                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" />
-                                New Folder
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Create Monitoring Folder</DialogTitle>
-                                <DialogDescription>Start a new crop monitoring project</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="folder-name">Folder Name</Label>
-                                    <Input
-                                        id="folder-name"
-                                        value={createForm.data.folder_name}
-                                        onChange={(e) => createForm.setData('folder_name', e.target.value)}
-                                        placeholder="e.g., Rice Blast Monitoring - Field A"
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="description">Description</Label>
-                                    <Textarea
-                                        id="description"
-                                        value={createForm.data.description}
-                                        onChange={(e) => createForm.setData('description', e.target.value)}
-                                        placeholder="Describe the monitoring purpose..."
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="sm" className="gap-2">
+                                    <Plus className="h-4 w-4" />
+                                    New Folder
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>Create Monitoring Folder</DialogTitle>
+                                    <DialogDescription>Start a new crop monitoring project</DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
                                     <div className="grid gap-2">
-                                        <Label>Category</Label>
+                                        <Label htmlFor="folder-name">Folder Name</Label>
+                                        <Input
+                                            id="folder-name"
+                                            value={createForm.data.folder_name}
+                                            onChange={(e) => createForm.setData('folder_name', e.target.value)}
+                                            placeholder="e.g., Rice Blast Monitoring - Field A"
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="description">Description</Label>
+                                        <Textarea
+                                            id="description"
+                                            value={createForm.data.description}
+                                            onChange={(e) => createForm.setData('description', e.target.value)}
+                                            placeholder="Describe the monitoring purpose..."
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label>Category</Label>
+                                            <Select
+                                                value={createForm.data.category_id}
+                                                onValueChange={(value) => createForm.setData('category_id', value)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {categories.map((cat) => (
+                                                        <SelectItem key={cat.crop_monitoring_category_id} value={String(cat.crop_monitoring_category_id)}>
+                                                            {cat.category_name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label>Commodity</Label>
+                                            <Select
+                                                value={createForm.data.commodity_id}
+                                                onValueChange={(value) => createForm.setData('commodity_id', value)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select commodity" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {commodities.map((comm) => (
+                                                        <SelectItem key={comm.id} value={String(comm.id)}>
+                                                            {comm.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Variety</Label>
                                         <Select
-                                            value={createForm.data.category_id}
-                                            onValueChange={(value) => createForm.setData('category_id', value)}
+                                            value={createForm.data.variety_id}
+                                            onValueChange={(value) => createForm.setData('variety_id', value)}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select category" />
+                                                <SelectValue placeholder="Select variety" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {categories.map((cat) => (
-                                                    <SelectItem key={cat.crop_monitoring_category_id} value={String(cat.crop_monitoring_category_id)}>
-                                                        {cat.category_name}
-                                                    </SelectItem>
-                                                ))}
+                                                <SelectItem value="1">Sample Variety 1</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label>Commodity</Label>
-                                        <Select
-                                            value={createForm.data.commodity_id}
-                                            onValueChange={(value) => createForm.setData('commodity_id', value)}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select commodity" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {commodities.map((comm) => (
-                                                    <SelectItem key={comm.id} value={String(comm.id)}>
-                                                        {comm.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label>Variety</Label>
-                                    <Select
-                                        value={createForm.data.variety_id}
-                                        onValueChange={(value) => createForm.setData('variety_id', value)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select variety" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {/* Varieties would be loaded based on commodity selection */}
-                                            <SelectItem value="1">Sample Variety 1</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                                <Button onClick={handleCreate} disabled={createForm.processing}>Create Folder</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>  
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                                    <Button onClick={handleCreate} disabled={createForm.processing}>Create Folder</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </div>
 
-                {/* Filters */}
-                <Card className="mb-2">
-                    <CardContent className="pt-6">
-                        
+                {/* KPI Cards */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <KpiCard label="Total Folders" value={totalFolders} icon={FolderTree} />
+                    <KpiCard label="Total Updates" value={totalUpdates} icon={PictureInPicture} />
+                    <KpiCard label="Categories" value={uniqueCategories} icon={Layers} />
+                    <KpiCard label="This Page" value={folders.data.length} icon={ClipboardList} />
+                </div>
+
+                {/* Main Container */}
+                <div className="glass-card rounded-2xl">
+                    {/* Filters */}
+                    <div className="space-y-3 border-b p-4">
                         <div className="grid gap-4 md:grid-cols-4">
                             <div className="relative">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     placeholder="Search folders..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
-                                    className="pl-8"
+                                    className="pl-9"
                                 />
                             </div>
                             <Select value={selectedCategory || 'all'} onValueChange={(value) => setSelectedCategory(value === 'all' ? '' : value)}>
@@ -269,45 +329,37 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <Button onClick={handleFilter}>Apply Filters</Button>
+                            <div className="flex items-center gap-2">
+                                <Button onClick={handleFilter} className="flex-1">Apply Filters</Button>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant={viewMode === 'card' ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setViewMode('card')}
+                                    >
+                                        <LayoutGrid className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant={viewMode === 'list' ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setViewMode('list')}
+                                    >
+                                        <List className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                        {/* View Toggle */}
-
-                    </CardContent>
-                </Card>
-
-                <div className="flex items-center justify-between px-4">
-                    <p className="text-sm text-muted-foreground">
-                        {folders.data.length} folder{folders.data.length !== 1 ? 's' : ''} found
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant={viewMode === 'card' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setViewMode('card')}
-                        >
-                            <LayoutGrid className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant={viewMode === 'list' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setViewMode('list')}
-                        >
-                            <List className="h-4 w-4" />
-                        </Button>
                     </div>
-                </div>
-            
-                {/* Grid View */}
-                {viewMode === 'card' && (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {folders.data.map((folder) => (
-                            <Card 
-                                key={folder.crop_monitoring_folder_id}
-                                className="group relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                                onClick={() => router.visit(route('admin.monitoring-folders.show', folder.crop_monitoring_folder_id))}
-                            >
-                                <CardHeader>
+
+                    {/* Card View */}
+                    {viewMode === 'card' && (
+                        <div className="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
+                            {folders.data.map((folder) => (
+                                <div 
+                                    key={folder.crop_monitoring_folder_id}
+                                    className="glass-surface group relative overflow-hidden rounded-xl p-4 transition-all hover:shadow-md cursor-pointer"
+                                    onClick={() => router.visit(route('admin.monitoring-folders.show', folder.crop_monitoring_folder_id))}
+                                >
                                     <div className="flex items-start justify-between">
                                         <FolderOpen className="h-8 w-8 text-primary" />
                                         <DropdownMenu>
@@ -315,6 +367,7 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
+                                                    className="text-muted-foreground/60 hover:text-foreground hover:bg-muted"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     <MoreHorizontal className="h-4 w-4" />
@@ -345,23 +398,17 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
                                                     }}
                                                     className="text-destructive focus:text-destructive"
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                                                        <path d="M3 6h18" />
-                                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                    </svg>
+                                                    <Trash2 className="mr-2 h-4 w-4" />
                                                     Delete Folder
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                    <CardTitle className="mt-4 line-clamp-2">{folder.folder_name}</CardTitle>
-                                    <CardDescription className="line-clamp-2">
+                                    <h3 className="mt-3 line-clamp-2 font-semibold">{folder.folder_name}</h3>
+                                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                                         {folder.description || 'No description'}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardFooter className="flex flex-col items-start gap-3">
-                                    <div className="flex flex-wrap gap-2">
+                                    </p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
                                         {folder.category && (
                                             <Badge variant="outline">{folder.category.category_name}</Badge>
                                         )}
@@ -369,10 +416,8 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
                                             <Badge variant="secondary">{folder.commodity.name}</Badge>
                                         )}
                                     </div>
-                                    
-                                    {/* Avatar Group for Updaters */}
                                     {folder.updaters && folder.updaters.length > 0 && (
-                                        <div className="flex items-center gap-2">
+                                        <div className="mt-3 flex items-center gap-2">
                                             <AvatarGroup>
                                                 {folder.updaters.slice(0, 3).map((updater, idx) => (
                                                     <Avatar key={idx} className="h-9 w-9 border-2 border-background">
@@ -393,8 +438,7 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
                                             </AvatarGroup>
                                         </div>
                                     )}
-                                    
-                                    <div className="flex items-center justify-between w-full text-sm text-muted-foreground mt-1">
+                                    <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
                                         <div className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
                                             {new Date(folder.updated_at).toLocaleDateString()}
@@ -404,111 +448,101 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
                                             {folder.items_count || 0} updates
                                         </div>
                                     </div>
-                                </CardFooter>
-                            </Card>
-                        ))}
-                    </div>
-                )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                {/* List View */}
-                {viewMode === 'list' && (
-                    <div className="rounded-md border ">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Folder Name</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead>Commodity/Variety</TableHead>
-                                    <TableHead>Updates</TableHead>
-                                    <TableHead>Last Updated</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {folders.data.map((folder) => (
-                                    <TableRow 
-                                        key={folder.crop_monitoring_folder_id}
-                                        className="cursor-pointer hover:bg-muted/50"
-                                        onClick={() => router.visit(route('admin.monitoring-folders.show', folder.crop_monitoring_folder_id))}
-                                    >
-                                        <TableCell className="font-medium">{folder.folder_name}</TableCell>
-                                        <TableCell>
-                                            {folder.category && (
-                                                <Badge variant="outline">{folder.category.category_name}</Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {folder.commodity?.name}
-                                            {folder.variety && ` / ${folder.variety.name}`}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="secondary">{folder.items_count || 0}</Badge>
-                                        </TableCell>
-                                        <TableCell>{new Date(folder.updated_at).toLocaleDateString()}</TableCell>
-                                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => {
-                                                        router.visit(route('admin.monitoring-folders.show', folder.crop_monitoring_folder_id));
-                                                    }}>
-                                                        <Eye className="mr-2 h-4 w-4" />
-                                                        View Folder
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleEdit(folder)}>
-                                                        <Pencil className="mr-2 h-4 w-4" />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        onClick={() => handleDelete(folder.crop_monitoring_folder_id)}
-                                                        className="text-destructive focus:text-destructive"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                                                            <path d="M3 6h18" />
-                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                        </svg>
-                                                        Delete Folder
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
+                    {/* List View */}
+                    {viewMode === 'list' && (
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Folder Name</TableHead>
+                                        <TableHead>Category</TableHead>
+                                        <TableHead>Commodity/Variety</TableHead>
+                                        <TableHead>Updates</TableHead>
+                                        <TableHead>Last Updated</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                )}
+                                </TableHeader>
+                                <TableBody>
+                                    {folders.data.map((folder) => (
+                                        <TableRow 
+                                            key={folder.crop_monitoring_folder_id}
+                                            className="cursor-pointer hover:bg-muted/50"
+                                            onClick={() => router.visit(route('admin.monitoring-folders.show', folder.crop_monitoring_folder_id))}
+                                        >
+                                            <TableCell className="font-medium">{folder.folder_name}</TableCell>
+                                            <TableCell>
+                                                {folder.category && (
+                                                    <Badge variant="outline">{folder.category.category_name}</Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {folder.commodity?.name}
+                                                {folder.variety && ` / ${folder.variety.name}`}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary">{folder.items_count || 0}</Badge>
+                                            </TableCell>
+                                            <TableCell>{new Date(folder.updated_at).toLocaleDateString()}</TableCell>
+                                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm"
+                                                            className="text-muted-foreground/60 hover:text-foreground hover:bg-muted"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem onClick={() => {
+                                                            router.visit(route('admin.monitoring-folders.show', folder.crop_monitoring_folder_id));
+                                                        }}>
+                                                            <Eye className="mr-2 h-4 w-4" />
+                                                            View Folder
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleEdit(folder)}>
+                                                            <Pencil className="mr-2 h-4 w-4" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleDelete(folder.crop_monitoring_folder_id)}
+                                                            className="text-destructive focus:text-destructive"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete Folder
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
 
-                {/* Pagination */}
-                {folders.last_page && folders.last_page > 1 && (
-                    <div className="mt-6 flex items-center justify-center gap-2">
-                        {folders.links && folders.links.map((link: any, index: number) => (
-                            link.url ? (
-                                <Button
-                                    key={index}
-                                    variant={link.active ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => router.visit(link.url)}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                />
-                            ) : (
-                                <span
-                                    key={index}
-                                    className="px-3 py-1 text-sm text-muted-foreground"
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                />
-                            )
-                        ))}
-                    </div>
-                )}
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="border-t p-4">
+                            <Pagination
+                                currentPage={folders.current_page}
+                                lastPage={totalPages}
+                                total={folders.total || folders.data.length}
+                                perPage={folders.data.length}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Edit Dialog */}
@@ -594,8 +628,6 @@ export default function MonitoringFolders({ folders, categories, commodities, fi
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-           
         </AppLayout>
     );
 }

@@ -1,11 +1,10 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Award, Check, X } from 'lucide-react';
+import { Award, Check, X, ClipboardList, User, MapPin, Phone, Heart, Users, GraduationCap, CreditCard, LandPlot, AlertCircle, Briefcase, FileText, Shield } from 'lucide-react';
 import React from 'react';
 import { type Farm } from '@/types';
 import FileUploadPreview from '@/components/file-upload-preview';
@@ -133,12 +132,19 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
     return (
         <div className="space-y-6">
             {/* Enrollment Information */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Enrollment Information</CardTitle>
-                    <CardDescription>Registration details</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <ClipboardList className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Enrollment Information</h3>
+                            <p className="text-xs text-muted-foreground">Registration details</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4">
                     <div className="grid gap-2">
                         <Label htmlFor="enrollment_type">Enrollment Type</Label>
                         <Select 
@@ -160,36 +166,43 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             <Input type="datetime-local" value={formData.enrollment_updated_at || ''} readOnly disabled />
                         </div>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Personal Information */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Basic farmer details</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <User className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Personal Information</h3>
+                            <p className="text-xs text-muted-foreground">Basic farmer details</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4 md:grid-cols-2">
                     <div className="grid gap-2">
-                        <Label htmlFor="first_name">First Name <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="first_name">First Name <span className="text-destructive">*</span></Label>
                         <Input id="first_name" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} />
-                        {errors?.first_name && <p className="text-xs text-red-500">{errors.first_name}</p>}
+                        {errors?.first_name && <p className="text-xs text-destructive">{errors.first_name}</p>}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="middle_name">Middle Name</Label>
                         <Input id="middle_name" value={formData.middle_name} onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })} />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="last_name">Surname <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="last_name">Surname <span className="text-destructive">*</span></Label>
                         <Input id="last_name" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} />
-                        {errors?.last_name && <p className="text-xs text-red-500">{errors.last_name}</p>}
+                        {errors?.last_name && <p className="text-xs text-destructive">{errors.last_name}</p>}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="extension_name">Extension Name</Label>
                         <Input id="extension_name" value={formData.extension_name} onChange={(e) => setFormData({ ...formData, extension_name: e.target.value })} placeholder="Jr., Sr., III" />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="sex">Sex <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="sex">Sex <span className="text-destructive">*</span></Label>
                         <Select value={formData.sex} onValueChange={(value) => setFormData({ ...formData, sex: value })}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
@@ -232,16 +245,23 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             </SelectContent>
                         </Select>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Address Information */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Address Information</CardTitle>
-                    <CardDescription>Complete residential address</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <MapPin className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Address Information</h3>
+                            <p className="text-xs text-muted-foreground">Complete residential address</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4">
                     <div className="grid gap-2 md:col-span-2">
                         <Label htmlFor="house_lot_bldg_no_purok">House/Lot/Building No. or Purok</Label>
                         <Input id="house_lot_bldg_no_purok" value={formData.house_lot_bldg_no_purok} onChange={(e) => setFormData({ ...formData, house_lot_bldg_no_purok: e.target.value })} />
@@ -268,16 +288,23 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             <Input id="region" value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} />
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Contact Information */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Contact Information</CardTitle>
-                    <CardDescription>Phone numbers and contact details</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <Phone className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Contact Information</h3>
+                            <p className="text-xs text-muted-foreground">Phone numbers and contact details</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4 md:grid-cols-2">
                     <div className="grid gap-2">
                         <Label htmlFor="contact_number">Mobile Number</Label>
                         <Input id="contact_number" value={formData.contact_number} onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })} placeholder="09XXXXXXXXX" />
@@ -286,16 +313,23 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                         <Label htmlFor="landline_number">Landline Number</Label>
                         <Input id="landline_number" value={formData.landline_number} onChange={(e) => setFormData({ ...formData, landline_number: e.target.value })} placeholder="(XX) XXX-XXXX" />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Spouse Information */}
-            <Card className={isSingle ? 'opacity-50 pointer-events-none' : ''}>
-                <CardHeader>
-                    <CardTitle>Spouse Information {isSingle && '(Not applicable for Single)'}</CardTitle>
-                    <CardDescription>If married, provide spouse details</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-4">
+            <div className={`glass-card rounded-2xl overflow-hidden ${isSingle ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <Heart className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Spouse Information {isSingle && '(Not applicable for Single)'}</h3>
+                            <p className="text-xs text-muted-foreground">If married, provide spouse details</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4 md:grid-cols-4">
                     <div className="grid gap-2">
                         <Label htmlFor="spouse_first_name">First Name</Label>
                         <Input 
@@ -332,16 +366,23 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             disabled={isSingle}
                         />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Household Information */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Household Information</CardTitle>
-                    <CardDescription>Family composition and members</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <Users className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Household Information</h3>
+                            <p className="text-xs text-muted-foreground">Family composition and members</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4">
                     <div className="flex items-center space-x-2">
                         <Checkbox
                             id="is_household_head"
@@ -406,16 +447,23 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             />
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Education & Special Fields */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Education & Special Fields</CardTitle>
-                    <CardDescription>Educational background and special categories</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <GraduationCap className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Education & Special Fields</h3>
+                            <p className="text-xs text-muted-foreground">Educational background and special categories</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4">
                     <div className="grid gap-2">
                         <Label htmlFor="highest_formal_education">Highest Formal Education</Label>
                         <Select 
@@ -458,20 +506,27 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             <Input id="ip_specify" value={formData.ip_specify} onChange={(e) => setFormData({ ...formData, ip_specify: e.target.value })} />
                         </div>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Government ID */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Government ID</CardTitle>
-                    <CardDescription>Valid government identification (multiple IDs allowed)</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <CreditCard className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Government ID</h3>
+                            <p className="text-xs text-muted-foreground">Valid government identification (multiple IDs allowed)</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4">
                     {/* Multiple Government IDs */}
                     <div className="space-y-4">
                         {formData.government_ids?.map((id: any, index: number) => (
-                            <div key={index} className="p-4 border rounded-lg space-y-3 relative">
+                            <div key={index} className="glass-surface rounded-xl p-4 space-y-3 relative">
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-sm font-semibold">ID #{index + 1}</h4>
                                     {formData.government_ids.length > 1 && (
@@ -481,7 +536,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                 const newIds = formData.government_ids.filter((_: any, i: number) => i !== index);
                                                 setFormData({ ...formData, government_ids: newIds });
                                             }}
-                                            className="text-red-600 hover:text-red-800 text-sm"
+                                            className="text-destructive hover:text-destructive/80 text-sm"
                                         >
                                             Remove
                                         </button>
@@ -560,16 +615,21 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             + Add Another Government ID
                         </Button>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Farm Profile */}
-            <Card>
-                <CardHeader>
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>Farm Profile</CardTitle>
-                            <CardDescription>Add multiple farms and their land parcels</CardDescription>
+                        <div className="flex items-center gap-2.5">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                                <LandPlot className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold tracking-tight">Farm Profile</h3>
+                                <p className="text-xs text-muted-foreground">Add multiple farms and their land parcels</p>
+                            </div>
                         </div>
                         <Button
                             type="button"
@@ -581,19 +641,18 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             + Add New Farm
                         </Button>
                     </div>
-                </CardHeader>
-                <CardContent className="grid gap-6">
+                </div>
+                <div className="grid gap-6 p-4">
                     {/* Display all farms in a vertical stack */}
                     {farms.length > 0 && (
                         <div className="space-y-4">
                             {farms.map((farm: any, farmIndex: number) => (
-                                <Card key={farm.id || farmIndex} className="border-2">
-                                    <CardHeader>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3 flex-1">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-white">
-                                                    {farmIndex + 1}
-                                                </div>
+                                <div key={farm.id || farmIndex} className="glass-surface rounded-xl p-4 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+                                                {farmIndex + 1}
+                                            </div>
                                                 <div className="flex-1 flex items-center gap-2">
                                                     {editingFarmId === farm.id ? (
                                                         <div className="flex items-center gap-2 flex-1">
@@ -615,7 +674,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleSaveFarmName(farm.id)}
-                                                                className="text-green-600 hover:text-green-800 p-1"
+                                                                className="text-primary hover:text-primary/80 p-1"
                                                                 title="Save (Enter)"
                                                             >
                                                                 <Check/>
@@ -623,7 +682,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setEditingFarmId(null)}
-                                                                className="text-red-600 hover:text-red-800 p-1"
+                                                                className="text-destructive hover:text-destructive/80 p-1"
                                                                 title="Cancel (Esc)"
                                                             >
                                                                 <X />
@@ -663,26 +722,25 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveFarm(farmIndex)}
-                                                        className="text-red-600 hover:text-red-800 text-sm px-2"
+                                                        className="text-destructive hover:text-destructive/80 text-sm px-2"
                                                     >
                                                         Remove
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    </CardHeader>
-                                    <CardContent>
+                                    <div>
                                         {farm.farm_parcels && farm.farm_parcels.length > 0 ? (
                                             <div className="space-y-4">
                                                 {farm.farm_parcels.map((parcel: any, parcelIndex: number) => (
-                                                    <div key={parcel.id || parcelIndex} className="p-4 border rounded-lg space-y-4 relative bg-muted/30">
+                                                    <div key={parcel.id || parcelIndex} className="glass-surface rounded-xl p-4 space-y-4 relative">
                                                         <div className="flex items-center justify-between">
                                                             <h5 className="font-medium">{parcel.parcel_number || `Parcel #${parcelIndex + 1}`}</h5>
                                                             {farm.farm_parcels.length > 1 && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleRemoveParcel(farmIndex, parcelIndex)}
-                                                                    className="text-red-600 hover:text-red-800 text-sm"
+                                                                    className="text-destructive hover:text-destructive/80 text-sm"
                                                                 >
                                                                     Remove Parcel
                                                                 </button>
@@ -870,7 +928,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
 
                                                         {/* Landowner Information - Only show if NOT registered owner */}
                                                         {parcel.ownership_type && parcel.ownership_type !== 'registered_owner' && (
-                                                            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                                                            <div className="space-y-4 glass-surface rounded-xl p-4">
                                                                 <h5 className="font-medium text-sm">Landowner Information</h5>
                                                                 <div className="grid gap-4 md:grid-cols-4">
                                                                     <div className="grid gap-2">
@@ -994,7 +1052,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="p-4 border rounded-lg bg-muted/30 text-center">
+                                            <div className="glass-surface rounded-xl p-4 text-center">
                                                 <p className="text-muted-foreground">
                                                     {!farm.farm_name || farm.farm_name.trim() === '' 
                                                         ? "Enter farm name above to enable adding parcels"
@@ -1003,8 +1061,8 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                 </p>
                                             </div>
                                         )}
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     )}
@@ -1013,7 +1071,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                     {farms.length === 0 && (
                         <div className="text-center py-8">
                             <div className="mb-4">
-                                <Award className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+                                <LandPlot className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
                             </div>
                             <h4 className="text-lg font-semibold mb-2">No Farms Yet</h4>
                             <p className="text-muted-foreground mb-4 max-w-md mx-auto">
@@ -1021,16 +1079,23 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                 </p>
                         </div>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
         {/* Emergency Contact */}
-            <Card>    
-                <CardHeader>
-                    <CardTitle>Emergency Contact</CardTitle>
-                    <CardDescription>Person to contact in case of emergency</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <AlertCircle className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Emergency Contact</h3>
+                            <p className="text-xs text-muted-foreground">Person to contact in case of emergency</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid gap-4 p-4">
                     <div className="grid gap-2 md:grid-cols-4">
                         <div className="grid gap-2">
                             <Label>First Name</Label>
@@ -1053,16 +1118,23 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                         <Label htmlFor="emergency_contact_number">Contact Number</Label>
                         <Input id="emergency_contact_number" value={formData.emergency_contact_number} onChange={(e) => setFormData({ ...formData, emergency_contact_number: e.target.value })} placeholder="09XXXXXXXXX" />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Main Livelihood */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Main Livelihood</CardTitle>
-                    <CardDescription>Select your primary livelihood activity</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+            <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="border-b p-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 flex-shrink-0">
+                            <Briefcase className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight">Main Livelihood</h3>
+                            <p className="text-xs text-muted-foreground">Select your primary livelihood activity</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="space-y-6 p-4">
                     {/* Livelihood Type Selection */}
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="flex items-center space-x-2">
@@ -1125,7 +1197,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
 
                     {/* Farmer Details */}
                     {formData.main_livelihood_type === 'farmer' && (
-                        <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                        <div className="space-y-4 glass-surface rounded-xl p-4">
                             <h5 className="font-medium">Farming Activity</h5>
                             
                             {/* Category Selection - Multi-select */}
@@ -1186,7 +1258,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                                 farmer_varieties: []
                                                             });
                                                         }}
-                                                        className="ml-1 text-red-600 hover:text-red-800 font-bold"
+                                                        className="ml-1 text-destructive hover:text-destructive/80 font-bold"
                                                     >
                                                         ×
                                                     </button>
@@ -1260,7 +1332,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                                     farmer_varieties: []
                                                                 });
                                                             }}
-                                                            className="ml-1 text-red-600 hover:text-red-800 font-bold"
+                                                            className="ml-1 text-destructive hover:text-destructive/80 font-bold"
                                                         >
                                                             ×
                                                         </button>
@@ -1323,7 +1395,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                             {formData.farmer_varieties.map((varietyId: any) => {
                                                 const variety = varieties.find((v: any) => v.id.toString() === varietyId);
                                                 return variety ? (
-                                                    <Badge key={varietyId} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300">
+                                                    <Badge key={varietyId} variant="outline" className="text-xs bg-primary/5 text-primary border-primary/20">
                                                         {variety.name}
                                                         <button
                                                             type="button"
@@ -1334,7 +1406,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                                                                     farmer_varieties: newVarieties
                                                                 });
                                                             }}
-                                                            className="ml-1 text-red-600 hover:text-red-800 font-bold"
+                                                            className="ml-1 text-destructive hover:text-destructive/80 font-bold"
                                                         >
                                                             ×
                                                         </button>
@@ -1350,7 +1422,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
 
                     {/* Farmworker Details */}
                     {formData.main_livelihood_type === 'farmworker' && (
-                        <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                        <div className="space-y-4 glass-surface rounded-xl p-4">
                             <h5 className="font-medium">Kind of Work (Check all that apply)</h5>
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className="flex items-center space-x-2">
@@ -1410,7 +1482,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
 
                     {/* Fisherfolk Details */}
                     {formData.main_livelihood_type === 'fisherfolk' && (
-                        <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                        <div className="space-y-4 glass-surface rounded-xl p-4">
                             <h5 className="font-medium">Fisherfolk Activity (Check all that apply)</h5>
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className="flex items-center space-x-2">
@@ -1478,7 +1550,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
 
                     {/* Agri-Youth Details */}
                     {formData.main_livelihood_type === 'agri_youth' && (
-                        <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                        <div className="space-y-4 glass-surface rounded-xl p-4">
                             <h5 className="font-medium">Agricultural Youth Status (Check all that apply)</h5>
                             <div className="grid gap-3">
                                 <div className="flex items-center space-x-2">
@@ -1529,7 +1601,7 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                     )}
 
                     {/* Gross Annual Income */}
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                    <div className="space-y-4 glass-surface rounded-xl p-4">
                         <h5 className="font-medium">Gross Annual Income Last Year</h5>
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="grid gap-2">
@@ -1554,8 +1626,8 @@ export default function ComprehensiveFarmerForm({ formData, setFormData, errors,
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 }

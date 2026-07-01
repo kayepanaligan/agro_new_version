@@ -1,4 +1,5 @@
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { ThemeProvider } from '@/context/theme-context';
 import { useState } from 'react';
 
 interface AppShellProps {
@@ -22,8 +23,10 @@ export function AppShell({ children, variant = 'header' }: AppShellProps) {
     }
 
     return (
-        <SidebarProvider defaultOpen={isOpen} open={isOpen} onOpenChange={handleSidebarChange}>
-            {children}
-        </SidebarProvider>
+        <ThemeProvider>
+            <SidebarProvider defaultOpen={isOpen} open={isOpen} onOpenChange={handleSidebarChange}>
+                {children}
+            </SidebarProvider>
+        </ThemeProvider>
     );
 }

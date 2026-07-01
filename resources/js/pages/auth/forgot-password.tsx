@@ -47,7 +47,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                     <div className="my-6 flex items-center justify-start">
                         <Button className="w-full" disabled={processing}>
-                            {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                            {processing && <LoaderCircle className="h-4 w-4 animate-spin text-emerald-400" />}
                             Email password reset link
                         </Button>
                     </div>

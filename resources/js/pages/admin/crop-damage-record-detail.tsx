@@ -26,7 +26,6 @@ import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -49,6 +48,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -192,171 +192,170 @@ export default function CropDamageRecordDetail({ cropDamageRecord, cropDamageRec
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${cropDamageRecord.name} - Items`} />
             
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
                 {/* Header */}
-                <div className="mb-6">
-                    <Button variant="ghost" onClick={() => router.visit(route('admin.crop-damage-records'))} className="mb-4">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Records
-                    </Button>
-                    
+                <div className="space-y-1">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="flex items-center gap-3">
-                                <FolderOpen className="h-8 w-8 text-primary" />
-                                <h1 className="text-3xl font-bold tracking-tight">{cropDamageRecord.name}</h1>
-                            </div>
-                            <p className="text-muted-foreground mt-2 flex items-center gap-4">
+                            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{cropDamageRecord.name}</h1>
+                            <p className="mt-1 text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                     <Calendar className="h-4 w-4" />
                                     Recorded: {new Date(cropDamageRecord.recorded_date).toLocaleDateString()}
                                 </span>
-                                <Badge variant="secondary">{cropDamageRecordItems.length} items</Badge>
                             </p>
                         </div>
-                        
-                        <Button onClick={() => setIsCreateItemModalOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Item
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => router.visit(route('admin.crop-damage-records'))}>
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Back
+                            </Button>
+                            <Button size="sm" onClick={() => setIsCreateItemModalOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Item
+                            </Button>
+                        </div>
                     </div>
-                    
                     {cropDamageRecord.notes && (
-                        <Card className="mt-4">
-                            <CardHeader>
-                                <CardDescription>{cropDamageRecord.notes}</CardDescription>
-                            </CardHeader>
-                        </Card>
+                        <div className="glass-card rounded-2xl p-4 mt-3">
+                            <p className="text-sm text-muted-foreground leading-relaxed">{cropDamageRecord.notes}</p>
+                        </div>
                     )}
                 </div>
 
+                {/* KPI Cards */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <KpiCard label="Total Items" value={cropDamageRecordItems.length} icon={FolderOpen} />
+                    <KpiCard label="Verified" value={cropDamageRecordItems.filter(i => i.status === 'verified').length} icon={Eye} />
+                    <KpiCard label="Pending" value={cropDamageRecordItems.filter(i => i.status === 'pending').length} icon={AlertCircle} />
+                    <KpiCard label="Closed" value={cropDamageRecordItems.filter(i => i.status === 'closed').length} icon={FileText} />
+                </div>
+
                 {/* Filters */}
-                <Card className="mb-6">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between gap-4 mb-4">
-                            <div className="grid gap-4 md:grid-cols-3 flex-1">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search items..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-9"
-                                    />
-                                </div>
-                                <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Filter by severity" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Severities</SelectItem>
-                                        <SelectItem value="low">Low</SelectItem>
-                                        <SelectItem value="medium">Medium</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Filter by status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Statuses</SelectItem>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="verified">Verified</SelectItem>
-                                        <SelectItem value="closed">Closed</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                <div className="glass-card rounded-2xl p-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="grid gap-4 md:grid-cols-3 flex-1">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search items..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-9"
+                                />
                             </div>
-                            
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant={viewMode === 'card' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setViewMode('card')}
-                                >
-                                    <LayoutGrid className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    variant={viewMode === 'list' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setViewMode('list')}
-                                >
-                                    <List className="h-4 w-4" />
-                                </Button>
-                            </div>
+                            <Select value={filterSeverity} onValueChange={setFilterSeverity}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filter by severity" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Severities</SelectItem>
+                                    <SelectItem value="low">Low</SelectItem>
+                                    <SelectItem value="medium">Medium</SelectItem>
+                                    <SelectItem value="high">High</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select value={filterStatus} onValueChange={setFilterStatus}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filter by status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="verified">Verified</SelectItem>
+                                    <SelectItem value="closed">Closed</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
-                    </CardContent>
-                </Card>
+                        
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant={viewMode === 'card' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setViewMode('card')}
+                            >
+                                <LayoutGrid className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant={viewMode === 'list' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setViewMode('list')}
+                            >
+                                <List className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Items Section */}
                 {viewMode === 'card' && (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {filteredItems.length === 0 ? (
                             <div className="col-span-full flex h-64 items-center justify-center">
-                                <div className="text-center">
-                                    <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <div className="glass-card rounded-2xl p-8 text-center">
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20">
+                                        <FileText className="h-6 w-6" />
+                                    </div>
                                     <h3 className="mt-4 text-lg font-semibold">No items found</h3>
                                     <p className="text-muted-foreground">Add your first item to this crop damage record</p>
                                 </div>
                             </div>
                         ) : (
                             filteredItems.map((item) => (
-                                <Card 
+                                <div 
                                     key={item.crop_damage_record_item_id}
-                                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                                    className="glass-card rounded-2xl p-4 cursor-pointer hover:shadow-lg transition-shadow"
                                     onClick={() => openViewItemModal(item)}
                                 >
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className="relative h-20 w-20 overflow-hidden rounded-md">
-                                                {item.photo_path ? (
-                                                    <img
-                                                        src={`/storage/${item.photo_path}`}
-                                                        alt="Damage proof"
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-full w-full items-center justify-center bg-muted">
-                                                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                                    <Button variant="ghost" size="sm">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => openViewItemModal(item)}>
-                                                        <Eye className="mr-2 h-4 w-4" />
-                                                        View
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => openEditItemModal(item)}>
-                                                        <Pencil className="mr-2 h-4 w-4" />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem 
-                                                        onClick={() => openDeleteItemModal(item)}
-                                                        className="text-destructive focus:text-destructive"
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                    <div className="flex items-start justify-between">
+                                        <div className="relative h-20 w-20 overflow-hidden rounded-lg">
+                                            {item.photo_path ? (
+                                                <img
+                                                    src={`/storage/${item.photo_path}`}
+                                                    alt="Damage proof"
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center glass-surface rounded-lg">
+                                                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                                </div>
+                                            )}
                                         </div>
-                                        <CardTitle className="mt-4 line-clamp-2">
-                                            {item.commodity_name} - {item.variety_name}
-                                        </CardTitle>
-                                        <CardDescription className="line-clamp-2">
-                                            Farm ID: {item.farm_id} • Damage Type ID: {item.damage_type_id}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardFooter className="flex items-center justify-between">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                <Button variant="ghost" size="sm">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => openViewItemModal(item)}>
+                                                    <Eye className="mr-2 h-4 w-4" />
+                                                    View
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => openEditItemModal(item)}>
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    onClick={() => openDeleteItemModal(item)}
+                                                    className="text-destructive focus:text-destructive"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    <h3 className="mt-3 font-semibold line-clamp-2">
+                                        {item.commodity_name} - {item.variety_name}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground line-clamp-2">
+                                        Farm ID: {item.farm_id} • Damage Type ID: {item.damage_type_id}
+                                    </p>
+                                    <div className="mt-3 flex items-center justify-between">
                                         <Badge 
                                             className={
                                                 item.damage_severity === 'high' 
@@ -379,8 +378,8 @@ export default function CropDamageRecordDetail({ cropDamageRecord, cropDamageRec
                                         >
                                             {item.status}
                                         </Badge>
-                                    </CardFooter>
-                                </Card>
+                                    </div>
+                                </div>
                             ))
                         )}
                     </div>
@@ -388,12 +387,19 @@ export default function CropDamageRecordDetail({ cropDamageRecord, cropDamageRec
 
                 {/* List View */}
                 {viewMode === 'list' && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Crop Damage Record Items</CardTitle>
-                            <CardDescription>Detailed list of all crop damage incidents in this folder</CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0">
+                    <div className="glass-card rounded-2xl overflow-hidden">
+                        <div className="p-4 pb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                    <List className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-semibold">Crop Damage Record Items</h2>
+                                    <p className="text-xs text-muted-foreground">Detailed list of all crop damage incidents in this folder</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -512,8 +518,8 @@ export default function CropDamageRecordDetail({ cropDamageRecord, cropDamageRec
                                     )}
                                 </TableBody>
                             </Table>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 )}
             </div>
 
@@ -765,57 +771,53 @@ export default function CropDamageRecordDetail({ cropDamageRecord, cropDamageRec
                     
                     <div className="grid gap-6 py-4">
                         {/* Photo Section - Full Width at Top */}
-                        {selectedItem?.photo_path ? (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                        <ImageIcon className="h-5 w-5" />
-                                        Photo Evidence
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="relative w-full rounded-lg overflow-hidden border bg-muted/50">
+                        <div className="glass-card rounded-2xl overflow-hidden">
+                            <div className="p-4 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                        <ImageIcon className="h-4 w-4" />
+                                    </div>
+                                    <h2 className="text-sm font-semibold">Photo Evidence</h2>
+                                </div>
+                            </div>
+                            {selectedItem?.photo_path ? (
+                                <div className="px-4 pb-4">
+                                    <div className="relative w-full rounded-xl overflow-hidden glass-surface">
                                         <img
                                             src={`/storage/${selectedItem.photo_path}`}
                                             alt="Damage proof"
                                             className="w-full h-auto object-contain max-h-[500px] mx-auto"
                                         />
                                     </div>
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                        <ImageIcon className="h-5 w-5" />
-                                        Photo Evidence
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg bg-muted/50">
+                                </div>
+                            ) : (
+                                <div className="px-4 pb-4">
+                                    <div className="flex items-center justify-center h-48 rounded-xl glass-surface border-2 border-dashed">
                                         <div className="text-center">
                                             <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
                                             <p className="text-muted-foreground">No photo uploaded</p>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        )}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Two Column Layout for Details */}
                         <div className="grid md:grid-cols-2 gap-6">
                             {/* Left Column - Farm & Crop Information */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <Sprout className="h-4 w-4" />
-                                        Farm & Crop Information
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <div className="p-4 pb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <Sprout className="h-4 w-4" />
+                                        </div>
+                                        <h2 className="text-sm font-semibold">Farm & Crop Information</h2>
+                                    </div>
+                                </div>
+                                <div className="p-4 pt-0 space-y-4">
                                     <div>
                                         <Label className="text-xs text-muted-foreground uppercase tracking-wide">Farm Owner</Label>
-                                        <div className="mt-1 p-3 rounded-md bg-muted/50">
+                                        <div className="mt-1 p-3 rounded-xl glass-surface">
                                             <p className="font-semibold text-sm">
                                                 {selectedItem?.farm?.farmer?.lfid || 'N/A'}
                                             </p>
@@ -835,21 +837,23 @@ export default function CropDamageRecordDetail({ cropDamageRecord, cropDamageRec
                                             <p className="font-medium mt-1 text-sm">{selectedItem?.variety_name || 'N/A'}</p>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
 
                             {/* Right Column - Damage Classification */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <AlertCircle className="h-4 w-4" />
-                                        Damage Classification
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <div className="p-4 pb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <AlertCircle className="h-4 w-4" />
+                                        </div>
+                                        <h2 className="text-sm font-semibold">Damage Classification</h2>
+                                    </div>
+                                </div>
+                                <div className="p-4 pt-0 space-y-4">
                                     <div>
                                         <Label className="text-xs text-muted-foreground uppercase tracking-wide">Damage Type</Label>
-                                        <div className="mt-1 p-3 rounded-md bg-muted/50">
+                                        <div className="mt-1 p-3 rounded-xl glass-surface">
                                             <p className="font-semibold text-sm">
                                                 {selectedItem?.damage_type?.damage_type_name || `Type ID: ${selectedItem?.damage_type_id}`}
                                             </p>
@@ -895,36 +899,40 @@ export default function CropDamageRecordDetail({ cropDamageRecord, cropDamageRec
                                             </div>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Notes Section - Full Width */}
                         {selectedItem?.notes && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <FileText className="h-4 w-4" />
-                                        Notes & Remarks
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="p-4 rounded-md bg-muted/50 border">
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <div className="p-4 pb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <FileText className="h-4 w-4" />
+                                        </div>
+                                        <h2 className="text-sm font-semibold">Notes & Remarks</h2>
+                                    </div>
+                                </div>
+                                <div className="p-4 pt-0">
+                                    <div className="p-4 rounded-xl glass-surface">
                                         <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedItem.notes}</p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         )}
 
                         {/* Metadata Section - Compact */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base flex items-center gap-2">
-                                    <Calendar className="h-4 w-4" />
-                                    Record Metadata
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                        <div className="glass-card rounded-2xl overflow-hidden">
+                            <div className="p-4 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                        <Calendar className="h-4 w-4" />
+                                    </div>
+                                    <h2 className="text-sm font-semibold">Record Metadata</h2>
+                                </div>
+                            </div>
+                            <div className="p-4 pt-0">
                                 <div className="grid grid-cols-3 gap-4">
                                     <div>
                                         <Label className="text-xs text-muted-foreground uppercase tracking-wide">Recorded</Label>
@@ -945,8 +953,8 @@ export default function CropDamageRecordDetail({ cropDamageRecord, cropDamageRec
                                         </p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
 
                     <DialogFooter className="gap-2">

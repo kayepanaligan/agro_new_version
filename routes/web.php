@@ -13,14 +13,14 @@ Route::get('/farm/profile/{fid}', [App\Http\Controllers\PublicFarmProfileControl
 Route::get('/farm-parcel/profile/{fpid}', [App\Http\Controllers\PublicFarmParcelProfileController::class, 'show'])->name('public.farm-parcel.profile');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', function () {
+    Route::get('dashboard', function (\Illuminate\Http\Request $request) {
         $user = auth()->user();
         
         // Redirect based on user role
         if ($user->role && $user->role->name === 'super admin') {
             return Inertia::render('super_admin/dashboard');
         } elseif ($user->role && $user->role->name === 'admin') {
-            return app(\App\Http\Controllers\Admin\DashboardAnalyticsController::class)->index();
+            return app(\App\Http\Controllers\Admin\DashboardAnalyticsController::class)->index($request);
         } elseif ($user->role && $user->role->name === 'farmer') {
             return Inertia::render('farmer/dashboard');
         } else {
@@ -55,6 +55,27 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/farmers', [App\Http\Controllers\Admin\FarmerController::class, 'store'])->name('admin.farmers.store');
         Route::put('/farmers/{farmer}', [App\Http\Controllers\Admin\FarmerController::class, 'update'])->name('admin.farmers.update');
         Route::delete('/farmers/{farmer}', [App\Http\Controllers\Admin\FarmerController::class, 'destroy'])->name('admin.farmers.destroy');
+
+        // Points Management Routes
+        Route::get('/points-management', [App\Http\Controllers\Admin\PointsManagementController::class, 'index'])->name('admin.points-management');
+        Route::post('/points/award', [App\Http\Controllers\Admin\PointsManagementController::class, 'awardPoints'])->name('admin.points.award');
+
+        // Point Rules Routes
+        Route::get('/point-rules', [App\Http\Controllers\Admin\PointRulesController::class, 'index'])->name('admin.point-rules');
+        Route::post('/point-rules', [App\Http\Controllers\Admin\PointRulesController::class, 'store'])->name('admin.point-rules.store');
+        Route::put('/point-rules/{pointRule}', [App\Http\Controllers\Admin\PointRulesController::class, 'update'])->name('admin.point-rules.update');
+        Route::delete('/point-rules/{pointRule}', [App\Http\Controllers\Admin\PointRulesController::class, 'destroy'])->name('admin.point-rules.destroy');
+        Route::post('/point-rules/{pointRule}/toggle', [App\Http\Controllers\Admin\PointRulesController::class, 'toggle'])->name('admin.point-rules.toggle');
+
+        // Reward Redemptions Routes
+        Route::get('/reward-redemptions', [App\Http\Controllers\Admin\RewardRedemptionsController::class, 'index'])->name('admin.reward-redemptions');
+        Route::get('/reward-redemptions/{rewardRedemption}', [App\Http\Controllers\Admin\RewardRedemptionsController::class, 'show'])->name('admin.reward-redemptions.show');
+        Route::post('/reward-redemptions/{rewardRedemption}/approve', [App\Http\Controllers\Admin\RewardRedemptionsController::class, 'approve'])->name('admin.reward-redemptions.approve');
+        Route::post('/reward-redemptions/{rewardRedemption}/reject', [App\Http\Controllers\Admin\RewardRedemptionsController::class, 'reject'])->name('admin.reward-redemptions.reject');
+
+        // Activity Log Routes
+        Route::get('/activity-log', [App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('admin.activity-log');
+        Route::get('/activity-log/export', [App\Http\Controllers\Admin\ActivityLogController::class, 'exportCsv'])->name('admin.activity-log.export');
 
         // Farm Routes
         Route::get('/farms', [App\Http\Controllers\Admin\FarmController::class, 'index'])->name('admin.farms');
@@ -215,6 +236,7 @@ Route::middleware(['auth'])->group(function () {
         // Technician Reports Routes
         Route::middleware(['permission:reports.view'])->group(function () {
             Route::get('/technician-reports', [App\Http\Controllers\Admin\TechnicianReportController::class, 'index'])->name('admin.technician-reports');
+            Route::get('/technician-reports/analytics', [App\Http\Controllers\Admin\TechnicianReportController::class, 'analytics'])->name('admin.technician-reports.analytics');
             Route::get('/technician-reports/{report}', [App\Http\Controllers\Admin\TechnicianReportController::class, 'show'])->name('admin.technician-reports.show');
             Route::post('/technician-reports/{report}/verify', [App\Http\Controllers\Admin\TechnicianReportController::class, 'verify'])->name('admin.technician-reports.verify');
             Route::post('/technician-reports/{report}/reject', [App\Http\Controllers\Admin\TechnicianReportController::class, 'reject'])->name('admin.technician-reports.reject');

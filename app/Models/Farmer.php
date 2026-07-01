@@ -123,4 +123,14 @@ class Farmer extends Model
     {
         return $this->hasMany(FarmerOrganizationMembership::class);
     }
+
+    public function farmerPoints()
+    {
+        return $this->hasMany(FarmerPoint::class);
+    }
+
+    public function rewardRedemptions()
+    {
+        return $this->hasMany(RewardRedemption::class);
+    }
 }

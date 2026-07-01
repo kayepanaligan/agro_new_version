@@ -1,4 +1,4 @@
-import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText, FolderOpen, FlaskConical, Shield, ClipboardCheck, Key, Calendar } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, GraduationCap, UsersRound, Activity, Award, AlertTriangle, Rat, Worm, WormIcon, Ruler, ClipboardList, FileCheck, HandCoinsIcon, Wallet, Layers, MapPin, CheckSquare, Truck, Scale, FileText, FolderOpen, FlaskConical, Shield, ClipboardCheck, Key, Calendar, Star, Trophy } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import OfflineStatusIndicator from '@/components/offline-status-indicator';
@@ -239,6 +239,33 @@ export function AppSidebar() {
                     title: 'Activity Calendar',
                     url: '/admin/calendar',
                     icon: Calendar,
+                },
+            ],
+        });
+
+        // Points Management
+        navGroups.push({
+            title: 'Points Management',
+            items: [
+                {
+                    title: 'Points Dashboard',
+                    url: '/admin/points-management',
+                    icon: Trophy,
+                },
+                {
+                    title: 'Point Rules',
+                    url: '/admin/point-rules',
+                    icon: Star,
+                },
+                {
+                    title: 'Reward Redemptions',
+                    url: '/admin/reward-redemptions',
+                    icon: Award,
+                },
+                {
+                    title: 'Activity Log',
+                    url: '/admin/activity-log',
+                    icon: Activity,
                 },
             ],
         });

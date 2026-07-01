@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Farmer, type Farm } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Plus, Search, Filter, Trash2, Eye, QrCode } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Plus, Search, Filter, Trash2, Eye, QrCode, MapPin, LandPlot, Users, CalendarDays, BarChart3, PieChartIcon, Ruler, Leaf, Shield, FileText } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     DropdownMenu,
@@ -26,6 +25,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { NarrativeCard } from '@/components/agro-profiler/narrative-card';
+import { DashboardDateFilter, type DateRange } from '@/components/agro-profiler/dashboard-date-filter';
+import { exportToCsv, exportToPdf } from '@/lib/export';
+import BarChart from '@/components/charts/BarChart';
+import PieChart from '@/components/charts/PieChart';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -37,17 +45,38 @@ const breadcrumbs: BreadcrumbItem[] = [
 type SortField = 'farm_name' | 'farmer_name' | 'parcel_count' | 'created_at';
 type SortOrder = 'asc' | 'desc';
 
-interface FarmsProps {
-    farms: any; // Laravel paginator with data property
+interface FarmAnalytics {
+    total_farms: number;
+    total_parcels: number;
+    total_area: number;
+    unique_farmers: number;
+    avg_parcel_area: number;
+    parcel_count_dist: { name: string; count: number }[];
+    area_size_dist: { name: string; count: number }[];
+    barangay_dist: { name: string; count: number }[];
+    ownership_dist: { name: string; count: number }[];
+    farm_type_dist: { name: string; count: number }[];
+    organic_dist: { name: string; count: number }[];
+    ancestral_dist: { name: string; count: number }[];
+    doc_type_dist: { name: string; count: number }[];
+    narrative: string;
+    date_range: DateRange | null;
 }
 
-export default function FarmsIndex({ farms }: FarmsProps) {
+interface FarmsProps {
+    farms: any; // Laravel paginator with data property
+    analytics: FarmAnalytics;
+}
+
+export default function FarmsIndex({ farms, analytics }: FarmsProps) {
+    const [dateRange, setDateRange] = useState<DateRange | null>(analytics.date_range);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortField, setSortField] = useState<SortField>('farm_name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
     const [filterFarmer, setFilterFarmer] = useState<string>('all');
     const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const [selectedFarm, setSelectedFarm] = useState<any>(null);
+    const [currentPage, setCurrentPage] = useState(farms.current_page || 1);
 
     // Convert farms.data to array (Laravel pagination)
     const farmsArray = farms.data || [];
@@ -117,7 +146,6 @@ export default function FarmsIndex({ farms }: FarmsProps) {
             setSortField(field);
             setSortOrder('asc');
         }
-        // Navigate to first page when sorting changes
         router.get('/admin/farms', { page: 1, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: field, order: sortOrder === 'asc' ? 'desc' : 'asc' }, {
             preserveState: true,
             preserveScroll: true,
@@ -137,20 +165,12 @@ export default function FarmsIndex({ farms }: FarmsProps) {
         if (confirm('Are you sure you want to delete this farm? This action cannot be undone.')) {
             router.delete(`/admin/farms/${farmId}`, {
                 preserveScroll: false,
-                onSuccess: () => {
-                    console.log('Farm deleted successfully');
-                },
-                onError: (errors) => {
-                    console.error('Delete error:', errors);
-                },
             });
         }
     };
 
-    // Handle search with debounce
     const handleSearch = (value: string) => {
         setSearchTerm(value);
-        // Debounce search to avoid too many requests
         setTimeout(() => {
             router.get('/admin/farms', { page: 1, search: value || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
                 preserveState: true,
@@ -159,7 +179,6 @@ export default function FarmsIndex({ farms }: FarmsProps) {
         }, 300);
     };
 
-    // Handle farmer filter
     const handleFarmerFilter = (value: string) => {
         setFilterFarmer(value);
         router.get('/admin/farms', { page: 1, search: searchTerm || undefined, farmer_id: value !== 'all' ? value : undefined, sort: sortField, order: sortOrder }, {
@@ -168,43 +187,80 @@ export default function FarmsIndex({ farms }: FarmsProps) {
         });
     };
 
+    // KPI counts
+    const totalParcels = farmsArray.reduce((sum: number, f: any) => sum + (f.farm_parcels_count || 0), 0);
+
+    const handleDateFilterChange = (range: DateRange | null) => {
+        setDateRange(range);
+        const params: Record<string, string> = {};
+        if (range) {
+            params.date_start = range.start;
+            params.date_end = range.end;
+        }
+        router.get('/admin/farms', params, { preserveState: true, replace: true });
+    };
+
+    const handleExportCsv = () => {
+        const headers = ['ID', 'FID', 'Farm Name', 'Farmer', 'Parcels', 'Created'];
+        const rows = filteredFarms.map((f: any) => [
+            f.id, f.fid || '', f.farm_name, `${f.farmer.first_name} ${f.farmer.last_name}`,
+            f.farm_parcels_count || 0, new Date(f.created_at).toLocaleDateString(),
+        ]);
+        exportToCsv('farms', headers, rows);
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Farms" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                {/* Header */}
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-2xl font-bold">Farms</h1>
-                                <p className="text-muted-foreground">Manage farm profiles and land parcels</p>
-                            </div>
-                            <Button onClick={() => router.visit('/admin/farmers/create')}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Farm
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
+                {/* Page Header */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Farms</h1>
+                        <p className="text-sm text-muted-foreground">Manage farm profiles and land parcels</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Button onClick={() => router.visit('/admin/farmers')}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Farm via Farmer
+                        </Button>
+                    </div>
+                </div>
 
-                {/* Filters */}
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="flex items-center gap-2 flex-1">
-                                <div className="relative flex-1 max-w-sm">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search farms or farmers..."
-                                        value={searchTerm}
-                                        onChange={(e) => handleSearch(e.target.value)}
-                                        className="pl-9"
-                                    />
-                                </div>
-                                
+                {/* Tabs */}
+                <Tabs defaultValue="farms" className="flex flex-col gap-4">
+                    <TabsList className="glass-surface w-fit">
+                        <TabsTrigger value="farms" className="gap-2"><MapPin className="h-4 w-4" />Farms</TabsTrigger>
+                        <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="h-4 w-4" />Reports & Analytics</TabsTrigger>
+                    </TabsList>
+
+                    {/* ─── Farms Tab ─────────────────────────────────────── */}
+                    <TabsContent value="farms" className="flex flex-col gap-5">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <KpiCard label="Total Farms" value={farms.total || farmsArray.length} icon={MapPin} />
+                    <KpiCard label="Total Parcels" value={totalParcels} icon={LandPlot} />
+                    <KpiCard label="Unique Farmers" value={uniqueFarmers.length} icon={Users} />
+                    <KpiCard label="This Page" value={farmsArray.length} icon={CalendarDays} />
+                </div>
+
+                {/* Main Table Card */}
+                <div className="glass-card rounded-2xl">
+                    <div className="space-y-3 border-b p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="relative max-w-sm flex-1">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search farms or farmers..."
+                                    value={searchTerm}
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    className="h-9 pl-9"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
                                 <Select value={filterFarmer} onValueChange={handleFarmerFilter}>
-                                    <SelectTrigger className="w-[250px]">
+                                    <SelectTrigger className="w-[220px]">
                                         <Filter className="mr-2 h-4 w-4" />
                                         <SelectValue placeholder="Filter by farmer" />
                                     </SelectTrigger>
@@ -220,215 +276,230 @@ export default function FarmsIndex({ farms }: FarmsProps) {
 
                                 {(searchTerm || filterFarmer !== 'all') && (
                                     <Button variant="ghost" size="sm" onClick={resetFilters}>
-                                        Clear Filters
+                                        Clear
                                     </Button>
                                 )}
                             </div>
-
-                            <div className="text-sm text-muted-foreground">
-                                Showing {farmsArray.length} of {farms.total} farm{farms.total !== 1 ? 's' : ''} (Page {farms.current_page} of {farms.last_page})
-                            </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
 
-                {/* Table */}
-                <Card>
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead>FID</TableHead>
+                                    <TableHead>
+                                        <Button variant="ghost" onClick={() => handleSort('farm_name')} className="-ml-4">
+                                            Farm Name
+                                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Button variant="ghost" onClick={() => handleSort('farmer_name')} className="-ml-4">
+                                            Farmer
+                                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Button variant="ghost" onClick={() => handleSort('parcel_count')} className="-ml-4">
+                                            Parcels
+                                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>Created</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredFarms.length === 0 ? (
                                     <TableRow>
-                                        <TableHead>ID</TableHead>
-                                        <TableHead>FID</TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('farm_name')} className="-ml-4">
-                                                Farm Name
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('farmer_name')} className="-ml-4">
-                                                Farmer
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('parcel_count')} className="-ml-4">
-                                                Parcels
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>Created At</TableHead>
-                                        <TableHead className="w-[70px]">Actions</TableHead>
+                                        <TableCell colSpan={6} className="h-32 text-center">
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <MapPin className="h-8 w-8" />
+                                                <p>No farms found</p>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredFarms.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="h-24 text-center">
-                                                No farms found.
+                                ) : (
+                                    filteredFarms.map((farm) => (
+                                        <TableRow 
+                                            key={farm.id} 
+                                            className="group cursor-pointer hover:bg-muted/50"
+                                            onClick={() => router.visit(`/admin/farms/${farm.id}`)}
+                                        >
+                                            <TableCell className="font-mono text-xs text-muted-foreground">{farm.fid || 'N/A'}</TableCell>
+                                            <TableCell className="font-medium">{farm.farm_name}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                                                        {farm.farmer.first_name[0]}{farm.farmer.last_name[0]}
+                                                    </div>
+                                                    <span className="font-medium">{farm.farmer.first_name} {farm.farmer.last_name}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">
+                                                    {farm.farm_parcels_count || 0} parcel{(farm.farm_parcels_count || 0) !== 1 ? 's' : ''}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {new Date(farm.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            className="h-8 w-8 p-0 text-muted-foreground/60 transition-colors hover:text-foreground hover:bg-muted"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem onClick={() => router.visit(`/admin/farms/${farm.id}`)}>
+                                                            <Eye className="mr-2 h-4 w-4" />
+                                                            <span>View</span>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => router.visit(`/admin/farms/${farm.id}/edit`)}>
+                                                            <Pencil className="mr-2 h-4 w-4" />
+                                                            <span>Edit</span>
+                                                        </DropdownMenuItem>
+                                                        {farm.fid && (
+                                                            <DropdownMenuItem onClick={() => {
+                                                                setSelectedFarm(farm);
+                                                                setIsQrModalOpen(true);
+                                                            }}>
+                                                                <QrCode className="mr-2 h-4 w-4" />
+                                                                <span>View QR</span>
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem 
+                                                            onClick={() => handleDelete(farm.id)}
+                                                            className="text-destructive focus:text-destructive"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            <span>Delete</span>
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
-                                    ) : (
-                                        filteredFarms.map((farm) => (
-                                            <TableRow 
-                                                key={farm.id} 
-                                                className="cursor-pointer hover:bg-muted/50"
-                                                onClick={() => router.visit(`/admin/farms/${farm.id}`)}
-                                            >
-                                                <TableCell className="font-medium">{farm.id}</TableCell>
-                                                <TableCell className="font-mono text-sm">{farm.fid || 'N/A'}</TableCell>
-                                                <TableCell className="font-medium">{farm.farm_name}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                                                            {farm.farmer.first_name[0]}{farm.farmer.last_name[0]}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-medium">
-                                                                {farm.farmer.first_name} {farm.farmer.last_name}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">
-                                                        {farm.farm_parcels_count || 0} parcel{(farm.farm_parcels_count || 0) !== 1 ? 's' : ''}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-sm text-muted-foreground">
-                                                    {new Date(farm.created_at).toLocaleDateString()}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm" 
-                                                                className="h-8 w-8 p-0"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.visit(`/admin/farms/${farm.id}`); }}>
-                                                                <Eye className="mr-2 h-4 w-4" />
-                                                                <span>View</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.visit(`/admin/farms/${farm.id}/edit`); }}>
-                                                                <Pencil className="mr-2 h-4 w-4" />
-                                                                <span>Edit</span>
-                                                            </DropdownMenuItem>
-                                                            {farm.fid && (
-                                                                <DropdownMenuItem onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setSelectedFarm(farm);
-                                                                    setIsQrModalOpen(true);
-                                                                }}>
-                                                                    <QrCode className="mr-2 h-4 w-4" />
-                                                                    <span>View QR</span>
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            <DropdownMenuItem 
-                                                                onClick={(e) => { e.stopPropagation(); handleDelete(farm.id); }}
-                                                                className="text-red-600 focus:text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                <span>Delete</span>
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {farms.last_page > 1 && (
+                        <div className="border-t p-4">
+                            <Pagination
+                                currentPage={farms.current_page}
+                                lastPage={farms.last_page}
+                                total={farms.total}
+                                perPage={10}
+                                onPageChange={(page) => {
+                                    setCurrentPage(page);
+                                    router.get('/admin/farms', { page, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                    });
+                                }}
+                            />
                         </div>
-                    </CardContent>
-                </Card>
+                    )}
+                </div>
+                    </TabsContent>
 
-                {/* Pagination Controls */}
-                {farms.last_page > 1 && (
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground">
-                                    Page {farms.current_page} of {farms.last_page}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            if (farms.current_page > 1) {
-                                                router.get('/admin/farms', { page: farms.current_page - 1, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
-                                                    preserveState: true,
-                                                    preserveScroll: true,
-                                                });
-                                            }
-                                        }}
-                                        disabled={farms.current_page === 1}
-                                    >
-                                        Previous
-                                    </Button>
-                                    
-                                    <div className="flex items-center gap-1">
-                                        {Array.from({ length: Math.min(5, farms.last_page) }, (_, i) => {
-                                            let pageNum;
-                                            if (farms.last_page <= 5) {
-                                                pageNum = i + 1;
-                                            } else if (farms.current_page <= 3) {
-                                                pageNum = i + 1;
-                                            } else if (farms.current_page >= farms.last_page - 2) {
-                                                pageNum = farms.last_page - 4 + i;
-                                            } else {
-                                                pageNum = farms.current_page - 2 + i;
-                                            }
-                                            
-                                            return (
-                                                <Button
-                                                    key={pageNum}
-                                                    variant={farms.current_page === pageNum ? 'default' : 'outline'}
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        router.get('/admin/farms', { page: pageNum, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                        });
-                                                    }}
-                                                    className="w-10"
-                                                >
-                                                    {pageNum}
-                                                </Button>
-                                            );
-                                        })}
-                                    </div>
+                    {/* ─── Reports & Analytics Tab ──────────────────────── */}
+                    <TabsContent value="analytics" className="flex flex-col gap-5">
+                        {/* Analytics Date Filter */}
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm text-muted-foreground">
+                                {dateRange
+                                    ? `Showing data for ${analytics.total_farms} farms in selected period`
+                                    : `Showing all ${analytics.total_farms} farms`}
+                            </p>
+                            <DashboardDateFilter
+                                dateRange={dateRange}
+                                onApply={handleDateFilterChange}
+                            />
+                        </div>
 
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            if (farms.current_page < farms.last_page) {
-                                                router.get('/admin/farms', { page: farms.current_page + 1, search: searchTerm || undefined, farmer_id: filterFarmer !== 'all' ? filterFarmer : undefined, sort: sortField, order: sortOrder }, {
-                                                    preserveState: true,
-                                                    preserveScroll: true,
-                                                });
-                                            }
-                                        }}
-                                        disabled={farms.current_page === farms.last_page}
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
+                        <NarrativeCard
+                            narrative={analytics.narrative}
+                            highlights={[
+                                { text: 'farms', value: analytics.total_farms.toLocaleString() },
+                                { text: 'parcels', value: analytics.total_parcels.toLocaleString() },
+                                { text: 'area', value: `${analytics.total_area} ha` },
+                            ]}
+                        />
+
+                        {/* KPI Summary Cards */}
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <KpiCard label="Total Farms" value={analytics.total_farms} icon={MapPin} />
+                            <KpiCard label="Total Parcels" value={analytics.total_parcels} icon={LandPlot} />
+                            <KpiCard label="Total Area" value={`${analytics.total_area} ha`} icon={Ruler} />
+                            <KpiCard label="Unique Farmers" value={analytics.unique_farmers} icon={Users} />
+                        </div>
+
+                        {/* Parcel Distribution */}
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Parcel Distribution</h2>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <BarChart data={analytics.parcel_count_dist} title="Parcels per Farm" />
+                                <BarChart data={analytics.area_size_dist} title="Area Size Categories" />
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
+                        </div>
+
+                        {/* Geographic & Ownership */}
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Geographic & Ownership Insights</h2>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                <BarChart data={analytics.barangay_dist} title="Top 10 Barangays" />
+                                <PieChart data={analytics.ownership_dist} title="Ownership Type" />
+                                <PieChart data={analytics.doc_type_dist} title="Document Type" />
+                            </div>
+                        </div>
+
+                        {/* Farm Characteristics */}
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Farm Characteristics</h2>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                <PieChart data={analytics.farm_type_dist} title="Farm Type" />
+                                <PieChart data={analytics.organic_dist} title="Organic Practices" />
+                                <PieChart data={analytics.ancestral_dist} title="Ancestral Domain" />
+                            </div>
+                        </div>
+
+                        {/* Summary Cards */}
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <div className="glass-surface rounded-xl p-4 text-center">
+                                <Leaf className="mx-auto mb-2 h-5 w-5 text-primary" />
+                                <p className="text-2xl font-bold text-primary">{analytics.organic_dist[0]?.count || 0}</p>
+                                <p className="text-xs text-muted-foreground">Organic Parcels</p>
+                            </div>
+                            <div className="glass-surface rounded-xl p-4 text-center">
+                                <Shield className="mx-auto mb-2 h-5 w-5 text-primary" />
+                                <p className="text-2xl font-bold text-primary">{analytics.ancestral_dist[0]?.count || 0}</p>
+                                <p className="text-xs text-muted-foreground">Within Ancestral Domain</p>
+                            </div>
+                            <div className="glass-surface rounded-xl p-4 text-center">
+                                <Ruler className="mx-auto mb-2 h-5 w-5 text-primary" />
+                                <p className="text-2xl font-bold text-primary">{analytics.avg_parcel_area} ha</p>
+                                <p className="text-xs text-muted-foreground">Avg. Parcel Size</p>
+                            </div>
+                            <div className="glass-surface rounded-xl p-4 text-center">
+                                <FileText className="mx-auto mb-2 h-5 w-5 text-primary" />
+                                <p className="text-2xl font-bold text-primary">{analytics.ownership_dist.length}</p>
+                                <p className="text-xs text-muted-foreground">Ownership Types</p>
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </div>
 
             {/* QR Code Modal */}

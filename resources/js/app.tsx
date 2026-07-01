@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './hooks/use-appearance';
 import { NetworkProvider } from './contexts/NetworkContext';
+import { WebSocketProvider } from './contexts/WebSocketContext';
 import { preCacheReferenceData } from './services/reference-data';
 import { startAutoSync } from './services/sync';
 
@@ -32,7 +33,9 @@ createInertiaApp({
 
         root.render(
             <NetworkProvider>
-                <App {...props} />
+                <WebSocketProvider enabled={true}>
+                    <App {...props} />
+                </WebSocketProvider>
             </NetworkProvider>
         );
     },

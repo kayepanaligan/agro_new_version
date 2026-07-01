@@ -62,6 +62,15 @@ export interface CropDamageData {
   }>;
 }
 
+export interface PointsSummaryData {
+  total_points: number;
+  active_farmers: number;
+  this_month_points: number;
+  tier_distribution: ChartDataPoint[];
+  points_trend: Array<{ month: string; count: number }>;
+  category_breakdown: ChartDataPoint[];
+}
+
 export interface AnalyticsData {
   kpis: KpiData;
   demographics: DemographicsData;
@@ -76,4 +85,7 @@ export interface AnalyticsData {
     month: string;
     count: number;
   }>;
+  points_summary: PointsSummaryData;
+  last_synced_at: string | null;
+  date_range: { start: string; end: string } | null;
 }

@@ -1,3 +1,528 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar-background);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+}
+
+/*
+  Compatibility layer for Tailwind CSS v4 border-color defaults.
+*/
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+/* ============================================================
+   LIGHT MODE — Base tokens (Nature / Green default)
+   ============================================================ */
+:root {
+    --radius: 0.875rem;
+
+    /* Surface */
+    --background: hsl(0, 0%, 98.5%);
+    --foreground: hsl(222, 47%, 11%);
+
+    /* Cards */
+    --card: hsl(0, 0%, 100%);
+    --card-foreground: hsl(222, 47%, 11%);
+
+    /* Popover */
+    --popover: hsl(0, 0%, 100%);
+    --popover-foreground: hsl(222, 47%, 11%);
+
+    /* Primary — overridden by accent */
+    --primary: hsl(142, 72%, 34%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --primary-hue: 142;
+
+    /* Secondary */
+    --secondary: hsl(210, 40%, 96%);
+    --secondary-foreground: hsl(222, 47%, 11%);
+
+    /* Muted */
+    --muted: hsl(210, 40%, 96%);
+    --muted-foreground: hsl(215, 16%, 47%);
+
+    /* Accent — overridden by accent */
+    --accent: hsl(142, 68%, 94%);
+    --accent-foreground: hsl(142, 72%, 28%);
+
+    /* Destructive */
+    --destructive: hsl(0, 84%, 60%);
+    --destructive-foreground: hsl(0, 0%, 100%);
+
+    /* Success / Warning */
+    --success: hsl(142, 72%, 34%);
+    --success-foreground: hsl(0, 0%, 100%);
+    --warning: hsl(38, 92%, 50%);
+    --warning-foreground: hsl(0, 0%, 100%);
+
+    /* Borders */
+    --border: hsl(214, 24%, 88%);
+    --input: hsl(214, 24%, 88%);
+    --ring: hsl(142, 72%, 34%);
+
+    /* Charts */
+    --chart-1: hsl(142, 72%, 34%);
+    --chart-2: hsl(210, 70%, 50%);
+    --chart-3: hsl(38, 92%, 50%);
+    --chart-4: hsl(280, 65%, 55%);
+    --chart-5: hsl(0, 84%, 60%);
+
+    /* Sidebar */
+    --sidebar-background: hsl(0, 0%, 100%);
+    --sidebar-foreground: hsl(215, 16%, 47%);
+    --sidebar-primary: hsl(142, 72%, 34%);
+    --sidebar-primary-foreground: hsl(0, 0%, 100%);
+    --sidebar-accent: hsl(210, 40%, 96%);
+    --sidebar-accent-foreground: hsl(222, 47%, 11%);
+    --sidebar-border: hsl(214, 32%, 91%);
+    --sidebar-ring: hsl(142, 72%, 34%);
+
+    /* Elevation shadows */
+    --shadow-xs: 0 1px 2px hsla(0, 0%, 0%, 0.04);
+    --shadow-sm: 0 1px 3px hsla(0, 0%, 0%, 0.06), 0 1px 2px hsla(0, 0%, 0%, 0.04);
+    --shadow-md: 0 4px 6px -1px hsla(0, 0%, 0%, 0.06), 0 2px 4px -2px hsla(0, 0%, 0%, 0.04);
+    --shadow-lg: 0 10px 15px -3px hsla(0, 0%, 0%, 0.06), 0 4px 6px -4px hsla(0, 0%, 0%, 0.04);
+}
+
+/* ============================================================
+   DARK MODE — Cosmic / Aurora theme
+   ============================================================ */
+.dark {
+    --background: hsl(228, 25%, 7%);
+    --foreground: hsl(210, 40%, 96%);
+
+    --card: hsl(228, 22%, 10%);
+    --card-foreground: hsl(210, 40%, 96%);
+
+    --popover: hsl(228, 22%, 10%);
+    --popover-foreground: hsl(210, 40%, 96%);
+
+    --primary: hsl(142, 68%, 42%);
+    --primary-foreground: hsl(228, 25%, 5%);
+    --primary-hue: 142;
+
+    --secondary: hsl(228, 18%, 15%);
+    --secondary-foreground: hsl(210, 40%, 96%);
+
+    --muted: hsl(228, 18%, 15%);
+    --muted-foreground: hsl(215, 20%, 65%);
+
+    --accent: hsl(142, 50%, 15%);
+    --accent-foreground: hsl(142, 68%, 55%);
+
+    --destructive: hsl(0, 72%, 55%);
+    --destructive-foreground: hsl(0, 0%, 100%);
+
+    --success: hsl(142, 68%, 42%);
+    --success-foreground: hsl(228, 25%, 5%);
+    --warning: hsl(38, 92%, 55%);
+    --warning-foreground: hsl(228, 25%, 5%);
+
+    --border: hsl(228, 18%, 16%);
+    --input: hsl(228, 18%, 16%);
+    --ring: hsl(142, 68%, 42%);
+
+    --chart-1: hsl(142, 68%, 42%);
+    --chart-2: hsl(210, 70%, 55%);
+    --chart-3: hsl(38, 92%, 55%);
+    --chart-4: hsl(280, 65%, 60%);
+    --chart-5: hsl(0, 72%, 55%);
+
+    --sidebar-background: hsl(228, 28%, 5%);
+    --sidebar-foreground: hsl(215, 20%, 75%);
+    --sidebar-primary: hsl(142, 68%, 42%);
+    --sidebar-primary-foreground: hsl(228, 25%, 5%);
+    --sidebar-accent: hsl(228, 20%, 12%);
+    --sidebar-accent-foreground: hsl(210, 40%, 96%);
+    --sidebar-border: hsl(228, 18%, 14%);
+    --sidebar-ring: hsl(142, 68%, 42%);
+
+    --shadow-xs: 0 1px 2px hsla(0, 0%, 0%, 0.3);
+    --shadow-sm: 0 1px 3px hsla(0, 0%, 0%, 0.4), 0 1px 2px hsla(0, 0%, 0%, 0.3);
+    --shadow-md: 0 4px 6px -1px hsla(0, 0%, 0%, 0.4), 0 2px 4px -2px hsla(0, 0%, 0%, 0.3);
+    --shadow-lg: 0 10px 15px -3px hsla(0, 0%, 0%, 0.4), 0 4px 6px -4px hsla(0, 0%, 0%, 0.3);
+}
+
+/* ============================================================
+   ACCENT THEMES — Light mode overrides
+   ============================================================ */
+
+/* Nature (Green) — default, already set in :root */
+:root[data-accent='nature'] {
+    --primary: hsl(142, 72%, 34%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --primary-hue: 142;
+    --accent: hsl(142, 68%, 94%);
+    --accent-foreground: hsl(142, 72%, 28%);
+    --ring: hsl(142, 72%, 34%);
+    --chart-1: hsl(142, 72%, 34%);
+    --chart-2: hsl(210, 70%, 50%);
+    --chart-3: hsl(38, 92%, 50%);
+    --chart-4: hsl(280, 65%, 55%);
+    --chart-5: hsl(0, 84%, 60%);
+    --sidebar-primary: hsl(142, 72%, 34%);
+    --sidebar-ring: hsl(142, 72%, 34%);
+    --success: hsl(142, 72%, 34%);
+}
+
+/* Harvest (Yellow) */
+:root[data-accent='harvest'] {
+    --primary: hsl(42, 92%, 46%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --primary-hue: 42;
+    --accent: hsl(42, 90%, 92%);
+    --accent-foreground: hsl(42, 80%, 28%);
+    --ring: hsl(42, 92%, 46%);
+    --chart-1: hsl(42, 92%, 46%);
+    --chart-2: hsl(142, 72%, 34%);
+    --chart-3: hsl(210, 70%, 50%);
+    --chart-4: hsl(280, 65%, 55%);
+    --chart-5: hsl(0, 84%, 60%);
+    --sidebar-primary: hsl(42, 92%, 46%);
+    --sidebar-ring: hsl(42, 92%, 46%);
+    --success: hsl(42, 92%, 46%);
+}
+
+/* Aurora (Purple) */
+:root[data-accent='aurora'] {
+    --primary: hsl(270, 70%, 50%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --primary-hue: 270;
+    --accent: hsl(270, 68%, 94%);
+    --accent-foreground: hsl(270, 60%, 35%);
+    --ring: hsl(270, 70%, 50%);
+    --chart-1: hsl(270, 70%, 50%);
+    --chart-2: hsl(142, 72%, 34%);
+    --chart-3: hsl(210, 70%, 50%);
+    --chart-4: hsl(38, 92%, 50%);
+    --chart-5: hsl(0, 84%, 60%);
+    --sidebar-primary: hsl(270, 70%, 50%);
+    --sidebar-ring: hsl(270, 70%, 50%);
+    --success: hsl(270, 70%, 50%);
+}
+
+/* Ocean (Blue) */
+:root[data-accent='ocean'] {
+    --primary: hsl(215, 80%, 50%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --primary-hue: 215;
+    --accent: hsl(215, 80%, 94%);
+    --accent-foreground: hsl(215, 70%, 32%);
+    --ring: hsl(215, 80%, 50%);
+    --chart-1: hsl(215, 80%, 50%);
+    --chart-2: hsl(142, 72%, 34%);
+    --chart-3: hsl(38, 92%, 50%);
+    --chart-4: hsl(280, 65%, 55%);
+    --chart-5: hsl(0, 84%, 60%);
+    --sidebar-primary: hsl(215, 80%, 50%);
+    --sidebar-ring: hsl(215, 80%, 50%);
+    --success: hsl(215, 80%, 50%);
+}
+
+/* Sunrise (Orange) */
+:root[data-accent='sunrise'] {
+    --primary: hsl(24, 90%, 52%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --primary-hue: 24;
+    --accent: hsl(24, 88%, 92%);
+    --accent-foreground: hsl(24, 80%, 32%);
+    --ring: hsl(24, 90%, 52%);
+    --chart-1: hsl(24, 90%, 52%);
+    --chart-2: hsl(142, 72%, 34%);
+    --chart-3: hsl(210, 70%, 50%);
+    --chart-4: hsl(280, 65%, 55%);
+    --chart-5: hsl(0, 84%, 60%);
+    --sidebar-primary: hsl(24, 90%, 52%);
+    --sidebar-ring: hsl(24, 90%, 52%);
+    --success: hsl(24, 90%, 52%);
+}
+
+/* Blossom (Pink) */
+:root[data-accent='blossom'] {
+    --primary: hsl(330, 75%, 52%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --primary-hue: 330;
+    --accent: hsl(330, 72%, 94%);
+    --accent-foreground: hsl(330, 65%, 35%);
+    --ring: hsl(330, 75%, 52%);
+    --chart-1: hsl(330, 75%, 52%);
+    --chart-2: hsl(142, 72%, 34%);
+    --chart-3: hsl(210, 70%, 50%);
+    --chart-4: hsl(38, 92%, 50%);
+    --chart-5: hsl(0, 84%, 60%);
+    --sidebar-primary: hsl(330, 75%, 52%);
+    --sidebar-ring: hsl(330, 75%, 52%);
+    --success: hsl(330, 75%, 52%);
+}
+
+/* ============================================================
+   ACCENT THEMES — Dark mode overrides
+   ============================================================ */
+.dark[data-accent='nature'] {
+    --primary: hsl(142, 68%, 42%);
+    --primary-hue: 142;
+    --accent: hsl(142, 50%, 15%);
+    --accent-foreground: hsl(142, 68%, 55%);
+    --ring: hsl(142, 68%, 42%);
+    --chart-1: hsl(142, 68%, 42%);
+    --sidebar-primary: hsl(142, 68%, 42%);
+    --sidebar-ring: hsl(142, 68%, 42%);
+}
+
+.dark[data-accent='harvest'] {
+    --primary: hsl(42, 88%, 52%);
+    --primary-hue: 42;
+    --accent: hsl(42, 50%, 15%);
+    --accent-foreground: hsl(42, 88%, 60%);
+    --ring: hsl(42, 88%, 52%);
+    --chart-1: hsl(42, 88%, 52%);
+    --sidebar-primary: hsl(42, 88%, 52%);
+    --sidebar-ring: hsl(42, 88%, 52%);
+}
+
+.dark[data-accent='aurora'] {
+    --primary: hsl(270, 68%, 58%);
+    --primary-hue: 270;
+    --accent: hsl(270, 45%, 18%);
+    --accent-foreground: hsl(270, 68%, 68%);
+    --ring: hsl(270, 68%, 58%);
+    --chart-1: hsl(270, 68%, 58%);
+    --sidebar-primary: hsl(270, 68%, 58%);
+    --sidebar-ring: hsl(270, 68%, 58%);
+}
+
+.dark[data-accent='ocean'] {
+    --primary: hsl(215, 78%, 58%);
+    --primary-hue: 215;
+    --accent: hsl(215, 45%, 16%);
+    --accent-foreground: hsl(215, 78%, 65%);
+    --ring: hsl(215, 78%, 58%);
+    --chart-1: hsl(215, 78%, 58%);
+    --sidebar-primary: hsl(215, 78%, 58%);
+    --sidebar-ring: hsl(215, 78%, 58%);
+}
+
+.dark[data-accent='sunrise'] {
+    --primary: hsl(24, 88%, 56%);
+    --primary-hue: 24;
+    --accent: hsl(24, 50%, 16%);
+    --accent-foreground: hsl(24, 88%, 62%);
+    --ring: hsl(24, 88%, 56%);
+    --chart-1: hsl(24, 88%, 56%);
+    --sidebar-primary: hsl(24, 88%, 56%);
+    --sidebar-ring: hsl(24, 88%, 56%);
+}
+
+.dark[data-accent='blossom'] {
+    --primary: hsl(330, 72%, 58%);
+    --primary-hue: 330;
+    --accent: hsl(330, 45%, 18%);
+    --accent-foreground: hsl(330, 72%, 68%);
+    --ring: hsl(330, 72%, 58%);
+    --chart-1: hsl(330, 72%, 58%);
+    --sidebar-primary: hsl(330, 72%, 58%);
+    --sidebar-ring: hsl(330, 72%, 58%);
+}
+
+/* ============================================================
+   BASE LAYER
+   ============================================================ */
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        pointer-events: auto !important;
+        font-feature-settings: 'rlig' 1, 'calt' 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* ============================================================
+   GLASS SURFACE UTILITIES
+   ============================================================ */
+.glass-card {
+    background: hsla(0, 0%, 100%, 0.78);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsla(0, 0%, 100%, 0.6);
+    box-shadow:
+        0 2px 8px hsla(0, 0%, 0%, 0.05),
+        0 4px 16px hsla(0, 0%, 0%, 0.03),
+        0 0 10px hsla(var(--primary-hue, 142), 70%, 50%, 0.03),
+        inset 0 1px 0 hsla(0, 0%, 100%, 0.5);
+}
+
+.dark .glass-card {
+    background: hsla(228, 22%, 12%, 0.6);
+    border-color: hsla(var(--primary-hue, 142), 50%, 50%, 0.1);
+    box-shadow:
+        0 2px 8px hsla(0, 0%, 0%, 0.25),
+        0 4px 20px hsla(0, 0%, 0%, 0.15),
+        0 0 24px hsla(var(--primary-hue, 142), 80%, 55%, 0.1),
+        inset 0 1px 0 hsla(0, 0%, 100%, 0.06);
+}
+
+.glass-surface {
+    background: hsla(0, 0%, 100%, 0.6);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid hsla(0, 0%, 100%, 0.55);
+    box-shadow:
+        0 2px 6px hsla(0, 0%, 0%, 0.04),
+        0 0 8px hsla(var(--primary-hue, 142), 70%, 50%, 0.03),
+        inset 0 1px 0 hsla(0, 0%, 100%, 0.4);
+}
+
+.dark .glass-surface {
+    background: hsla(228, 22%, 12%, 0.5);
+    border-color: hsla(var(--primary-hue, 142), 60%, 50%, 0.1);
+    box-shadow:
+        0 2px 6px hsla(0, 0%, 0%, 0.2),
+        0 0 16px hsla(var(--primary-hue, 142), 80%, 55%, 0.08),
+        inset 0 1px 0 hsla(0, 0%, 100%, 0.06);
+}
+
+/* Header Glass Effect */
+.header-glass {
+    background: hsla(0, 0%, 100%, 0.85);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    border-bottom: 1px solid hsla(0, 0%, 100%, 0.5);
+    box-shadow:
+        0 2px 8px hsla(0, 0%, 0%, 0.05),
+        inset 0 -1px 0 hsla(0, 0%, 0%, 0.03);
+}
+
+.dark .header-glass {
+    background: hsla(228, 22%, 8%, 0.8);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border-bottom-color: hsla(0, 0%, 100%, 0.06);
+    box-shadow:
+        0 2px 8px hsla(0, 0%, 0%, 0.3),
+        inset 0 -1px 0 hsla(0, 0%, 100%, 0.04);
+}
+
+/* ============================================================
+   COSMIC DARK MODE — Subtle nebula background
+   ============================================================ */
+.dark body {
+    background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, hsla(270, 60%, 30%, 0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 50%, hsla(210, 60%, 25%, 0.08), transparent),
+        radial-gradient(ellipse 50% 30% at 20% 80%, hsla(142, 50%, 20%, 0.06), transparent);
+}
+
+/* ============================================================
+   SMOOTH TRANSITIONS
+   ============================================================ */
+.theme-transition,
+.theme-transition * {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
+/* ============================================================
+   SCROLLBAR STYLING
+   ============================================================ */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: hsl(215, 16%, 75%);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(215, 16%, 60%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: hsl(228, 18%, 22%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(228, 18%, 30%);
+}
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 
 @import 'tailwindcss';

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\FarmerCreated;
+use App\Events\FarmerUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Farmer;
 use Illuminate\Http\JsonResponse;
@@ -72,6 +74,9 @@ class FarmerController extends Controller
             }
         }
 
+        // Broadcast real-time event
+        event(new FarmerCreated($farmer));
+
         return response()->json([
             'success' => true,
             'message' => 'Farmer created successfully.',
@@ -128,6 +133,9 @@ class FarmerController extends Controller
         }
 
         $farmer->update($validated);
+
+        // Broadcast real-time event
+        event(new FarmerUpdated($farmer));
 
         return response()->json([
             'success' => true,

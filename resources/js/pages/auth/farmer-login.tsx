@@ -113,7 +113,7 @@ export default function FarmerLogin({ status, canResetPassword }: FarmerLoginPro
                     </div>
 
                     <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
-                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                        {processing && <LoaderCircle className="h-4 w-4 animate-spin text-emerald-400" />}
                         Login as Farmer
                     </Button>
                 </div>

@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,7 +33,8 @@ class TechnicianReportController extends Controller
             $query->where('report_type', $request->report_type);
         }
 
-        $reports = $query->paginate(20)->through(function ($report) {
+        $perPage = $request->input('per_page', 10);
+        $reports = $query->paginate($perPage)->through(function ($report) {
             return [
                 'id' => $report->id,
                 'report_type' => $report->report_type,
@@ -54,12 +56,17 @@ class TechnicianReportController extends Controller
 
         $technicians = User::whereHas('role', function ($q) {
             $q->where('name', 'technician');
-        })->get();
+        })->get()->map(fn ($t) => [
+            'id' => $t->id,
+            'full_name' => $t->full_name,
+            'email' => $t->email,
+        ]);
 
         return Inertia::render('admin/technician-reports', [
             'reports' => $reports,
             'technicians' => $technicians,
             'filters' => $request->only(['status', 'technician_id', 'report_type']),
+            'analytics' => $this->computeAnalytics(),
         ]);
     }
 
@@ -137,6 +144,16 @@ class TechnicianReportController extends Controller
     }
 
     /**
+     * Display analytics dashboard for technician reports.
+     */
+    public function analytics(): Response
+    {
+        return Inertia::render('admin/technician-reports', [
+            'analytics' => $this->computeAnalytics(),
+        ]);
+    }
+
+    /**
      * Bulk verify multiple reports.
      */
     public function bulkVerify(Request $request): RedirectResponse
@@ -155,5 +172,88 @@ class TechnicianReportController extends Controller
 
         return redirect()->route('admin.technician-reports')
             ->with('success', count($validated['report_ids']) . ' reports verified successfully.');
+    }
+
+    /**
+     * Compute analytics data for technician reports.
+     */
+    private function computeAnalytics(): array
+    {
+        $statusCounts = [
+            'pending' => TechnicianReport::whereIn('status', ['pending', 'submitted'])->count(),
+            'submitted' => TechnicianReport::where('status', 'submitted')->count(),
+            'verified' => TechnicianReport::where('status', 'verified')->count(),
+            'rejected' => TechnicianReport::where('status', 'rejected')->count(),
+        ];
+        $statusCounts['total'] = TechnicianReport::count();
+
+        $typeCounts = TechnicianReport::select('report_type', DB::raw('count(*) as count'))
+            ->groupBy('report_type')
+            ->pluck('count', 'report_type')
+            ->toArray();
+
+        $submissionTrend = TechnicianReport::select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('count(*) as count')
+            )
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(fn ($row) => [
+                'date' => $row->date,
+                'count' => (int) $row->count,
+            ])
+            ->values()
+            ->toArray();
+
+        $technicianPerformance = TechnicianReport::select(
+                'technician_id',
+                DB::raw('count(*) as total_reports'),
+                DB::raw("sum(case when status = 'verified' then 1 else 0 end) as verified_count")
+            )
+            ->groupBy('technician_id')
+            ->orderByDesc('total_reports')
+            ->limit(10)
+            ->get()
+            ->map(function ($row) {
+                $tech = User::find($row->technician_id);
+                return [
+                    'technician_id' => $row->technician_id,
+                    'full_name' => $tech?->full_name ?? 'Unknown',
+                    'total_reports' => (int) $row->total_reports,
+                    'verified_count' => (int) $row->verified_count,
+                    'verification_rate' => $row->total_reports > 0
+                        ? round(($row->verified_count / $row->total_reports) * 100, 1)
+                        : 0,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        $recentActivity = TechnicianReport::with('technician:id,first_name,middle_name,last_name')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'report_type' => $r->report_type,
+                'status' => $r->status,
+                'technician_name' => $r->technician?->full_name ?? 'Unknown',
+                'created_at' => $r->created_at->toISOString(),
+            ])
+            ->values()
+            ->toArray();
+
+        $lastSyncedAt = TechnicianReport::max('created_at');
+
+        return [
+            'status_counts' => $statusCounts,
+            'type_counts' => $typeCounts,
+            'submission_trend' => $submissionTrend,
+            'technician_performance' => $technicianPerformance,
+            'recent_activity' => $recentActivity,
+            'last_synced_at' => $lastSyncedAt ? \Carbon\Carbon::parse($lastSyncedAt)->toISOString() : null,
+        ];
     }
 }

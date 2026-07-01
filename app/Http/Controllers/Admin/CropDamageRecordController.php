@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\CropDamageRecordCreated;
 use App\Http\Controllers\Controller;
 use App\Models\CropDamageRecord;
 use App\Models\CropDamageRecordItem;
@@ -52,7 +53,10 @@ class CropDamageRecordController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        CropDamageRecord::create($validated);
+        $cropDamageRecord = CropDamageRecord::create($validated);
+
+        // Broadcast real-time event
+        event(new CropDamageRecordCreated($cropDamageRecord));
 
         return redirect()->back()->with('success', 'Crop damage record folder created successfully.');
     }

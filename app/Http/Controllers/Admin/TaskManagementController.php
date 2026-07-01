@@ -57,10 +57,73 @@ class TaskManagementController extends Controller
             $q->where('name', 'technician');
         })->get();
 
+        // Productivity data
+        $allTasks = Task::query();
+        $totalTasks = $allTasks->count();
+        $statusDist = Task::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->get()
+            ->map(fn($r) => ['name' => ucfirst(str_replace('_', ' ', $r->status)), 'count' => $r->count])
+            ->values()
+            ->toArray();
+
+        $typeDist = Task::selectRaw('task_type, count(*) as count')
+            ->groupBy('task_type')
+            ->get()
+            ->map(fn($r) => ['name' => $r->task_type, 'count' => $r->count])
+            ->values()
+            ->toArray();
+
+        $priorityDist = Task::selectRaw('priority, count(*) as count')
+            ->groupBy('priority')
+            ->get()
+            ->map(fn($r) => ['name' => ucfirst($r->priority), 'count' => $r->count])
+            ->values()
+            ->toArray();
+
+        $techProductivity = Task::selectRaw('assigned_to, count(*) as total, sum(case when status = \'verified\' then 1 else 0 end) as completed')
+            ->groupBy('assigned_to')
+            ->with('assignedTo:id,first_name,last_name')
+            ->get()
+            ->map(fn($r) => [
+                'technician_id' => $r->assigned_to,
+                'technician_name' => $r->assignedTo->full_name ?? 'Unknown',
+                'total' => $r->total,
+                'completed' => (int) $r->completed,
+            ])
+            ->values()
+            ->toArray();
+
+        $overdueCount = Task::where('status', '!=', 'verified')
+            ->where('due_date', '<', now())
+            ->count();
+
+        $completionRate = $totalTasks > 0
+            ? round((Task::where('status', 'verified')->count() / $totalTasks) * 100, 1)
+            : 0;
+
+        $narrative = $totalTasks > 0
+            ? "Out of {$totalTasks} total tasks, {$completionRate}% have been verified. "
+                . ($overdueCount > 0 ? "There are {$overdueCount} overdue tasks requiring attention. " : "All tasks are within schedule. ")
+                . "The most common task type is " . collect($typeDist)->sortByDesc('count')->first()['name'] . "."
+            : 'No tasks have been created yet.';
+
+        $productivity = [
+            'total' => $totalTasks,
+            'status_dist' => $statusDist,
+            'type_dist' => $typeDist,
+            'priority_dist' => $priorityDist,
+            'tech_productivity' => $techProductivity,
+            'overdue_count' => $overdueCount,
+            'completion_rate' => $completionRate,
+            'narrative' => $narrative,
+        ];
+
         return Inertia::render('admin/tasks', [
             'tasks' => $tasks,
             'technicians' => $technicians,
             'filters' => $request->only(['status', 'technician_id', 'priority']),
+            'productivity' => $productivity,
         ]);
     }
 

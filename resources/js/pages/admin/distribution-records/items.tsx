@@ -11,10 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { BarChart3, TrendingUp, TrendingDown, Clock, CheckCircle } from 'lucide-react';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
 
 interface Props {
     distributionRecord: DistributionRecord;
@@ -197,8 +197,8 @@ const DistributionRecordsItems = () => {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${distributionRecord.distribution_name} - Items`} />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="rounded-xl border bg-card shadow-sm">
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
+                <div className="glass-card rounded-2xl shadow-sm">
                     <div className="p-6">
                         <div className="mb-4 flex items-center gap-2">
                             <Button variant="ghost" size="sm" onClick={() => router.get('/admin/distribution-records')}>
@@ -207,9 +207,16 @@ const DistributionRecordsItems = () => {
                             </Button>
                         </div>
                         
-                        <Card className="mb-6">
-                            <CardContent className="p-4">
-                                <h2 className="text-2xl font-bold mb-2">{distributionRecord.distribution_name}</h2>
+                        <div className="glass-card rounded-2xl overflow-hidden mb-6">
+                            <div className="p-4 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                        <FileDown className="h-4 w-4" />
+                                    </div>
+                                    <h2 className="text-sm font-semibold">{distributionRecord.distribution_name}</h2>
+                                </div>
+                            </div>
+                            <div className="p-4 pt-0">
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                     <div>
                                         <span className="text-muted-foreground">Source:</span>
@@ -221,7 +228,7 @@ const DistributionRecordsItems = () => {
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Total Quantity:</span>
-                                        <span className="ml-2 font-medium">{Number(distributionRecord.total_quantity).toFixed(2)}</span>
+                                        <span className="ml-2 font-medium text-primary">{Number(distributionRecord.total_quantity).toFixed(2)}</span>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Items:</span>
@@ -231,8 +238,8 @@ const DistributionRecordsItems = () => {
                                 {distributionRecord.note && (
                                     <p className="text-sm text-muted-foreground mt-3">{distributionRecord.note}</p>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div className="flex flex-col gap-4 md:flex-row md:items-center flex-1">
@@ -299,7 +306,7 @@ const DistributionRecordsItems = () => {
                             )}
                         </div>
 
-                        <div className="rounded-md border">
+                        <div className="glass-card rounded-2xl overflow-hidden">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -395,7 +402,6 @@ const DistributionRecordsItems = () => {
                     </div>
                 </div>
             </div>
-
             {/* Add Item Modal */}
             <Dialog open={isAddItemModalOpen} onOpenChange={setIsAddItemModalOpen}>
                 <DialogContent>
@@ -538,20 +544,18 @@ const DistributionRecordsItems = () => {
                                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary"></span>
                                         Distribution Information
                                     </h3>
-                                    <Card className="bg-muted/30">
-                                        <CardContent className="pt-4 pb-4">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-1">
-                                                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Distribution Name</Label>
-                                                    <p className="font-semibold text-sm leading-tight">{distributionRecord.distribution_name}</p>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Farmer LFID</Label>
-                                                    <p className="font-mono font-semibold text-sm leading-tight">{selectedItem.acknowledgement.farmer_lfid}</p>
-                                                </div>
+                                    <div className="glass-surface rounded-xl p-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Distribution Name</Label>
+                                                <p className="font-semibold text-sm leading-tight">{distributionRecord.distribution_name}</p>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                            <div className="space-y-1">
+                                                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Farmer LFID</Label>
+                                                <p className="font-mono font-semibold text-sm leading-tight">{selectedItem.acknowledgement.farmer_lfid}</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Receipt Details */}
@@ -561,9 +565,9 @@ const DistributionRecordsItems = () => {
                                         Receipt Details
                                     </h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5 p-3 rounded-md border bg-card">
+                                        <div className="space-y-1.5 p-3 rounded-xl glass-surface">
                                             <Label className="text-xs text-muted-foreground flex items-center gap-1.5 uppercase tracking-wide">
-                                                <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                                                <span className="inline-block w-2 h-2 rounded-full bg-primary"></span>
                                                 Received Date
                                             </Label>
                                             <p className="font-semibold text-sm">
@@ -582,9 +586,9 @@ const DistributionRecordsItems = () => {
                                             </p>
                                         </div>
                                         
-                                        <div className="space-y-1.5 p-3 rounded-md border bg-card">
+                                        <div className="space-y-1.5 p-3 rounded-xl glass-surface">
                                             <Label className="text-xs text-muted-foreground flex items-center gap-1.5 uppercase tracking-wide">
-                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                                                <span className="inline-block w-2 h-2 rounded-full bg-primary"></span>
                                                 Status
                                             </Label>
                                             <Badge variant="default" className="mt-1">
@@ -601,8 +605,8 @@ const DistributionRecordsItems = () => {
                                                 <span className="inline-block w-2 h-2 rounded-full bg-purple-500"></span>
                                                 Photo Proof of Receipt
                                             </Label>
-                                            <div className="rounded-lg border-2 border-muted overflow-hidden bg-muted/20">
-                                                <div className="w-full h-80 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                                            <div className="rounded-xl glass-surface overflow-hidden">
+                                                <div className="w-full h-80 flex items-center justify-center bg-primary/[0.02] dark:bg-primary/[0.04]">
                                                     <img 
                                                         src={`/storage/${selectedItem.acknowledgement.photo_proof}`} 
                                                         alt="Proof of receipt" 
@@ -623,7 +627,7 @@ const DistributionRecordsItems = () => {
                                                 <span className="inline-block w-2 h-2 rounded-full bg-orange-500"></span>
                                                 Notes & Remarks
                                             </Label>
-                                            <div className="rounded-md border bg-muted/20 p-4">
+                                            <div className="glass-surface rounded-xl p-4">
                                                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedItem.acknowledgement.notes}</p>
                                             </div>
                                         </div>
@@ -636,22 +640,22 @@ const DistributionRecordsItems = () => {
                                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary"></span>
                                         Distributed Item Details
                                     </h3>
-                                    <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-                                        <CardContent className="pt-4 pb-4">
+                                    <div className="glass-card rounded-2xl overflow-hidden bg-primary/[0.02] dark:bg-primary/[0.04] border-primary/20">
+                                        <div className="p-4">
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-1">
-                                                    <Label className="text-xs text-blue-700 dark:text-blue-400 uppercase tracking-wide">Quantity Allocated</Label>
-                                                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{selectedItem.quantity_allocated}</p>
+                                                    <Label className="text-xs text-primary/70 uppercase tracking-wide">Quantity Allocated</Label>
+                                                    <p className="text-2xl font-bold text-primary">{selectedItem.quantity_allocated}</p>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label className="text-xs text-blue-700 dark:text-blue-400 uppercase tracking-wide">Unit of Measure</Label>
-                                                    <p className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                                                    <Label className="text-xs text-primary/70 uppercase tracking-wide">Unit of Measure</Label>
+                                                    <p className="text-lg font-semibold text-primary/80">
                                                         {selectedItem.allocation_policy?.allocation_type?.unit_of_measurement?.name || 'N/A'}
                                                     </p>
                                                 </div>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -717,50 +721,9 @@ const DistributionRecordsItems = () => {
                             <div className="space-y-6 py-4">
                                 {/* Summary Cards */}
                                 <div className="grid grid-cols-3 gap-4">
-                                    <Card className="bg-muted/30">
-                                        <CardContent className="pt-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-                                                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Pending</p>
-                                                    <p className="text-2xl font-bold">{pendingItems}</p>
-                                                    <p className="text-xs text-muted-foreground">{pendingPercentage}%</p>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-
-                                    <Card className="bg-muted/30">
-                                        <CardContent className="pt-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                                                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Received</p>
-                                                    <p className="text-2xl font-bold">{receivedItems}</p>
-                                                    <p className="text-xs text-muted-foreground">{receivedPercentage}%</p>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-
-                                    <Card className="bg-muted/30">
-                                        <CardContent className="pt-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
-                                                    <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Items</p>
-                                                    <p className="text-2xl font-bold">{totalItems}</p>
-                                                    <p className="text-xs text-muted-foreground">farmers</p>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                    <KpiCard label="Pending" value={pendingItems} icon={Clock} />
+                                    <KpiCard label="Received" value={receivedItems} icon={CheckCircle} />
+                                    <KpiCard label="Total Items" value={totalItems} icon={TrendingUp} />
                                 </div>
 
                                 {/* Progress Bars */}
@@ -770,7 +733,7 @@ const DistributionRecordsItems = () => {
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="flex items-center gap-2">
-                                                <Clock className="h-4 w-4 text-blue-600" />
+                                                <Clock className="h-4 w-4 text-primary" />
                                                 Pending Distribution
                                             </span>
                                             <span className="font-semibold">{pendingPercentage}%</span>
@@ -784,7 +747,7 @@ const DistributionRecordsItems = () => {
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="flex items-center gap-2">
-                                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                                <CheckCircle className="h-4 w-4 text-primary" />
                                                 Successfully Distributed
                                             </span>
                                             <span className="font-semibold">{receivedPercentage}%</span>
@@ -799,8 +762,8 @@ const DistributionRecordsItems = () => {
                                 {/* Quantity Breakdown */}
                                 <div className="space-y-3">
                                     <h3 className="text-sm font-semibold">Quantity Breakdown</h3>
-                                    <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-                                        <CardContent className="pt-4">
+                                    <div className="glass-card rounded-2xl overflow-hidden bg-primary/[0.02] dark:bg-primary/[0.04] border-primary/20">
+                                        <div className="p-4">
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-1">
                                                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Allocated</p>
@@ -809,12 +772,12 @@ const DistributionRecordsItems = () => {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Remaining to Distribute</p>
-                                                    <p className="text-3xl font-bold text-orange-600">{Number(pendingQuantity).toFixed(2)}</p>
+                                                    <p className="text-3xl font-bold text-primary">{Number(pendingQuantity).toFixed(2)}</p>
                                                     <p className="text-xs text-muted-foreground">units pending</p>
                                                 </div>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Action Insights */}
@@ -824,37 +787,33 @@ const DistributionRecordsItems = () => {
                                         Action Required
                                     </h3>
                                     {pendingItems > 0 ? (
-                                        <Card className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">
-                                            <CardContent className="pt-4">
-                                                <div className="flex items-start gap-3">
-                                                    <Clock className="h-5 w-5 text-orange-600 mt-0.5" />
-                                                    <div className="space-y-1">
-                                                        <p className="text-sm font-medium text-orange-900 dark:text-orange-100">
-                                                            {pendingItems} farmers awaiting distribution
-                                                        </p>
-                                                        <p className="text-xs text-orange-700 dark:text-orange-300">
-                                                            {Number(pendingQuantity).toFixed(2)} units still need to be distributed to complete this allocation
-                                                        </p>
-                                                    </div>
+                                        <div className="glass-surface rounded-xl p-4">
+                                            <div className="flex items-start gap-3">
+                                                <Clock className="h-5 w-5 text-primary mt-0.5" />
+                                                <div className="space-y-1">
+                                                    <p className="text-sm font-medium">
+                                                        {pendingItems} farmers awaiting distribution
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {Number(pendingQuantity).toFixed(2)} units still need to be distributed to complete this allocation
+                                                    </p>
                                                 </div>
-                                            </CardContent>
-                                        </Card>
+                                            </div>
+                                        </div>
                                     ) : (
-                                        <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
-                                            <CardContent className="pt-4">
-                                                <div className="flex items-start gap-3">
-                                                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                                                    <div className="space-y-1">
-                                                        <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                                                            All items distributed successfully!
-                                                        </p>
-                                                        <p className="text-xs text-green-700 dark:text-green-300">
-                                                            All {totalItems} farmers have received their allocations
-                                                        </p>
-                                                    </div>
+                                        <div className="glass-surface rounded-xl p-4">
+                                            <div className="flex items-start gap-3">
+                                                <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                                                <div className="space-y-1">
+                                                    <p className="text-sm font-medium">
+                                                        All items distributed successfully!
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        All {totalItems} farmers have received their allocations
+                                                    </p>
                                                 </div>
-                                            </CardContent>
-                                        </Card>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             </div>

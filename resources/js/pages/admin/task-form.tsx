@@ -6,13 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import {
     Select,
     SelectContent,
     SelectItem,
@@ -82,17 +75,17 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
     };
 
     const taskTypes = [
-        { value: 'monitor_crops', label: 'Monitor Crops', icon: <Sprout className="h-6 w-6" />, color: 'bg-green-50 border-green-200 hover:border-green-400', description: 'Field monitoring and crop assessment' },
-        { value: 'verify_farmers', label: 'Verify Farmers', icon: <UserCheck className="h-6 w-6" />, color: 'bg-blue-50 border-blue-200 hover:border-blue-400', description: 'Farmer verification and validation' },
-        { value: 'distribute_allocation', label: 'Distribute Allocation', icon: <Package className="h-6 w-6" />, color: 'bg-purple-50 border-purple-200 hover:border-purple-400', description: 'Allocation distribution to farmers' },
-        { value: 'register_farmers', label: 'Register Farmers', icon: <UserPlus className="h-6 w-6" />, color: 'bg-orange-50 border-orange-200 hover:border-orange-400', description: 'New farmer registration' },
-        { value: 'crop_damage_assessment', label: 'Crop Damage Assessment', icon: <AlertTriangle className="h-6 w-6" />, color: 'bg-red-50 border-red-200 hover:border-red-400', description: 'Assess and report crop damage' },
+        { value: 'monitor_crops', label: 'Monitor Crops', icon: <Sprout className="h-6 w-6" />, description: 'Field monitoring and crop assessment' },
+        { value: 'verify_farmers', label: 'Verify Farmers', icon: <UserCheck className="h-6 w-6" />, description: 'Farmer verification and validation' },
+        { value: 'distribute_allocation', label: 'Distribute Allocation', icon: <Package className="h-6 w-6" />, description: 'Allocation distribution to farmers' },
+        { value: 'register_farmers', label: 'Register Farmers', icon: <UserPlus className="h-6 w-6" />, description: 'New farmer registration' },
+        { value: 'crop_damage_assessment', label: 'Crop Damage Assessment', icon: <AlertTriangle className="h-6 w-6" />, description: 'Assess and report crop damage' },
     ];
 
     const priorities = [
-        { value: 'low', label: 'Low', icon: <span className="h-3 w-3 rounded-full bg-blue-500" />, color: 'bg-blue-50 border-blue-200 text-blue-700', badge: 'bg-blue-500' },
-        { value: 'medium', label: 'Medium', icon: <span className="h-3 w-3 rounded-full bg-yellow-500" />, color: 'bg-yellow-50 border-yellow-200 text-yellow-700', badge: 'bg-yellow-500' },
-        { value: 'high', label: 'High', icon: <span className="h-3 w-3 rounded-full bg-red-500" />, color: 'bg-red-50 border-red-200 text-red-700', badge: 'bg-red-500' },
+        { value: 'low', label: 'Low', icon: <span className="h-3 w-3 rounded-full bg-blue-500" /> },
+        { value: 'medium', label: 'Medium', icon: <span className="h-3 w-3 rounded-full bg-yellow-500" /> },
+        { value: 'high', label: 'High', icon: <span className="h-3 w-3 rounded-full bg-red-500" /> },
     ];
 
     const selectedTechnician = technicians.find(t => t.id.toString() === data.assigned_to);
@@ -111,7 +104,7 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={isEdit ? 'Edit Task' : 'Create Task'} />
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -121,7 +114,7 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight md:text-3xl flex items-center gap-2">
                                 <ClipboardList className="h-7 w-7 text-primary" />
                                 {isEdit ? 'Edit Task' : 'Create New Task'}
                             </h1>
@@ -135,7 +128,7 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                     </div>
                     <div className="flex items-center gap-2">
                         {isFormComplete && (
-                            <Badge className="bg-green-100 text-green-700 border-green-300">
+                            <Badge className="bg-primary/10 text-primary border-primary/20">
                                 <CheckCircle2 className="h-3 w-3 mr-1" />
                                 Ready to Submit
                             </Badge>
@@ -143,35 +136,37 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                         {/* Main Form */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="lg:col-span-2 space-y-5">
                             {/* Task Type Selection */}
-                            <Card className="border-2">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Target className="h-5 w-5 text-primary" />
-                                        Task Type
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Select the type of task to be performed
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <div className="p-4 pb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <Target className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-sm font-semibold">Task Type</h2>
+                                            <p className="text-xs text-muted-foreground">Select the type of task to be performed</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-4 pt-0">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {taskTypes.map((type) => (
                                             <button
                                                 key={type.value}
                                                 type="button"
                                                 onClick={() => setData('task_type', type.value)}
-                                                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                                                className={`p-4 rounded-xl border-2 transition-all text-left ${
                                                     data.task_type === type.value 
-                                                        ? `${type.color} ring-2 ring-primary/20` 
-                                                        : 'bg-background hover:border-gray-300'
+                                                        ? 'glass-surface border-primary ring-2 ring-primary/20' 
+                                                        : 'glass-surface hover:border-primary/30'
                                                 }`}
                                             >
-                                                <div className="text-2xl mb-2">{type.icon}</div>
+                                                <div className="text-primary mb-2">{type.icon}</div>
                                                 <div className="font-semibold">{type.label}</div>
                                                 <div className="text-xs text-muted-foreground mt-1">
                                                     {type.description}
@@ -182,21 +177,23 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                     {errors.task_type && (
                                         <p className="text-sm text-red-500 mt-2">{errors.task_type}</p>
                                     )}
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
 
                             {/* Task Details */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <FileText className="h-5 w-5 text-primary" />
-                                        Task Details
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Provide detailed information about the task
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <div className="p-4 pb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <FileText className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-sm font-semibold">Task Details</h2>
+                                            <p className="text-xs text-muted-foreground">Provide detailed information about the task</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-4 pt-0 space-y-4">
                                     <div className="grid gap-2">
                                         <Label htmlFor="title">Task Title *</Label>
                                         <Input
@@ -226,28 +223,30 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                             <p className="text-sm text-red-500">{errors.description}</p>
                                         )}
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
 
                             {/* Priority & Schedule */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Priority Selection */}
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">Priority Level</CardTitle>
-                                        <CardDescription>Set task urgency</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
+                                <div className="glass-card rounded-2xl overflow-hidden">
+                                    <div className="p-4 pb-3">
+                                        <div>
+                                            <h2 className="text-sm font-semibold">Priority Level</h2>
+                                            <p className="text-xs text-muted-foreground">Set task urgency</p>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 pt-0">
                                         <div className="space-y-2">
                                             {priorities.map((priority) => (
                                                 <button
                                                     key={priority.value}
                                                     type="button"
                                                     onClick={() => setData('priority', priority.value)}
-                                                    className={`w-full p-3 rounded-lg border-2 transition-all text-left flex items-center justify-between ${
+                                                    className={`w-full p-3 rounded-xl border-2 transition-all text-left flex items-center justify-between ${
                                                         data.priority === priority.value 
-                                                            ? `${priority.color} ring-2 ring-primary/20` 
-                                                            : 'bg-background hover:border-gray-300'
+                                                            ? 'glass-surface border-primary ring-2 ring-primary/20' 
+                                                            : 'glass-surface hover:border-primary/30'
                                                     }`}
                                                 >
                                                     <div className="flex items-center gap-2">
@@ -255,7 +254,7 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                                         <span className="font-semibold">{priority.label}</span>
                                                     </div>
                                                     {data.priority === priority.value && (
-                                                        <CheckCircle2 className="h-5 w-5" />
+                                                        <CheckCircle2 className="h-5 w-5 text-primary" />
                                                     )}
                                                 </button>
                                             ))}
@@ -263,19 +262,23 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                         {errors.priority && (
                                             <p className="text-sm text-red-500 mt-2">{errors.priority}</p>
                                         )}
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                </div>
 
                                 {/* Due Date */}
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg flex items-center gap-2">
-                                            <Calendar className="h-5 w-5" />
-                                            Due Date
-                                        </CardTitle>
-                                        <CardDescription>When should this be completed?</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
+                                <div className="glass-card rounded-2xl overflow-hidden">
+                                    <div className="p-4 pb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                                <Calendar className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-sm font-semibold">Due Date</h2>
+                                                <p className="text-xs text-muted-foreground">When should this be completed?</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 pt-0">
                                         <div className="grid gap-2">
                                             <Input
                                                 id="due_date"
@@ -301,22 +304,24 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                                 <p className="text-sm text-red-500">{errors.due_date}</p>
                                             )}
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Target Location */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <MapPin className="h-5 w-5 text-primary" />
-                                        Target Location
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Specify the barangays where the task should be performed
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <div className="p-4 pb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <MapPin className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-sm font-semibold">Target Location</h2>
+                                            <p className="text-xs text-muted-foreground">Specify the barangays where the task should be performed</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-4 pt-0">
                                     <div className="grid gap-2">
                                         <Label>Target Barangays (Optional)</Label>
                                         <Input
@@ -344,24 +349,26 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                             <p className="text-sm text-red-500">{errors.target_barangay}</p>
                                         )}
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Assignment Sidebar */}
-                        <div className="space-y-6">
+                        <div className="space-y-5">
                             {/* Technician Assignment */}
-                            <Card className="border-2 border-primary/20">
-                                <CardHeader className="bg-primary/5">
-                                    <CardTitle className="flex items-center gap-2">
-                                        <User className="h-5 w-5" />
-                                        Assign Technician
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Select who will execute this task
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4 pt-4">
+                            <div className="glass-card rounded-2xl overflow-hidden border-primary/20">
+                                <div className="glass-surface p-4 pb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <User className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-sm font-semibold">Assign Technician</h2>
+                                            <p className="text-xs text-muted-foreground">Select who will execute this task</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-4 space-y-4">
                                     <div className="grid gap-2">
                                         <Label htmlFor="assigned_to">Technician *</Label>
                                         <Select 
@@ -400,9 +407,9 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                             <Separator />
                                             
                                             {/* Technician Info */}
-                                            <div className="p-4 rounded-lg bg-accent/50">
+                                            <div className="glass-surface rounded-xl p-4">
                                                 <div className="flex items-center gap-3 mb-3">
-                                                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
                                                         <User className="h-5 w-5 text-primary" />
                                                     </div>
                                                     <div>
@@ -432,29 +439,31 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
 
                                             {/* Territory Match Alert */}
                                             {data.target_barangay && data.target_barangay.length > 0 && (
-                                                <Alert className="bg-amber-50 border-amber-200">
-                                                    <AlertCircle className="h-4 w-4 text-amber-600" />
-                                                    <AlertTitle className="text-amber-900 text-sm">Territory Match</AlertTitle>
-                                                    <AlertDescription className="text-amber-800 text-xs mt-1">
+                                                <Alert className="glass-surface border-primary/20">
+                                                    <AlertCircle className="h-4 w-4 text-primary" />
+                                                    <AlertTitle className="text-sm">Territory Match</AlertTitle>
+                                                    <AlertDescription className="text-xs text-muted-foreground mt-1">
                                                         Verify that target barangays align with the technician's territory for optimal efficiency.
                                                     </AlertDescription>
                                                 </Alert>
                                             )}
                                         </>
                                     )}
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
 
                             {/* Task Summary */}
-                            <Card>
-                                <CardHeader className="bg-gradient-to-r from-primary/5 to-purple-50">
-                                    <CardTitle className="text-lg">Task Summary</CardTitle>
-                                    <CardDescription>Review before submitting</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4 pt-4">
+                            <div className="glass-card rounded-2xl overflow-hidden bg-primary/[0.02] dark:bg-primary/[0.04]">
+                                <div className="glass-surface p-4 pb-3">
+                                    <div>
+                                        <h2 className="text-sm font-semibold">Task Summary</h2>
+                                        <p className="text-xs text-muted-foreground">Review before submitting</p>
+                                    </div>
+                                </div>
+                                <div className="p-4 space-y-3">
                                     {selectedTaskType && (
-                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
-                                            <span className="text-2xl">{selectedTaskType.icon}</span>
+                                        <div className="glass-surface rounded-xl p-3 flex items-center gap-3">
+                                            <span className="text-primary text-2xl">{selectedTaskType.icon}</span>
                                             <div>
                                                 <div className="text-xs text-muted-foreground">Task Type</div>
                                                 <div className="font-semibold">{selectedTaskType.label}</div>
@@ -463,7 +472,7 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                     )}
                                     
                                     {selectedPriority && (
-                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
+                                        <div className="glass-surface rounded-xl p-3 flex items-center gap-3">
                                             <span className="text-2xl">{selectedPriority.icon}</span>
                                             <div>
                                                 <div className="text-xs text-muted-foreground">Priority</div>
@@ -473,8 +482,8 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                     )}
                                     
                                     {data.due_date && (
-                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
-                                            <Calendar className="h-5 w-5 text-muted-foreground" />
+                                        <div className="glass-surface rounded-xl p-3 flex items-center gap-3">
+                                            <Calendar className="h-5 w-5 text-primary" />
                                             <div>
                                                 <div className="text-xs text-muted-foreground">Due Date</div>
                                                 <div className="font-semibold">
@@ -485,7 +494,7 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                     )}
                                     
                                     {data.target_barangay && data.target_barangay.length > 0 && (
-                                        <div className="p-3 rounded-lg bg-accent/50">
+                                        <div className="glass-surface rounded-xl p-3">
                                             <div className="text-xs text-muted-foreground mb-2">Target Locations</div>
                                             <div className="font-semibold">{data.target_barangay.length} barangay(s)</div>
                                         </div>
@@ -495,17 +504,17 @@ export default function TaskForm({ technicians, task = null }: TaskFormProps) {
                                     
                                     <div className="text-center">
                                         <div className="text-xs text-muted-foreground mb-1">Form Completion</div>
-                                        <div className={`text-2xl font-bold ${isFormComplete ? 'text-green-600' : 'text-muted-foreground'}`}>
+                                        <div className={`text-2xl font-bold ${isFormComplete ? 'text-primary' : 'text-muted-foreground'}`}>
                                             {isFormComplete ? '✓ Complete' : 'Incomplete'}
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex justify-end gap-3 sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 border-t shadow-lg">
+                    <div className="flex justify-end gap-3 sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 border-t shadow-lg rounded-b-xl">
                         <Button variant="outline" type="button" size="lg" asChild>
                             <Link href={route('admin.tasks')}>Cancel</Link>
                         </Button>

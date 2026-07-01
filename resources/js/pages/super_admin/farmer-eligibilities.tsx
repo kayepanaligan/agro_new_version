@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type FarmerEligibility } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, UserCheck, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -54,6 +54,8 @@ export default function FarmerEligibilities() {
         is_active: true,
     });
     const [availableValues, setAvailableValues] = useState<any[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
 
     // Filter and sort eligibilities
     const filteredEligibilities = useMemo(() => {
@@ -88,6 +90,10 @@ export default function FarmerEligibilities() {
 
         return result;
     }, [farmerEligibilities, searchTerm, sortField, sortOrder]);
+
+    const totalPages = Math.ceil(filteredEligibilities.length / itemsPerPage);
+    const paginatedEligibilities = useMemo(() => filteredEligibilities.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage), [filteredEligibilities, currentPage, itemsPerPage]);
+    useMemo(() => setCurrentPage(1), [searchTerm]);
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
@@ -176,125 +182,216 @@ export default function FarmerEligibilities() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Farmer Eligibilities" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="p-6">
-                        <h1 className="mb-2 text-3xl font-bold">Farmer Eligibilities</h1>
-                        <p className="text-muted-foreground">Manage eligibility criteria for farmers</p>
+
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+
+                {/* Page Header */}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                            <UserCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Farmer Eligibilities</h1>
+                            <p className="text-sm text-muted-foreground">Manage eligibility criteria for farmers</p>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="mt-3 sm:mt-0 bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Eligibility
+                    </Button>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {[
+                        { label: 'Total Criteria', value: farmerEligibilities.length, accent: 'border-l-primary' },
+                        { label: 'Active', value: farmerEligibilities.filter((e) => e.is_active).length, accent: 'border-l-blue-400' },
+                        { label: 'Inactive', value: farmerEligibilities.filter((e) => !e.is_active).length, accent: 'border-l-amber-400' },
+                        { label: 'Unique Fields', value: new Set(farmerEligibilities.map((e) => e.attribute_field)).size, accent: 'border-l-purple-400' },
+                    ].map((stat) => (
+                        <div
+                            key={stat.label}
+                            className={`glass-card rounded-lg p-4 border-l-4 ${stat.accent}`}
+                        >
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Table Card */}
+                <div className="glass-card rounded-xl overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="relative w-full max-w-xs">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Search eligibilities..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-9 h-9 text-sm"
+                            />
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {filteredEligibilities.length === farmerEligibilities.length
+                                ? `${farmerEligibilities.length} criteria`
+                                : `${filteredEligibilities.length} of ${farmerEligibilities.length} criteria`}
+                        </span>
                     </div>
 
-                    <div className="border-t p-6">
-                        {/* Header with Add button */}
-                        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="relative flex-1 max-w-sm">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search eligibilities..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-9"
-                                />
-                            </div>
-
-                            <Button onClick={() => setIsCreateModalOpen(true)}>
-                                Add Eligibility
-                            </Button>
-                        </div>
-
-                        {/* Results count */}
-                        <div className="mb-4 text-sm text-muted-foreground">
-                            Showing {filteredEligibilities.length} of {farmerEligibilities.length} eligibilities
-                        </div>
-
-                        {/* Table */}
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                    <TableHead className="w-16 text-xs font-semibold uppercase tracking-wide text-muted-foreground">ID</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <Button variant="ghost" size="sm" className="h-auto p-0 text-xs font-semibold uppercase tracking-wide" onClick={() => handleSort('name')}>
+                                            Name <ArrowUpDown className="ml-1 h-3 w-3" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Attribute Field</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Required Value</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                                    <TableHead className="w-16 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedEligibilities.length === 0 ? (
                                     <TableRow>
-                                        <TableHead className="w-[100px]">ID</TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('name')} className="-ml-4">
-                                                Name
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>Attribute Field</TableHead>
-                                        <TableHead>Required Value</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableCell colSpan={6} className="h-40 text-center">
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <UserCheck className="h-8 w-8 opacity-30" />
+                                                <p className="text-sm font-medium">No eligibilities found</p>
+                                                <p className="text-xs">
+                                                    {searchTerm ? 'Try a different search term.' : 'Click "New Eligibility" to get started.'}
+                                                </p>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredEligibilities.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center">
-                                                No farmer eligibilities found. Click "Add Eligibility" to create one.
+                                ) : (
+                                    paginatedEligibilities.map((eligibility) => (
+                                        <TableRow key={eligibility.id} className="hover:bg-muted/30 transition-colors">
+                                            <TableCell className="text-xs text-muted-foreground font-mono">{eligibility.id}</TableCell>
+                                            <TableCell className="font-medium text-sm">{eligibility.name}</TableCell>
+                                            <TableCell className="font-mono text-xs text-muted-foreground">{eligibility.attribute_field}</TableCell>
+                                            <TableCell className="font-mono text-xs text-muted-foreground max-w-[200px] truncate" title={eligibility.required_value}>
+                                                {eligibility.required_value}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={eligibility.is_active ? 'default' : 'secondary'} className="text-xs">
+                                                    {eligibility.is_active ? 'Active' : 'Inactive'}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-36">
+                                                        <DropdownMenuItem
+                                                            onClick={() => openEditModal(eligibility)}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            <Pencil className="mr-2 h-3.5 w-3.5" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            onClick={() => openDeleteModal(eligibility)}
+                                                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                        >
+                                                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
-                                    ) : (
-                                        filteredEligibilities.map((eligibility) => (
-                                            <TableRow key={eligibility.id}>
-                                                <TableCell className="font-medium">{eligibility.id}</TableCell>
-                                                <TableCell className="font-medium">{eligibility.name}</TableCell>
-                                                <TableCell className="font-mono text-sm">{eligibility.attribute_field}</TableCell>
-                                                <TableCell className="font-mono text-sm">{eligibility.required_value}</TableCell>
-                                                <TableCell>
-                                                    {eligibility.is_active ? (
-                                                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                                                            Active
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
-                                                            Inactive
-                                                        </span>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => openEditModal(eligibility)}>
-                                                                <Pencil className="mr-2 h-4 w-4" />
-                                                                <span>Edit</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                onClick={() => openDeleteModal(eligibility)}
-                                                                className="text-red-600 focus:text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                <span>Delete</span>
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between border-t px-6 py-4">
+                            <p className="text-xs text-muted-foreground">
+                                Page {currentPage} of {totalPages}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum: number;
+                                    if (totalPages <= 5) pageNum = i + 1;
+                                    else if (currentPage <= 3) pageNum = i + 1;
+                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                    else pageNum = currentPage - 2 + i;
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                                            size="sm"
+                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-primary hover:bg-primary/90 border-primary' : ''}`}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    );
+                                })}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Create Modal */}
-            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-                <DialogContent>
+            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { setIsCreateModalOpen(open); if (!open) setFormData({ name: '', description: '', attribute_field: '', required_value: '', is_active: true }); }}>
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Create Farmer Eligibility</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                                <UserCheck className="h-4 w-4" />
+                            </span>
+                            New Farmer Eligibility
+                        </DialogTitle>
                         <DialogDescription>
-                            Add a new farmer eligibility criterion. Fill in the details below.
+                            Add a new eligibility criterion. Fields marked with <span className="text-red-500">*</span> are required.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="create-name">Name</Label>
+                            <Label htmlFor="create-name">
+                                Name <span className="text-red-500">*</span>
+                            </Label>
                             <Input
                                 id="create-name"
                                 value={formData.name}
@@ -312,9 +409,11 @@ export default function FarmerEligibilities() {
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="create-attribute">Attribute Field</Label>
+                            <Label htmlFor="create-attribute">
+                                Attribute Field <span className="text-red-500">*</span>
+                            </Label>
                             <Select value={formData.attribute_field} onValueChange={(value) => setFormData({ ...formData, attribute_field: value, required_value: '' })}>
-                                <SelectTrigger><SelectValue placeholder="Select farmer attribute" /></SelectTrigger>
+                                <SelectTrigger id="create-attribute"><SelectValue placeholder="Select farmer attribute" /></SelectTrigger>
                                 <SelectContent>
                                     {(farmerAttributes || []).map((attr) => (
                                         <SelectItem key={attr.value} value={attr.value}>{attr.label}</SelectItem>
@@ -323,10 +422,12 @@ export default function FarmerEligibilities() {
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="create-value">Required Value</Label>
+                            <Label htmlFor="create-value">
+                                Required Value <span className="text-red-500">*</span>
+                            </Label>
                             {availableValues && availableValues.length > 0 ? (
                                 <Select value={formData.required_value} onValueChange={(value) => setFormData({ ...formData, required_value: value })}>
-                                    <SelectTrigger><SelectValue placeholder="Select value" /></SelectTrigger>
+                                    <SelectTrigger id="create-value"><SelectValue placeholder="Select value" /></SelectTrigger>
                                     <SelectContent>
                                         {availableValues.map((val: any) => (
                                             <SelectItem key={val.value} value={val.value}>{val.label}</SelectItem>
@@ -343,23 +444,23 @@ export default function FarmerEligibilities() {
                             )}
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="create-active">Active</Label>
-                            <select
-                                id="create-active"
-                                value={formData.is_active ? 'true' : 'false'}
-                                onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'true' })}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            >
-                                <option value="true">Active</option>
-                                <option value="false">Inactive</option>
-                            </select>
+                            <Label htmlFor="create-active">Status</Label>
+                            <Select value={formData.is_active ? 'true' : 'false'} onValueChange={(value) => setFormData({ ...formData, is_active: value === 'true' })}>
+                                <SelectTrigger id="create-active"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="true">Active</SelectItem>
+                                    <SelectItem value="false">Inactive</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleCreate}>
+                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={handleCreate}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            disabled={!formData.name.trim() || !formData.attribute_field || !formData.required_value}
+                        >
                             Create Eligibility
                         </Button>
                     </DialogFooter>
@@ -367,17 +468,24 @@ export default function FarmerEligibilities() {
             </Dialog>
 
             {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogContent>
+            <Dialog open={isEditModalOpen} onOpenChange={(open) => { setIsEditModalOpen(open); if (!open) { setFormData({ name: '', description: '', attribute_field: '', required_value: '', is_active: true }); setSelectedEligibility(null); } }}>
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Edit Farmer Eligibility</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                                <Pencil className="h-4 w-4" />
+                            </span>
+                            Edit Farmer Eligibility
+                        </DialogTitle>
                         <DialogDescription>
-                            Update farmer eligibility information. Make your changes below.
+                            Update eligibility criterion. Fields marked with <span className="text-red-500">*</span> are required.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-name">Name</Label>
+                            <Label htmlFor="edit-name">
+                                Name <span className="text-red-500">*</span>
+                            </Label>
                             <Input
                                 id="edit-name"
                                 value={formData.name}
@@ -393,9 +501,11 @@ export default function FarmerEligibilities() {
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-attribute">Attribute Field</Label>
+                            <Label htmlFor="edit-attribute">
+                                Attribute Field <span className="text-red-500">*</span>
+                            </Label>
                             <Select value={formData.attribute_field} onValueChange={(value) => setFormData({ ...formData, attribute_field: value, required_value: '' })}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectTrigger id="edit-attribute"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     {(farmerAttributes || []).map((attr) => (
                                         <SelectItem key={attr.value} value={attr.value}>{attr.label}</SelectItem>
@@ -404,10 +514,12 @@ export default function FarmerEligibilities() {
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-value">Required Value</Label>
+                            <Label htmlFor="edit-value">
+                                Required Value <span className="text-red-500">*</span>
+                            </Label>
                             {availableValues && availableValues.length > 0 ? (
                                 <Select value={formData.required_value} onValueChange={(value) => setFormData({ ...formData, required_value: value })}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectTrigger id="edit-value"><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         {availableValues.map((val: any) => (
                                             <SelectItem key={val.value} value={val.value}>{val.label}</SelectItem>
@@ -423,45 +535,48 @@ export default function FarmerEligibilities() {
                             )}
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-active">Active</Label>
-                            <select
-                                id="edit-active"
-                                value={formData.is_active ? 'true' : 'false'}
-                                onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'true' })}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            >
-                                <option value="true">Active</option>
-                                <option value="false">Inactive</option>
-                            </select>
+                            <Label htmlFor="edit-active">Status</Label>
+                            <Select value={formData.is_active ? 'true' : 'false'} onValueChange={(value) => setFormData({ ...formData, is_active: value === 'true' })}>
+                                <SelectTrigger id="edit-active"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="true">Active</SelectItem>
+                                    <SelectItem value="false">Inactive</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleUpdate}>
-                            Update Eligibility
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={handleUpdate}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            disabled={!formData.name.trim() || !formData.attribute_field || !formData.required_value}
+                        >
+                            Save Changes
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-                <DialogContent>
+            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => { setIsDeleteModalOpen(open); if (!open) setSelectedEligibility(null); }}>
+                <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
-                        <DialogTitle>Delete Farmer Eligibility</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete "{selectedEligibility?.name}"? This action cannot be undone.
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-red-100 text-red-600">
+                                <Trash2 className="h-4 w-4" />
+                            </span>
+                            Delete Farmer Eligibility
+                        </DialogTitle>
+                        <DialogDescription className="pt-1">
+                            This will permanently delete{' '}
+                            <span className="font-medium text-foreground">{selectedEligibility?.name}</span>.
+                            This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button variant="destructive" onClick={handleDelete}>
-                            Delete
-                        </Button>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleDelete}>Delete Eligibility</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

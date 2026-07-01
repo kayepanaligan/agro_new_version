@@ -1,16 +1,10 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Calendar, User, MapPin, AlertCircle, CheckCircle, XCircle, Paperclip, Clock } from 'lucide-react';
+import { ArrowLeft, Calendar, User, MapPin, AlertCircle, CheckCircle, XCircle, Paperclip, Clock, ClipboardList } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
     Dialog,
     DialogContent,
@@ -69,57 +63,35 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const STATUS_COLORS: Record<string, string> = {
+    pending: 'bg-gray-500',
+    assigned: 'bg-blue-500',
+    in_progress: 'bg-yellow-500',
+    submitted: 'bg-purple-500',
+    verified: 'bg-green-500',
+    rejected: 'bg-red-500',
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+    low: 'bg-blue-400',
+    medium: 'bg-yellow-500',
+    high: 'bg-red-500',
+};
+
+const TASK_TYPE_LABELS: Record<string, string> = {
+    monitor_crops: 'Monitor Crops',
+    verify_farmers: 'Verify Farmers',
+    distribute_allocation: 'Distribute Allocation',
+    register_farmers: 'Register Farmers',
+    crop_damage_assessment: 'Crop Damage Assessment',
+};
+
 export default function TaskDetail({ task }: TaskDetailProps) {
     const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
 
-    const verifyForm = useForm({
-        remarks: '',
-    });
-
-    const rejectForm = useForm({
-        remarks: '',
-    });
-
-    const getStatusBadge = (status: string) => {
-        const colors: Record<string, string> = {
-            pending: 'bg-gray-500',
-            assigned: 'bg-blue-500',
-            'in_progress': 'bg-yellow-500',
-            submitted: 'bg-purple-500',
-            verified: 'bg-green-500',
-            rejected: 'bg-red-500',
-        };
-        return (
-            <Badge className={colors[status] || 'bg-gray-500'}>
-                {status.replace('_', ' ').toUpperCase()}
-            </Badge>
-        );
-    };
-
-    const getPriorityBadge = (priority: string) => {
-        const colors: Record<string, string> = {
-            low: 'bg-blue-400',
-            medium: 'bg-yellow-500',
-            high: 'bg-red-500',
-        };
-        return (
-            <Badge className={colors[priority] || 'bg-gray-500'}>
-                {priority.toUpperCase()}
-            </Badge>
-        );
-    };
-
-    const getTaskTypeLabel = (type: string) => {
-        const labels: Record<string, string> = {
-            monitor_crops: 'Monitor Crops',
-            verify_farmers: 'Verify Farmers',
-            distribute_allocation: 'Distribute Allocation',
-            register_farmers: 'Register Farmers',
-            crop_damage_assessment: 'Crop Damage Assessment',
-        };
-        return labels[type] || type;
-    };
+    const verifyForm = useForm({ remarks: '' });
+    const rejectForm = useForm({ remarks: '' });
 
     const handleVerify = (e: React.FormEvent) => {
         e.preventDefault();
@@ -136,7 +108,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
     };
 
     const getStatusTimeline = () => {
-        const timeline = [
+        return [
             { status: 'created', label: 'Task Created', date: task.created_at, completed: true },
             { status: 'assigned', label: 'Assigned to Technician', date: task.created_at, completed: true },
             { status: 'in_progress', label: 'In Progress', date: null, completed: ['in_progress', 'submitted', 'verified', 'rejected'].includes(task.status) },
@@ -146,7 +118,6 @@ export default function TaskDetail({ task }: TaskDetailProps) {
               date: task.status === 'verified' || task.status === 'rejected' ? task.updated_at : null, 
               completed: ['verified', 'rejected'].includes(task.status) },
         ];
-        return timeline;
     };
 
     breadcrumbs[1] = {
@@ -159,13 +130,14 @@ export default function TaskDetail({ task }: TaskDetailProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Task: ${task.title}`} />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
+                {/* Header */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <Button variant="ghost" size="sm" asChild>
                             <Link href={route('admin.tasks')}>
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Tasks
+                                Back
                             </Link>
                         </Button>
                     </div>
@@ -177,10 +149,10 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                                 onClick={() => setRejectDialogOpen(true)}
                             >
                                 <XCircle className="mr-2 h-4 w-4" />
-                                Reject Task
+                                Reject
                             </Button>
                             <Button
-                                className="bg-green-600 hover:bg-green-700"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                 onClick={() => setVerifyDialogOpen(true)}
                             >
                                 <CheckCircle className="mr-2 h-4 w-4" />
@@ -190,26 +162,34 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                            <CardHeader>
+                    <div className="lg:col-span-2 space-y-5">
+                        {/* Task Info */}
+                        <div className="glass-card rounded-2xl overflow-hidden">
+                            <div className="p-4 pb-3">
                                 <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <CardTitle className="text-2xl mb-2">{task.title}</CardTitle>
-                                        <div className="flex flex-wrap gap-2">
-                                            {getStatusBadge(task.status)}
-                                            {getPriorityBadge(task.priority)}
-                                            <Badge variant="outline">{getTaskTypeLabel(task.task_type)}</Badge>
-                                            {task.is_overdue && (
-                                                <Badge className="bg-red-600">OVERDUE</Badge>
-                                            )}
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <ClipboardList className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-semibold">{task.title}</h2>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                <Badge className={STATUS_COLORS[task.status] || 'bg-gray-500'}>
+                                                    {task.status.replace('_', ' ').toUpperCase()}
+                                                </Badge>
+                                                <Badge className={PRIORITY_COLORS[task.priority] || 'bg-gray-500'}>
+                                                    {task.priority.toUpperCase()}
+                                                </Badge>
+                                                <Badge variant="outline">{TASK_TYPE_LABELS[task.task_type] || task.task_type}</Badge>
+                                                {task.is_overdue && <Badge className="bg-red-600">OVERDUE</Badge>}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                            </div>
+                            <div className="p-4 pt-0 space-y-4">
                                 {task.description && (
                                     <div>
                                         <h4 className="text-sm font-medium text-muted-foreground mb-1">Description</h4>
@@ -225,43 +205,39 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                                         </h4>
                                         <div className="flex flex-wrap gap-2">
                                             {task.target_barangay.map((brgy, idx) => (
-                                                <Badge key={idx} variant="secondary">
-                                                    {brgy}
-                                                </Badge>
+                                                <Badge key={idx} variant="secondary">{brgy}</Badge>
                                             ))}
                                         </div>
                                     </div>
                                 )}
 
                                 {task.remarks && (
-                                    <div className="rounded-lg border p-4 bg-amber-50 dark:bg-amber-950/20">
-                                        <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
-                                            Remarks
-                                        </h4>
-                                        <p className="text-sm text-amber-800 dark:text-amber-200">
-                                            {task.remarks}
-                                        </p>
+                                    <div className="glass-surface rounded-xl p-4">
+                                        <h4 className="text-sm font-medium text-primary mb-1">Remarks</h4>
+                                        <p className="text-sm">{task.remarks}</p>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         {/* Timeline */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5" />
-                                    Progress Timeline
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
+                        <div className="glass-card rounded-2xl overflow-hidden">
+                            <div className="p-4 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                        <Clock className="h-4 w-4" />
+                                    </div>
+                                    <h2 className="text-sm font-semibold">Progress Timeline</h2>
+                                </div>
+                            </div>
+                            <div className="p-4 pt-0">
+                                <div className="space-y-0">
                                     {getStatusTimeline().map((step, idx) => (
                                         <div key={idx} className="flex items-start gap-4">
                                             <div className="flex flex-col items-center">
-                                                <div className={`h-4 w-4 rounded-full ${step.completed ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                                <div className={`h-4 w-4 rounded-full ${step.completed ? 'bg-primary' : 'bg-muted'}`} />
                                                 {idx < getStatusTimeline().length - 1 && (
-                                                    <div className={`w-0.5 h-12 ${step.completed ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                                    <div className={`w-0.5 h-12 ${step.completed ? 'bg-primary' : 'bg-muted'}`} />
                                                 )}
                                             </div>
                                             <div className="flex-1 pb-4">
@@ -275,58 +251,63 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                                         </div>
                                     ))}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         {/* Attachments */}
                         {task.attachments && task.attachments.length > 0 && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Paperclip className="h-5 w-5" />
-                                        Attachments & Evidence
-                                    </CardTitle>
-                                    <CardDescription>
-                                        {task.attachments.length} file{task.attachments.length !== 1 ? 's' : ''} uploaded
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid gap-3">
-                                        {task.attachments.map((attachment) => (
-                                            <div key={attachment.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                                <div className="flex items-center gap-3">
-                                                    <Paperclip className="h-5 w-5 text-muted-foreground" />
-                                                    <div>
-                                                        <div className="font-medium text-sm">
-                                                            {attachment.file_path.split('/').pop()}
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            Uploaded by {attachment.uploaded_by} • {new Date(attachment.created_at).toLocaleDateString()}
-                                                        </div>
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <div className="p-4 pb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                            <Paperclip className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-sm font-semibold">Attachments & Evidence</h2>
+                                            <p className="text-xs text-muted-foreground">
+                                                {task.attachments.length} file{task.attachments.length !== 1 ? 's' : ''} uploaded
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-4 pt-0 grid gap-3">
+                                    {task.attachments.map((attachment) => (
+                                        <div key={attachment.id} className="glass-surface rounded-xl p-3 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <Paperclip className="h-5 w-5 text-muted-foreground" />
+                                                <div>
+                                                    <div className="font-medium text-sm">
+                                                        {attachment.file_path.split('/').pop()}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        Uploaded by {attachment.uploaded_by} • {new Date(attachment.created_at).toLocaleDateString()}
                                                     </div>
                                                 </div>
-                                                <Button variant="outline" size="sm">
-                                                    Download
-                                                </Button>
                                             </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                            <Button variant="outline" size="sm">Download</Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         )}
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Assignment Details</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                    <div className="space-y-5">
+                        <div className="glass-card rounded-2xl overflow-hidden">
+                            <div className="p-4 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                        <User className="h-4 w-4" />
+                                    </div>
+                                    <h2 className="text-sm font-semibold">Assignment Details</h2>
+                                </div>
+                            </div>
+                            <div className="p-4 pt-0 space-y-4">
                                 <div>
                                     <div className="text-sm text-muted-foreground">Assigned To</div>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <User className="h-4 w-4" />
+                                        <User className="h-4 w-4 text-primary" />
                                         <div className="font-medium">{task.assigned_to.full_name}</div>
                                     </div>
                                     <div className="text-sm text-muted-foreground mt-1">
@@ -341,7 +322,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
 
                                 <div className="pt-4 border-t space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                                        <Calendar className="h-4 w-4 text-primary" />
                                         <div>
                                             <div className="text-sm text-muted-foreground">Due Date</div>
                                             <div className="font-medium">
@@ -352,7 +333,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
 
                                     {task.completed_at && (
                                         <div className="flex items-center gap-2">
-                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                            <CheckCircle className="h-4 w-4 text-primary" />
                                             <div>
                                                 <div className="text-sm text-muted-foreground">Completed At</div>
                                                 <div className="font-medium">
@@ -362,14 +343,19 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                                         </div>
                                     )}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Task Metadata</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3 text-sm">
+                        <div className="glass-card rounded-2xl overflow-hidden">
+                            <div className="p-4 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                                        <ClipboardList className="h-4 w-4" />
+                                    </div>
+                                    <h2 className="text-sm font-semibold">Task Metadata</h2>
+                                </div>
+                            </div>
+                            <div className="p-4 pt-0 space-y-3 text-sm">
                                 <div>
                                     <div className="text-muted-foreground">Task ID</div>
                                     <div className="font-mono">#{task.id}</div>
@@ -382,8 +368,8 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                                     <div className="text-muted-foreground">Last Updated</div>
                                     <div>{new Date(task.updated_at).toLocaleString()}</div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -393,7 +379,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                         <form onSubmit={handleVerify}>
                             <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2">
-                                    <CheckCircle className="h-5 w-5 text-green-600" />
+                                    <CheckCircle className="h-5 w-5 text-primary" />
                                     Verify Task
                                 </DialogTitle>
                                 <DialogDescription>
@@ -413,12 +399,8 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setVerifyDialogOpen(false)}>
-                                    Cancel
-                                </Button>
-                                <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                                    Verify Task
-                                </Button>
+                                <Button type="button" variant="outline" onClick={() => setVerifyDialogOpen(false)}>Cancel</Button>
+                                <Button type="submit">Verify Task</Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>
@@ -454,12 +436,8 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setRejectDialogOpen(false)}>
-                                    Cancel
-                                </Button>
-                                <Button type="submit" variant="destructive">
-                                    Reject Task
-                                </Button>
+                                <Button type="button" variant="outline" onClick={() => setRejectDialogOpen(false)}>Cancel</Button>
+                                <Button type="submit" variant="destructive">Reject Task</Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>

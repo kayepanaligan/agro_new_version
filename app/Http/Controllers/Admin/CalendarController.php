@@ -80,11 +80,90 @@ class CalendarController extends Controller
                 ->count(),
         ];
 
+        // ── Productivity data ──────────────────────────────────────────
+        $tasksInMonth = Task::whereBetween('due_date', [$startDate, $endDate])->get();
+        $reportsInMonth = TechnicianReport::whereBetween('created_at', [$startDate, $endDate])->get();
+
+        // Task status distribution
+        $taskStatusDist = $tasksInMonth->groupBy('status')->map(fn($g) => $g->count())->map(fn($count, $status) => [
+            'name' => ucfirst(str_replace('_', ' ', $status)),
+            'count' => $count,
+        ])->values()->toArray();
+
+        // Report status distribution
+        $reportStatusDist = $reportsInMonth->groupBy('status')->map(fn($g) => $g->count())->map(fn($count, $status) => [
+            'name' => ucfirst(str_replace('_', ' ', $status)),
+            'count' => $count,
+        ])->values()->toArray();
+
+        // Weekly breakdown (4-5 weeks in month)
+        $weeklyData = [];
+        $weekStart = $startDate->copy();
+        $weekNum = 1;
+        while ($weekStart->lte($endDate)) {
+            $weekEnd = $weekStart->copy()->addDays(6)->min($endDate);
+            $weekTasks = Task::whereBetween('due_date', [$weekStart, $weekEnd])->count();
+            $weekCompleted = Task::whereBetween('due_date', [$weekStart, $weekEnd])->where('status', 'verified')->count();
+            $weekReports = TechnicianReport::whereBetween('created_at', [$weekStart, $weekEnd])->count();
+            $weeklyData[] = [
+                'name' => "Week {$weekNum}",
+                'tasks' => $weekTasks,
+                'completed' => $weekCompleted,
+                'reports' => $weekReports,
+            ];
+            $weekStart = $weekEnd->copy()->addDay();
+            $weekNum++;
+        }
+
+        // Task type distribution
+        $taskTypeDist = $tasksInMonth->groupBy('task_type')->map(fn($g) => $g->count())->map(fn($count, $type) => [
+            'name' => ucfirst(str_replace('_', ' ', $type ?? 'general')),
+            'count' => $count,
+        ])->values()->toArray();
+
+        // Daily activity (tasks due per day)
+        $dailyActivity = [];
+        $dayCursor = $startDate->copy();
+        while ($dayCursor->lte($endDate)) {
+            $dateStr = $dayCursor->format('Y-m-d');
+            $dailyActivity[] = [
+                'name' => $dayCursor->format('M d'),
+                'count' => Task::where('due_date', $dateStr)->count(),
+            ];
+            $dayCursor->addDay();
+        }
+
+        // Completion rate
+        $completionRate = $stats['total_tasks'] > 0
+            ? round(($stats['completed_tasks'] / $stats['total_tasks']) * 100)
+            : 0;
+
+        // Generate narrative
+        $monthLabel = $startDate->format('F Y');
+        $narrative = "In {$monthLabel}, ";
+        $narrative .= "{$stats['total_tasks']} tasks were scheduled across the month with a {$completionRate}% completion rate. ";
+        if ($stats['completed_tasks'] > 0) {
+            $narrative .= "{$stats['completed_tasks']} tasks were successfully verified. ";
+        }
+        if ($stats['overdue_tasks'] > 0) {
+            $narrative .= "There are {$stats['overdue_tasks']} overdue tasks requiring attention. ";
+        }
+        $narrative .= "Technicians filed {$stats['total_reports']} reports, of which {$stats['verified_reports']} were verified.";
+
         return Inertia::render('admin/calendar', [
             'events' => $events,
             'stats' => $stats,
             'currentMonth' => $month,
             'filters' => $request->only(['type', 'status', 'technician_id']),
+            'productivity' => [
+                'task_status_dist' => $taskStatusDist,
+                'report_status_dist' => $reportStatusDist,
+                'weekly_data' => $weeklyData,
+                'task_type_dist' => $taskTypeDist,
+                'daily_activity' => $dailyActivity,
+                'completion_rate' => $completionRate,
+                'narrative' => $narrative,
+            ],
         ]);
     }
 }

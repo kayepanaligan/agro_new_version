@@ -1,19 +1,22 @@
 import { useState, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-    Calendar as CalendarIcon, 
-    ChevronLeft, 
-    ChevronRight, 
-    ClipboardList, 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { NarrativeCard } from '@/components/agro-profiler/narrative-card';
+import BarChart from '@/components/charts/BarChart';
+import PieChart from '@/components/charts/PieChart';
+import LineChart from '@/components/charts/LineChart';
+import {
+    Calendar as CalendarIcon,
+    ChevronLeft,
+    ChevronRight,
+    ClipboardList,
     FileText,
     Clock,
-    MapPin,
     User,
     AlertCircle,
     CheckCircle2,
@@ -22,7 +25,8 @@ import {
     UserCheck,
     Package,
     UserPlus,
-    AlertTriangle
+    AlertTriangle,
+    BarChart3,
 } from 'lucide-react';
 import type { BreadcrumbItem } from '@/types';
 
@@ -57,18 +61,29 @@ interface Stats {
     verified_reports: number;
 }
 
+interface Productivity {
+    task_status_dist: { name: string; count: number }[];
+    report_status_dist: { name: string; count: number }[];
+    weekly_data: { name: string; tasks: number; completed: number; reports: number }[];
+    task_type_dist: { name: string; count: number }[];
+    daily_activity: { name: string; count: number }[];
+    completion_rate: number;
+    narrative: string;
+}
+
 interface Props {
     events: CalendarEvent[];
     stats: Stats;
     currentMonth: string;
     filters: any;
+    productivity: Productivity;
 }
 
-export default function Calendar({ events, stats, currentMonth }: Props) {
+export default function Calendar({ events, stats, currentMonth, productivity }: Props) {
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [showEventDialog, setShowEventDialog] = useState(false);
     const [selectedEvents, setSelectedEvents] = useState<CalendarEvent[]>([]);
-    
+
     const currentDate = new Date(currentMonth + '-01');
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -88,7 +103,7 @@ export default function Calendar({ events, stats, currentMonth }: Props) {
         const startingDayOfWeek = firstDay.getDay();
 
         const days = [];
-        
+
         // Previous month days
         const prevMonthLastDay = new Date(year, month, 0).getDate();
         for (let i = startingDayOfWeek - 1; i >= 0; i--) {
@@ -104,7 +119,7 @@ export default function Calendar({ events, stats, currentMonth }: Props) {
             const date = new Date(year, month, day);
             const dateStr = date.toISOString().split('T')[0];
             const dayEvents = events.filter(e => e.date === dateStr);
-            
+
             days.push({
                 date: day,
                 currentMonth: true,
@@ -138,10 +153,10 @@ export default function Calendar({ events, stats, currentMonth }: Props) {
 
     const handleDateClick = (day: any) => {
         if (!day.currentMonth) return;
-        
+
         const dateStr = day.fullDate.toISOString().split('T')[0];
         const dayEvents = events.filter(e => e.date === dateStr);
-        
+
         if (dayEvents.length > 0) {
             setSelectedDate(dateStr);
             setSelectedEvents(dayEvents);
@@ -152,18 +167,18 @@ export default function Calendar({ events, stats, currentMonth }: Props) {
     const getStatusColor = (event: CalendarEvent) => {
         if (event.type === 'task') {
             switch (event.status) {
-                case 'verified': return 'bg-green-500';
+                case 'verified': return 'bg-primary';
                 case 'submitted': return 'bg-blue-500';
-                case 'in_progress': return 'bg-yellow-500';
+                case 'in_progress': return 'bg-amber-500';
                 case 'rejected': return 'bg-red-500';
-                default: return 'bg-gray-400';
+                default: return 'bg-muted-foreground/40';
             }
         } else {
             switch (event.status) {
-                case 'verified': return 'bg-green-500';
+                case 'verified': return 'bg-primary';
                 case 'submitted': return 'bg-blue-500';
                 case 'rejected': return 'bg-red-500';
-                default: return 'bg-gray-400';
+                default: return 'bg-muted-foreground/40';
             }
         }
     };
@@ -186,142 +201,199 @@ export default function Calendar({ events, stats, currentMonth }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Activity Calendar" />
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6">
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl flex items-center gap-2">
                             <CalendarIcon className="h-7 w-7 text-primary" />
                             Activity Calendar
                         </h1>
-                        <p className="text-muted-foreground mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                             View all scheduled tasks and technician activities
                         </p>
                     </div>
                 </div>
 
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-primary">{stats.total_tasks}</div>
-                                <div className="text-sm text-muted-foreground mt-1">Total Tasks</div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-green-600">{stats.completed_tasks}</div>
-                                <div className="text-sm text-muted-foreground mt-1">Completed</div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-amber-600">{stats.pending_tasks}</div>
-                                <div className="text-sm text-muted-foreground mt-1">In Progress</div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-blue-600">{stats.total_reports}</div>
-                                <div className="text-sm text-muted-foreground mt-1">Reports Filed</div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                {/* KPI Cards */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <KpiCard label="Total Tasks" value={stats.total_tasks} icon={ClipboardList} />
+                    <KpiCard label="Completed" value={stats.completed_tasks} icon={CheckCircle2} />
+                    <KpiCard label="Pending" value={stats.pending_tasks} icon={Clock} />
+                    <KpiCard label="Reports Filed" value={stats.total_reports} icon={FileText} />
                 </div>
 
-                {/* Calendar */}
-                <Card>
-                    <CardHeader className="pb-4">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-2xl font-bold">
-                                {monthNames[month]} {year}
-                            </CardTitle>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)}>
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => {
-                                    const today = new Date().toISOString().slice(0, 7);
-                                    router.get('/admin/calendar', { month: today });
-                                }}>
-                                    Today
-                                </Button>
-                                <Button variant="outline" size="icon" onClick={() => navigateMonth(1)}>
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {/* Day Names Header */}
-                        <div className="grid grid-cols-7 gap-px mb-2">
-                            {dayNames.map((day) => (
-                                <div key={day} className="text-center text-sm font-semibold text-muted-foreground py-2">
-                                    {day}
-                                </div>
-                            ))}
-                        </div>
+                {/* Tabs */}
+                <Tabs defaultValue="calendar" className="flex flex-col gap-4">
+                    <TabsList className="glass-surface w-fit">
+                        <TabsTrigger value="calendar" className="gap-2">
+                            <CalendarIcon className="h-4 w-4" />
+                            Calendar
+                        </TabsTrigger>
+                        <TabsTrigger value="productivity" className="gap-2">
+                            <BarChart3 className="h-4 w-4" />
+                            Productivity
+                        </TabsTrigger>
+                    </TabsList>
 
-                        {/* Calendar Grid */}
-                        <div className="grid grid-cols-7 gap-px">
-                            {calendarDays.map((day, index) => (
-                                <div
-                                    key={index}
-                                    onClick={() => handleDateClick(day)}
-                                    className={`min-h-[100px] p-2 border rounded-lg cursor-pointer transition-all ${
-                                        day.currentMonth 
-                                            ? 'bg-white hover:bg-accent/50' 
-                                            : 'bg-gray-50 opacity-50'
-                                    } ${
-                                        day.isToday ? 'ring-2 ring-primary' : ''
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className={`text-sm font-medium ${
-                                            day.isToday 
-                                                ? 'bg-primary text-primary-foreground w-7 h-7 rounded-full flex items-center justify-center' 
-                                                : ''
-                                        }`}>
-                                            {day.date}
-                                        </span>
-                                        {day.currentMonth && day.events && day.events.length > 0 && (
-                                            <Badge variant="secondary" className="text-xs">
-                                                {day.events.length}
-                                            </Badge>
-                                        )}
+                    {/* ─── Calendar Tab ─────────────────────────────────── */}
+                    <TabsContent value="calendar" className="flex flex-col gap-5">
+                        <div className="glass-card rounded-2xl p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold">
+                                    {monthNames[month]} {year}
+                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)}>
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => {
+                                        const today = new Date().toISOString().slice(0, 7);
+                                        router.get('/admin/calendar', { month: today });
+                                    }}>
+                                        Today
+                                    </Button>
+                                    <Button variant="outline" size="icon" onClick={() => navigateMonth(1)}>
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Day Names Header */}
+                            <div className="grid grid-cols-7 gap-px mb-2">
+                                {dayNames.map((day) => (
+                                    <div key={day} className="text-center text-sm font-semibold text-muted-foreground py-2">
+                                        {day}
                                     </div>
-                                    
-                                    {day.currentMonth && day.events && (
-                                        <div className="space-y-1">
-                                            {day.events.slice(0, 3).map((event, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className={`text-xs p-1 rounded truncate ${getStatusColor(event)} text-white`}
-                                                    title={event.title}
-                                                >
-                                                    <span className="mr-1">{getTaskTypeIcon(event.task_type)}</span>
-                                                    {event.title}
-                                                </div>
-                                            ))}
-                                            {day.events.length > 3 && (
-                                                <div className="text-xs text-muted-foreground pl-1">
-                                                    +{day.events.length - 3} more
-                                                </div>
+                                ))}
+                            </div>
+
+                            {/* Calendar Grid */}
+                            <div className="grid grid-cols-7 gap-px">
+                                {calendarDays.map((day, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => handleDateClick(day)}
+                                        className={`min-h-[100px] p-2 border rounded-lg cursor-pointer transition-all ${
+                                            day.currentMonth
+                                                ? 'bg-card hover:bg-accent/50'
+                                                : 'bg-muted/30 opacity-50'
+                                        } ${
+                                            day.isToday ? 'ring-2 ring-primary' : ''
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className={`text-sm font-medium ${
+                                                day.isToday
+                                                    ? 'bg-primary text-primary-foreground w-7 h-7 rounded-full flex items-center justify-center'
+                                                    : ''
+                                            }`}>
+                                                {day.date}
+                                            </span>
+                                            {day.currentMonth && day.events && day.events.length > 0 && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {day.events.length}
+                                                </Badge>
                                             )}
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+
+                                        {day.currentMonth && day.events && (
+                                            <div className="space-y-1">
+                                                {day.events.slice(0, 3).map((event, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className={`text-xs p-1 rounded truncate ${getStatusColor(event)} text-primary-foreground`}
+                                                        title={event.title}
+                                                    >
+                                                        <span className="mr-1">{getTaskTypeIcon(event.task_type)}</span>
+                                                        {event.title}
+                                                    </div>
+                                                ))}
+                                                {day.events.length > 3 && (
+                                                    <div className="text-xs text-muted-foreground pl-1">
+                                                        +{day.events.length - 3} more
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </TabsContent>
+
+                    {/* ─── Productivity Tab ─────────────────────────────── */}
+                    <TabsContent value="productivity" className="flex flex-col gap-5">
+                        <NarrativeCard
+                            narrative={productivity.narrative}
+                            highlights={[
+                                { text: 'tasks', value: stats.total_tasks },
+                                { text: 'completion rate', value: `${productivity.completion_rate}%` },
+                                { text: 'reports', value: stats.total_reports },
+                            ]}
+                        />
+
+                        {/* Weekly Activity */}
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Weekly Activity Breakdown</h2>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <BarChart
+                                    data={productivity.weekly_data.map(w => ({ name: w.name, count: w.tasks }))}
+                                    title="Tasks per Week"
+                                />
+                                <BarChart
+                                    data={productivity.weekly_data.map(w => ({ name: w.name, count: w.completed }))}
+                                    title="Completed per Week"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Status Distributions */}
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Status Distribution</h2>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {productivity.task_status_dist.length > 0 && (
+                                    <PieChart data={productivity.task_status_dist} title="Task Status" />
+                                )}
+                                {productivity.report_status_dist.length > 0 ? (
+                                    <PieChart data={productivity.report_status_dist} title="Report Status" />
+                                ) : (
+                                    <div className="glass-surface rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                                        <FileText className="h-8 w-8 opacity-20" />
+                                        <p className="text-sm font-medium">No reports this month</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Task Types & Daily Trend */}
+                        <div className="glass-card rounded-2xl p-6">
+                            <h2 className="mb-4 text-lg font-semibold">Task Types & Daily Trend</h2>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {productivity.task_type_dist.length > 0 && (
+                                    <PieChart data={productivity.task_type_dist} title="By Task Type" />
+                                )}
+                                <LineChart data={productivity.daily_activity} title="Daily Task Volume" />
+                            </div>
+                        </div>
+
+                        {/* Completion Rate Highlight */}
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            <div className="glass-surface rounded-2xl p-6 text-center">
+                                <p className="text-4xl font-bold text-primary">{productivity.completion_rate}%</p>
+                                <p className="text-sm text-muted-foreground mt-2">Completion Rate</p>
+                            </div>
+                            <div className="glass-surface rounded-2xl p-6 text-center">
+                                <p className="text-4xl font-bold text-primary">{stats.verified_reports}</p>
+                                <p className="text-sm text-muted-foreground mt-2">Verified Reports</p>
+                            </div>
+                            <div className="glass-surface rounded-2xl p-6 text-center">
+                                <p className="text-4xl font-bold text-primary">{stats.overdue_tasks}</p>
+                                <p className="text-sm text-muted-foreground mt-2">Overdue Tasks</p>
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </div>
 
             {/* Event Dialog */}
@@ -338,62 +410,60 @@ export default function Calendar({ events, stats, currentMonth }: Props) {
                             })}
                         </DialogTitle>
                     </DialogHeader>
-                    
+
                     <div className="space-y-4 mt-4">
                         {selectedEvents.map((event) => (
                             <Link key={event.id} href={event.url}>
-                                <Card className="hover:bg-accent/50 cursor-pointer transition-all">
-                                    <CardContent className="pt-4">
-                                        <div className="flex items-start gap-3">
-                                            <div className={`p-2 rounded-lg ${getStatusColor(event)} text-white`}>
-                                                {getTypeIcon(event.type)}
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h3 className="font-semibold">{event.title}</h3>
-                                                    <Badge variant="outline" className="text-xs capitalize">
-                                                        {event.type}
+                                <div className="glass-surface rounded-xl p-4 hover:bg-accent/50 cursor-pointer transition-all">
+                                    <div className="flex items-start gap-3">
+                                        <div className={`p-2 rounded-lg ${getStatusColor(event)} text-primary-foreground`}>
+                                            {getTypeIcon(event.type)}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="font-semibold">{event.title}</h3>
+                                                <Badge variant="outline" className="text-xs capitalize">
+                                                    {event.type}
+                                                </Badge>
+                                                {event.priority && (
+                                                    <Badge className={`text-xs ${
+                                                        event.priority === 'high' ? 'bg-red-500' :
+                                                        event.priority === 'medium' ? 'bg-amber-500' :
+                                                        'bg-blue-500'
+                                                    }`}>
+                                                        {event.priority}
                                                     </Badge>
-                                                    {event.priority && (
-                                                        <Badge className={`text-xs ${
-                                                            event.priority === 'high' ? 'bg-red-500' :
-                                                            event.priority === 'medium' ? 'bg-yellow-500' :
-                                                            'bg-blue-500'
-                                                        }`}>
-                                                            {event.priority}
-                                                        </Badge>
-                                                    )}
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1 text-sm text-muted-foreground">
+                                                <div className="flex items-center gap-2">
+                                                    <User className="h-3 w-3" />
+                                                    <span>{event.assigned_to}</span>
                                                 </div>
-                                                
-                                                <div className="space-y-1 text-sm text-muted-foreground">
+                                                {event.start_time && (
                                                     <div className="flex items-center gap-2">
-                                                        <User className="h-3 w-3" />
-                                                        <span>{event.assigned_to}</span>
+                                                        <Clock className="h-3 w-3" />
+                                                        <span>
+                                                            {new Date(`2000-01-01T${event.start_time}`).toLocaleTimeString()} -
+                                                            {event.end_time && new Date(`2000-01-01T${event.end_time}`).toLocaleTimeString()}
+                                                        </span>
                                                     </div>
-                                                    {event.start_time && (
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock className="h-3 w-3" />
-                                                            <span>
-                                                                {new Date(event.start_time).toLocaleTimeString()} - 
-                                                                {event.end_time && new Date(event.end_time).toLocaleTimeString()}
-                                                            </span>
-                                                        </div>
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    {event.status === 'verified' ? (
+                                                        <CheckCircle2 className="h-3 w-3 text-primary" />
+                                                    ) : event.status === 'rejected' ? (
+                                                        <XCircle className="h-3 w-3 text-red-600" />
+                                                    ) : (
+                                                        <AlertCircle className="h-3 w-3 text-amber-600" />
                                                     )}
-                                                    <div className="flex items-center gap-2">
-                                                        {event.status === 'verified' ? (
-                                                            <CheckCircle2 className="h-3 w-3 text-green-600" />
-                                                        ) : event.status === 'rejected' ? (
-                                                            <XCircle className="h-3 w-3 text-red-600" />
-                                                        ) : (
-                                                            <AlertCircle className="h-3 w-3 text-amber-600" />
-                                                        )}
-                                                        <span className="capitalize">{event.status.replace('_', ' ')}</span>
-                                                    </div>
+                                                    <span className="capitalize">{event.status.replace('_', ' ')}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                </div>
                             </Link>
                         ))}
                     </div>

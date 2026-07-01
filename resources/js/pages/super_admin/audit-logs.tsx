@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, Calendar, Eye, FileText, Filter, Search, User, X } from 'lucide-react';
+import { ArrowUpDown, Calendar, Eye, FileText, Filter, Search, User, X, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -139,7 +140,7 @@ export default function AuditLogs() {
 
     const getEventBadge = (event: string) => {
         const config: Record<string, { color: string; label: string }> = {
-            created: { color: 'bg-green-500', label: 'Created' },
+            created: { color: 'bg-emerald-600', label: 'Created' },
             updated: { color: 'bg-blue-500', label: 'Updated' },
             deleted: { color: 'bg-red-500', label: 'Deleted' },
             logged_in: { color: 'bg-purple-500', label: 'Logged In' },
@@ -171,298 +172,296 @@ export default function AuditLogs() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Audit Logs" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="p-6">
-                        <h1 className="mb-2 text-3xl font-bold">Audit Logs</h1>
-                        <p className="text-muted-foreground">Monitor all user activities and system transactions</p>
+
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+
+                {/* Page Header */}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+                            <ClipboardList className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Audit Logs</h1>
+                            <p className="text-sm text-muted-foreground">Monitor all user activities and system transactions</p>
+                        </div>
                     </div>
+                </div>
 
-                    <div className="border-t p-6">
-                        {/* Search and Filter Controls */}
-                        <div className="mb-4 flex flex-col gap-4">
-                            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                                <div className="relative flex-1 max-w-sm">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search logs..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        onKeyPress={handleKeyPress}
-                                        className="pl-9"
-                                    />
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <Button 
-                                        variant="outline" 
-                                        onClick={() => setShowFilters(!showFilters)}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Filter className="h-4 w-4" />
-                                        Filters
-                                        {hasActiveFilters && (
-                                            <span className="h-2 w-2 rounded-full bg-blue-500" />
-                                        )}
-                                    </Button>
-                                    <Button onClick={handleSearch}>
-                                        Search
-                                    </Button>
-                                </div>
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {[
+                        { label: 'Total Logs', value: auditLogs.total, accent: 'border-l-emerald-500' },
+                        { label: 'Created', value: auditLogs.data.filter((l) => l.event === 'created').length, accent: 'border-l-blue-400' },
+                        { label: 'Updated', value: auditLogs.data.filter((l) => l.event === 'updated').length, accent: 'border-l-amber-400' },
+                        { label: 'Unique Users', value: new Set(auditLogs.data.filter((l) => l.user).map((l) => l.user!.id)).size, accent: 'border-l-purple-400' },
+                    ].map((stat) => (
+                        <div
+                            key={stat.label}
+                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
+                        >
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
+                        </div>
+                    ))}
+                </div>
+                
+                {/* Table Card */}
+                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-3 border-b px-6 py-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="relative w-full max-w-xs">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search logs..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    className="pl-9 h-9 text-sm"
+                                />
                             </div>
-
-                            {/* Advanced Filters */}
-                            {showFilters && (
-                                <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <div className="grid gap-2">
-                                            <label className="text-sm font-medium">Event Type</label>
-                                            <Select value={eventFilter} onValueChange={setEventFilter}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select event" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="all">All Events</SelectItem>
-                                                    {events.map((event) => (
-                                                        <SelectItem key={event} value={event}>
-                                                            {getModuleName(event)}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <label className="text-sm font-medium">Module</label>
-                                            <Select value={moduleFilter} onValueChange={setModuleFilter}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select module" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="all">All Modules</SelectItem>
-                                                    {modules.map((module) => (
-                                                        <SelectItem key={module} value={module}>
-                                                            {getModuleName(module)}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <label className="text-sm font-medium">User</label>
-                                            <Select value={userFilter} onValueChange={setUserFilter}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select user" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="all">All Users</SelectItem>
-                                                    {users.map((user) => (
-                                                        <SelectItem key={user.id} value={user.id.toString()}>
-                                                            {user.first_name} {user.last_name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <label className="text-sm font-medium">Date Range</label>
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    type="date"
-                                                    value={startDate}
-                                                    onChange={(e) => setStartDate(e.target.value)}
-                                                    placeholder="Start"
-                                                />
-                                                <Input
-                                                    type="date"
-                                                    value={endDate}
-                                                    onChange={(e) => setEndDate(e.target.value)}
-                                                    placeholder="End"
-                                                />
-                                            </div>
-                                        </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    className="h-9 flex items-center gap-2"
+                                >
+                                    <Filter className="h-4 w-4" />
+                                    Filters
+                                    {hasActiveFilters && (
+                                        <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                                    )}
+                                </Button>
+                                <Button onClick={handleSearch} className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white">
+                                    Search
+                                </Button>
+                            </div>
+                        </div>
+                
+                        {/* Advanced Filters */}
+                        {showFilters && (
+                            <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-medium">Event Type</Label>
+                                        <Select value={eventFilter} onValueChange={setEventFilter}>
+                                            <SelectTrigger className="h-9"><SelectValue placeholder="Select event" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Events</SelectItem>
+                                                {events.map((event) => (
+                                                    <SelectItem key={event} value={event}>{getModuleName(event)}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
-
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="outline" onClick={resetFilters} className="flex items-center gap-2">
-                                            <X className="h-4 w-4" />
-                                            Reset Filters
-                                        </Button>
-                                        <Button onClick={applyFilters}>Apply Filters</Button>
+                
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-medium">Module</Label>
+                                        <Select value={moduleFilter} onValueChange={setModuleFilter}>
+                                            <SelectTrigger className="h-9"><SelectValue placeholder="Select module" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Modules</SelectItem>
+                                                {modules.map((module) => (
+                                                    <SelectItem key={module} value={module}>{getModuleName(module)}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-medium">User</Label>
+                                        <Select value={userFilter} onValueChange={setUserFilter}>
+                                            <SelectTrigger className="h-9"><SelectValue placeholder="Select user" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Users</SelectItem>
+                                                {users.map((user) => (
+                                                    <SelectItem key={user.id} value={user.id.toString()}>{user.first_name} {user.last_name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-medium">Date Range</Label>
+                                        <div className="flex gap-2">
+                                            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 text-sm" />
+                                            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 text-sm" />
+                                        </div>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Results count */}
-                        <div className="mb-4 text-sm text-muted-foreground">
-                            Showing {auditLogs.data.length} of {auditLogs.total} logs
-                        </div>
-
-                        {/* Table */}
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Timestamp</TableHead>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => {}} className="-ml-4">
-                                                Event
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>Module</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>IP Address</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {auditLogs.data.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="h-24 text-center">
-                                                No audit logs found.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        auditLogs.data.map((log) => (
-                                            <TableRow key={log.id}>
-                                                <TableCell className="text-sm">
-                                                    <div className="flex items-center gap-1 text-muted-foreground">
-                                                        <Calendar className="h-3 w-3" />
-                                                        {formatDate(log.created_at)}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {log.user ? (
-                                                        <div className="flex items-center gap-2">
-                                                            <Avatar className="h-8 w-8">
-                                                                <AvatarImage src={log.user.avatar || undefined} />
-                                                                <AvatarFallback>
-                                                                    <User className="h-4 w-4" />
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                            <div>
-                                                                <div className="text-sm font-medium">{log.user.full_name}</div>
-                                                                <div className="text-xs text-muted-foreground">{log.user_type}</div>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-sm text-muted-foreground">Unknown</span>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>{getEventBadge(log.event)}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">{getModuleName(log.module)}</Badge>
-                                                </TableCell>
-                                                <TableCell className="max-w-xs truncate text-sm">
-                                                    {log.description}
-                                                </TableCell>
-                                                <TableCell className="text-sm font-mono">
-                                                    {log.ip_address || '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => viewDetails(log)}
-                                                    >
-                                                        <Eye className="h-4 w-4 mr-1" />
-                                                        View
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-
-                        {/* Pagination */}
-                        {auditLogs.last_page > 1 && (
-                            <div className="border-t p-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="text-sm text-muted-foreground">
-                                        Page {auditLogs.current_page} of {auditLogs.last_page}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                                const page = auditLogs.current_page - 1;
-                                                if (page >= 1) {
-                                                    router.get(`/super-admin/audit-logs`, { ...filters, page }, {
-                                                        preserveState: true,
-                                                        preserveScroll: true,
-                                                    });
-                                                }
-                                            }}
-                                            disabled={auditLogs.current_page === 1}
-                                        >
-                                            Previous
-                                        </Button>
-                                        
-                                        <div className="flex items-center gap-1">
-                                            {Array.from({ length: Math.min(5, auditLogs.last_page) }, (_, i) => {
-                                                let pageNum: number;
-                                                if (auditLogs.last_page <= 5) {
-                                                    pageNum = i + 1;
-                                                } else if (auditLogs.current_page <= 3) {
-                                                    pageNum = i + 1;
-                                                } else if (auditLogs.current_page >= auditLogs.last_page - 2) {
-                                                    pageNum = auditLogs.last_page - 4 + i;
-                                                } else {
-                                                    pageNum = auditLogs.current_page - 2 + i;
-                                                }
-
-                                                return (
-                                                    <Button
-                                                        key={pageNum}
-                                                        variant={auditLogs.current_page === pageNum ? 'default' : 'outline'}
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            router.get(`/super-admin/audit-logs`, { ...filters, page: pageNum }, {
-                                                                preserveState: true,
-                                                                preserveScroll: true,
-                                                            });
-                                                        }}
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        {pageNum}
-                                                    </Button>
-                                                );
-                                            })}
-                                        </div>
-
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                                const page = auditLogs.current_page + 1;
-                                                if (page <= auditLogs.last_page) {
-                                                    router.get(`/super-admin/audit-logs`, { ...filters, page }, {
-                                                        preserveState: true,
-                                                        preserveScroll: true,
-                                                    });
-                                                }
-                                            }}
-                                            disabled={auditLogs.current_page === auditLogs.last_page}
-                                        >
-                                            Next
-                                        </Button>
-                                    </div>
+                
+                                <div className="flex justify-end gap-2">
+                                    <Button variant="outline" onClick={resetFilters} className="flex items-center gap-2 h-9">
+                                        <X className="h-4 w-4" />
+                                        Reset Filters
+                                    </Button>
+                                    <Button onClick={applyFilters} className="h-9">Apply Filters</Button>
                                 </div>
                             </div>
                         )}
+                
+                        <span className="text-xs text-muted-foreground">
+                            {auditLogs.data.length} of {auditLogs.total} logs
+                        </span>
                     </div>
-                </div>
-            </div>
 
-            {/* Detail Modal */}
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Timestamp</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">User</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Event</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Module</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">IP Address</TableHead>
+                                    <TableHead className="w-20 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {auditLogs.data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="h-40 text-center">
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <ClipboardList className="h-8 w-8 opacity-30" />
+                                                <p className="text-sm font-medium">No audit logs found</p>
+                                                <p className="text-xs">Try adjusting your search or filter criteria.</p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    auditLogs.data.map((log) => (
+                                        <TableRow key={log.id} className="hover:bg-muted/30 transition-colors">
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                <div className="flex items-center gap-1">
+                                                    <Calendar className="h-3 w-3" />
+                                                    {formatDate(log.created_at)}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {log.user ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarImage src={log.user.avatar || undefined} />
+                                                            <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <div className="text-sm font-medium">{log.user.full_name}</div>
+                                                            <div className="text-xs text-muted-foreground">{log.user_type}</div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground">Unknown</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>{getEventBadge(log.event)}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="text-xs">{getModuleName(log.module)}</Badge>
+                                            </TableCell>
+                                            <TableCell className="max-w-xs truncate text-sm text-muted-foreground line-clamp-2">
+                                                {log.description}
+                                            </TableCell>
+                                            <TableCell className="text-sm font-mono text-muted-foreground">
+                                                {log.ip_address || '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => viewDetails(log)}
+                                                    className="h-8"
+                                                >
+                                                    <Eye className="h-4 w-4 mr-1" />
+                                                    View
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Pagination */}
+                    {auditLogs.last_page > 1 && (
+                        <div className="flex items-center justify-between border-t px-6 py-4">
+                            <p className="text-xs text-muted-foreground">
+                                Page {auditLogs.current_page} of {auditLogs.last_page}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                        const page = auditLogs.current_page - 1;
+                                        if (page >= 1) {
+                                            router.get(`/super-admin/audit-logs`, { ...filters, page }, {
+                                                preserveState: true,
+                                                preserveScroll: true,
+                                            });
+                                        }
+                                    }}
+                                    disabled={auditLogs.current_page === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                
+                                {Array.from({ length: Math.min(5, auditLogs.last_page) }, (_, i) => {
+                                    let pageNum: number;
+                                    if (auditLogs.last_page <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (auditLogs.current_page <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (auditLogs.current_page >= auditLogs.last_page - 2) {
+                                        pageNum = auditLogs.last_page - 4 + i;
+                                    } else {
+                                        pageNum = auditLogs.current_page - 2 + i;
+                                    }
+
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            variant={auditLogs.current_page === pageNum ? 'default' : 'outline'}
+                                            size="sm"
+                                            className={`h-8 w-8 p-0 text-xs ${auditLogs.current_page === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
+                                            onClick={() => {
+                                                router.get(`/super-admin/audit-logs`, { ...filters, page: pageNum }, {
+                                                    preserveState: true,
+                                                    preserveScroll: true,
+                                                });
+                                            }}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    );
+                                })}
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                        const page = auditLogs.current_page + 1;
+                                        if (page <= auditLogs.last_page) {
+                                            router.get(`/super-admin/audit-logs`, { ...filters, page }, {
+                                                preserveState: true,
+                                                preserveScroll: true,
+                                            });
+                                        }
+                                    }}
+                                    disabled={auditLogs.current_page === auditLogs.last_page}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Detail Modal */}
             <Dialog open={isDetailModalOpen} onOpenChange={(open) => {
                 setIsDetailModalOpen(open);
                 if (!open) setSelectedLog(null);
@@ -592,6 +591,7 @@ export default function AuditLogs() {
                     )}
                 </DialogContent>
             </Dialog>
+            </div>
         </AppLayout>
     );
 }

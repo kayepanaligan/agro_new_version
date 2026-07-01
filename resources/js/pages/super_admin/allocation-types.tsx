@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type AllocationType, type BreadcrumbItem, type Program, type UnitOfMeasure, type Category, type Commodity, type Variety, type Barangay, type FarmerEligibility } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pencil, Search, Trash2, ListChecks, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -199,17 +199,43 @@ export default function AllocationTypes() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Allocation Types" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="p-6">
-                        <h1 className="mb-2 text-3xl font-bold">Allocation Types</h1>
-                        <p className="text-muted-foreground">Manage allocation types for distribution</p>
-                    </div>
 
-                    <div className="border-t p-6">
-                        {/* Header with Add button */}
-                        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="relative flex-1 max-w-sm">
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+                {/* Page Header */}
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                        <ListChecks className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Allocation Types</h1>
+                        <p className="text-sm text-muted-foreground">Manage allocation types for distribution</p>
+                    </div>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {[
+                        { label: 'Total Types', value: allocationTypes.length, accent: 'border-l-primary' },
+                        { label: 'With Programs', value: allocationTypes.filter((a) => a.program_id).length, accent: 'border-l-blue-400' },
+                        { label: 'Average Amount', value: allocationTypes.length ? Math.round(allocationTypes.reduce((sum, a) => sum + a.amount, 0) / allocationTypes.length).toLocaleString() : 0, accent: 'border-l-amber-400' },
+                        { label: 'Unique Units', value: new Set(allocationTypes.map((a) => a.unit_of_measurement_id)).size, accent: 'border-l-purple-400' },
+                    ].map((stat) => (
+                        <div
+                            key={stat.label}
+                            className={`glass-card rounded-lg p-4 border-l-4 ${stat.accent}`}
+                        >
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Table Card */}
+                <div className="glass-card rounded-xl overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-3 border-b px-6 py-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="relative w-full max-w-xs">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     placeholder="Search allocations..."
@@ -218,103 +244,105 @@ export default function AllocationTypes() {
                                     className="pl-9"
                                 />
                             </div>
-
-                            <Button onClick={() => setIsCreateModalOpen(true)}>
+                            <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                                <Plus className="h-4 w-4 mr-2" />
                                 Add Allocation Type
                             </Button>
                         </div>
 
-                        {/* Results count */}
-                        <div className="mb-4 text-sm text-muted-foreground">
-                            Showing {filteredAllocations.length} of {allocationTypes.length} allocation types
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {filteredAllocations.length} of {allocationTypes.length} allocation type{allocationTypes.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
 
-                        {/* Table */}
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">ID</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Name</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Program</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Unit</TableHead>
+                                    <TableHead className="w-20 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredAllocations.length === 0 ? (
                                     <TableRow>
-                                        <TableHead className="w-[100px]">ID</TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('name')} className="-ml-4">
-                                                Name
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Amount</TableHead>
-                                        <TableHead>Program</TableHead>
-                                        <TableHead>Unit</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableCell colSpan={7} className="h-40 text-center">
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <ListChecks className="h-8 w-8 opacity-30" />
+                                                <p className="text-sm font-medium">No allocation types found</p>
+                                                <p className="text-xs">Click "Add Allocation Type" to create one.</p>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredAllocations.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="h-24 text-center">
-                                                No allocation types found. Click "Add Allocation Type" to create one.
+                                ) : (
+                                    filteredAllocations.map((allocation) => (
+                                        <TableRow key={allocation.id} className="hover:bg-muted/30 transition-colors">
+                                            <TableCell className="font-mono text-sm">{allocation.id}</TableCell>
+                                            <TableCell className="font-medium">{allocation.name}</TableCell>
+                                            <TableCell className="max-w-xs truncate text-sm text-muted-foreground line-clamp-2">{allocation.description || '-'}</TableCell>
+                                            <TableCell className="text-sm font-semibold">{allocation.amount.toLocaleString()}</TableCell>
+                                            <TableCell className="text-sm">{allocation.program?.program_name || '-'}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="text-xs">{allocation.unit_of_measurement?.code || '-'}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem onClick={() => openEditModal(allocation)}>
+                                                            <Pencil className="mr-2 h-4 w-4" />
+                                                            <span>Edit</span>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem 
+                                                            onClick={() => openDeleteModal(allocation)}
+                                                            className="text-red-600 focus:text-red-600"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            <span>Delete</span>
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
-                                    ) : (
-                                        filteredAllocations.map((allocation) => (
-                                            <TableRow key={allocation.id}>
-                                                <TableCell className="font-medium">{allocation.id}</TableCell>
-                                                <TableCell className="font-medium">{allocation.name}</TableCell>
-                                                <TableCell>{allocation.description || '-'}</TableCell>
-                                                <TableCell>
-                                                    <span className="font-semibold">{allocation.amount.toLocaleString()}</span>
-                                                </TableCell>
-                                                <TableCell>{allocation.program?.program_name || '-'}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">{allocation.unit_of_measurement?.code || '-'}</Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => openEditModal(allocation)}>
-                                                                <Pencil className="mr-2 h-4 w-4" />
-                                                                <span>Edit</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                onClick={() => openDeleteModal(allocation)}
-                                                                className="text-red-600 focus:text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                <span>Delete</span>
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
-            </div>
 
             {/* Create Modal */}
-            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <Dialog open={isCreateModalOpen} onOpenChange={(open) => { setIsCreateModalOpen(open); if (!open) setFormData({ name: '', description: '', amount: 0, unit_of_measurement_id: 0, program_id: 0, category_ids: [], commodity_ids: [], variety_ids: [], barangay_ids: [] }); }}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Create Allocation Type</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                                <ListChecks className="h-4 w-4" />
+                            </span>
+                            New Allocation Type
+                        </DialogTitle>
                         <DialogDescription>
-                            Add a new allocation type. Fill in the details below.
+                            Add a new allocation type. Fields marked with <span className="text-red-500">*</span> are required.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4 pr-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="create-name">Name</Label>
+                                <Label htmlFor="create-name">
+                                    Name <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="create-name"
                                     value={formData.name}
@@ -323,7 +351,9 @@ export default function AllocationTypes() {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="create-amount">Amount</Label>
+                                <Label htmlFor="create-amount">
+                                    Amount <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="create-amount"
                                     type="number"
@@ -675,10 +705,12 @@ export default function AllocationTypes() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleCreate}>
+                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={handleCreate}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            disabled={!formData.name.trim() || formData.amount <= 0}
+                        >
                             Create Allocation
                         </Button>
                     </DialogFooter>
@@ -686,18 +718,25 @@ export default function AllocationTypes() {
             </Dialog>
 
             {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <Dialog open={isEditModalOpen} onOpenChange={(open) => { setIsEditModalOpen(open); if (!open && selectedAllocation) { setFormData({ name: selectedAllocation.name, description: selectedAllocation.description || '', amount: selectedAllocation.amount, unit_of_measurement_id: selectedAllocation.unit_of_measurement_id || 0, program_id: selectedAllocation.program_id || 0, category_ids: [], commodity_ids: [], variety_ids: [], barangay_ids: [] }); } }}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Edit Allocation Type</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                                <ListChecks className="h-4 w-4" />
+                            </span>
+                            Edit Allocation Type
+                        </DialogTitle>
                         <DialogDescription>
-                            Update allocation type information. Make your changes below.
+                            Update allocation type information. Fields marked with <span className="text-red-500">*</span> are required.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4 pr-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="edit-name">Name</Label>
+                                <Label htmlFor="edit-name">
+                                    Name <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="edit-name"
                                     value={formData.name}
@@ -705,7 +744,9 @@ export default function AllocationTypes() {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="edit-amount">Amount</Label>
+                                <Label htmlFor="edit-amount">
+                                    Amount <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="edit-amount"
                                     type="number"
@@ -1055,10 +1096,12 @@ export default function AllocationTypes() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleUpdate}>
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={handleUpdate}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            disabled={!formData.name.trim() || formData.amount <= 0}
+                        >
                             Update Allocation
                         </Button>
                     </DialogFooter>
@@ -1069,9 +1112,14 @@ export default function AllocationTypes() {
             <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete Allocation Type</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-red-100 text-red-700">
+                                <ListChecks className="h-4 w-4" />
+                            </span>
+                            Delete Allocation Type
+                        </DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete "{selectedAllocation?.name}"? This action cannot be undone.
+                            Are you sure you want to delete <span className="font-semibold text-foreground">"{selectedAllocation?.name}"</span>? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -1084,6 +1132,7 @@ export default function AllocationTypes() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            </div>
         </AppLayout>
     );
 }

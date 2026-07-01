@@ -14,14 +14,16 @@ import {
     X,
     List,
     LayoutGrid,
-    ArrowUpDown
+    ArrowUpDown,
+    ClipboardList,
+    AlertTriangle,
+    Layers
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
     DropdownMenu,
@@ -41,6 +43,10 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { KpiCard } from '@/components/agro-profiler/kpi-card';
+import { Pagination } from '@/components/agro-profiler/pagination';
+import { ExportButtons } from '@/components/agro-profiler/export-buttons';
+import { exportToCsv, exportToPdf } from '@/lib/export';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -73,7 +79,6 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
     const filteredRecords = useMemo(() => {
         let result = [...cropDamageRecords];
 
-        // Search filter
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             result = result.filter(
@@ -83,10 +88,8 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
             );
         }
 
-        // Sorting
         result.sort((a, b) => {
             let comparison = 0;
-            
             switch (sortField) {
                 case 'name':
                     comparison = a.name.localeCompare(b.name);
@@ -95,7 +98,6 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
                     comparison = new Date(a.recorded_date).getTime() - new Date(b.recorded_date).getTime();
                     break;
             }
-            
             return sortOrder === 'asc' ? comparison : -comparison;
         });
 
@@ -109,6 +111,19 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
     }, [filteredRecords, currentPage]);
 
     const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+
+    // KPI computations
+    const totalRecords = cropDamageRecords.length;
+    const totalItems = cropDamageRecords.reduce((sum, r) => sum + (r.items_count || 0), 0);
+    const thisMonth = cropDamageRecords.filter((r) => {
+        const d = new Date(r.recorded_date);
+        const now = new Date();
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+    const recentRecords = cropDamageRecords.filter((r) => {
+        const daysDiff = (Date.now() - new Date(r.recorded_date).getTime()) / (1000 * 60 * 60 * 24);
+        return daysDiff <= 30;
+    }).length;
 
     const handleSort = (field: typeof sortField) => {
         if (sortField === field) {
@@ -134,7 +149,6 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
 
     const handleEdit = () => {
         if (!selectedRecord) return;
-        
         router.put(route('admin.crop-damage-records.update', selectedRecord.crop_damage_record_id), formData, {
             onSuccess: () => {
                 setIsEditModalOpen(false);
@@ -150,7 +164,6 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
 
     const handleDelete = () => {
         if (!selectedRecord) return;
-        
         router.delete(route('admin.crop-damage-records.destroy', selectedRecord.crop_damage_record_id), {
             onSuccess: () => {
                 setIsDeleteModalOpen(false);
@@ -174,26 +187,52 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
         setIsDeleteModalOpen(true);
     };
 
+    const handleExportCsv = () => {
+        const headers = ['ID', 'Name', 'Date Recorded', 'Notes', 'Items Count'];
+        const rows = filteredRecords.map((r) => [
+            r.crop_damage_record_id,
+            r.name,
+            r.recorded_date,
+            r.notes || '',
+            r.items_count || 0,
+        ]);
+        exportToCsv('crop-damage-records', headers, rows);
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Crop Damage Records" />
             
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-                {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
+            <div className="flex h-full flex-1 flex-col gap-5 rounded-xl p-4 md:p-6">
+                {/* Page Header */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Crop Damage Records</h1>
-                        <p className="text-muted-foreground mt-1">Manage crop damage record folders</p>
+                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Crop Damage Records</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Manage crop damage record folders and track damage reports
+                        </p>
                     </div>
-                    <Button onClick={() => setIsCreateModalOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Record Folder
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <ExportButtons onExportCsv={handleExportCsv} onExportPdf={exportToPdf} />
+                        <Button onClick={() => setIsCreateModalOpen(true)} size="sm" className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            New Record Folder
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Filters and View Toggle */}
-                <Card className="mb-6">
-                    <CardContent className="pt-6">
+                {/* KPI Cards */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <KpiCard label="Total Records" value={totalRecords} icon={ClipboardList} />
+                    <KpiCard label="Total Items" value={totalItems} icon={Layers} />
+                    <KpiCard label="This Month" value={thisMonth} icon={Calendar} />
+                    <KpiCard label="Last 30 Days" value={recentRecords} icon={AlertTriangle} />
+                </div>
+
+                {/* Main Table/Card Container */}
+                <div className="glass-card rounded-2xl">
+                    {/* Filters & View Toggle */}
+                    <div className="space-y-3 border-b p-4">
                         <div className="flex items-center justify-between gap-4">
                             <div className="relative flex-1 max-w-sm">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -204,7 +243,6 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
                                     className="pl-9"
                                 />
                             </div>
-                            
                             <div className="flex items-center gap-2">
                                 <Button
                                     variant={viewMode === 'card' ? 'default' : 'outline'}
@@ -222,50 +260,62 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
                                 </Button>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
 
-                {/* Card View */}
-                {viewMode === 'card' && (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {paginatedRecords.length === 0 ? (
-                            <div className="col-span-full flex h-64 items-center justify-center">
-                                <div className="text-center">
-                                    <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-                                    <h3 className="mt-4 text-lg font-semibold">No records found</h3>
-                                    <p className="text-muted-foreground">Create your first crop damage record folder</p>
+                    {/* Card View */}
+                    {viewMode === 'card' && (
+                        <div className="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {paginatedRecords.length === 0 ? (
+                                <div className="col-span-full flex h-64 items-center justify-center">
+                                    <div className="text-center">
+                                        <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                                        <h3 className="mt-4 text-lg font-semibold">No records found</h3>
+                                        <p className="text-muted-foreground">Create your first crop damage record folder</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            paginatedRecords.map((record) => (
-                                <Card 
-                                    key={record.crop_damage_record_id} 
-                                    className="group relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                                    onClick={() => router.visit(route('admin.crop-damage-records.show', record.crop_damage_record_id))}
-                                >
-                                    <CardHeader>
+                            ) : (
+                                paginatedRecords.map((record) => (
+                                    <div 
+                                        key={record.crop_damage_record_id} 
+                                        className="glass-surface group relative overflow-hidden rounded-xl p-4 transition-all hover:shadow-md cursor-pointer"
+                                        onClick={() => router.visit(route('admin.crop-damage-records.show', record.crop_damage_record_id))}
+                                    >
                                         <div className="flex items-start justify-between">
                                             <FolderOpen className="h-8 w-8 text-primary" />
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        className="text-muted-foreground/60 hover:text-foreground hover:bg-muted"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => router.visit(route('admin.crop-damage-records.show', record.crop_damage_record_id))}>
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        router.visit(route('admin.crop-damage-records.show', record.crop_damage_record_id));
+                                                    }}>
                                                         <FolderOpen className="mr-2 h-4 w-4" />
                                                         Open Folder
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => openEditModal(record)}>
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openEditModal(record);
+                                                    }}>
                                                         <Pencil className="mr-2 h-4 w-4" />
                                                         Edit
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem 
-                                                        onClick={() => openDeleteModal(record)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openDeleteModal(record);
+                                                        }}
                                                         className="text-destructive focus:text-destructive"
                                                     >
                                                         <Trash2 className="mr-2 h-4 w-4" />
@@ -274,30 +324,28 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>
-                                        <CardTitle className="mt-4 line-clamp-2">{record.name}</CardTitle>
-                                        <CardDescription className="line-clamp-2">
+                                        <h3 className="mt-3 line-clamp-2 font-semibold">{record.name}</h3>
+                                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                                             {record.notes || 'No notes'}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="h-3 w-3" />
-                                            {new Date(record.recorded_date).toLocaleDateString()}
+                                        </p>
+                                        <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                                            <div className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                {new Date(record.recorded_date).toLocaleDateString()}
+                                            </div>
+                                            <Badge variant="secondary">
+                                                {record.items_count || 0} items
+                                            </Badge>
                                         </div>
-                                        <Badge variant="secondary">
-                                            {record.items_count || 0} items
-                                        </Badge>
-                                    </CardFooter>
-                                </Card>
-                            ))
-                        )}
-                    </div>
-                )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
 
-                {/* List View */}
-                {viewMode === 'list' && (
-                    <Card>
-                        <CardContent className="p-0">
+                    {/* List View */}
+                    {viewMode === 'list' && (
+                        <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -322,7 +370,11 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
                                         </TableRow>
                                     ) : (
                                         paginatedRecords.map((record) => (
-                                            <TableRow key={record.crop_damage_record_id}>
+                                            <TableRow 
+                                                key={record.crop_damage_record_id}
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() => router.visit(route('admin.crop-damage-records.show', record.crop_damage_record_id))}
+                                            >
                                                 <TableCell className="font-medium">
                                                     <div className="flex items-center gap-2">
                                                         <FolderOpen className="h-4 w-4 text-primary" />
@@ -340,10 +392,14 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
                                                         {record.items_count || 0} items
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell onClick={(e) => e.stopPropagation()}>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm">
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                className="text-muted-foreground/60 hover:text-foreground hover:bg-muted"
+                                                            >
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
@@ -374,39 +430,22 @@ export default function CropDamageRecords({ cropDamageRecords }: CropDamageRecor
                                     )}
                                 </TableBody>
                             </Table>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="mt-6 flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length} records
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                            >
-                                Previous
-                            </Button>
-                            <span className="text-sm text-muted-foreground">
-                                Page {currentPage} of {totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                            >
-                                Next
-                            </Button>
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="border-t p-4">
+                            <Pagination
+                                currentPage={currentPage}
+                                lastPage={totalPages}
+                                total={filteredRecords.length}
+                                perPage={itemsPerPage}
+                                onPageChange={setCurrentPage}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Create Modal */}

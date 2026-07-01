@@ -18,6 +18,7 @@ interface ResetPasswordForm {
     email: string;
     password: string;
     password_confirmation: string;
+    [key: string]: string;
 }
 
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
@@ -88,7 +89,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                     </div>
 
                     <Button type="submit" className="mt-4 w-full" disabled={processing}>
-                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                        {processing && <LoaderCircle className="h-4 w-4 animate-spin text-emerald-400" />}
                         Reset password
                     </Button>
                 </div>

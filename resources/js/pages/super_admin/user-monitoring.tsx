@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type User } from '@/types';
 import { Head, router, usePage, Link, useForm } from '@inertiajs/react';
-import { ArrowUpDown, Check, Clock, Eye, MoreHorizontal, Pencil, Search, Trash2, X, Key, Shield, Plus } from 'lucide-react';
+import { ArrowUpDown, Check, Clock, Eye, MoreHorizontal, Pencil, Search, Trash2, X, Key, Shield, Plus, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -71,6 +71,8 @@ export default function UserMonitoring() {
     const [selectedUser, setSelectedUser] = useState<UserWithFullDetails | null>(null);
     const [showPrivilegesDialog, setShowPrivilegesDialog] = useState(false);
     const [newPrivilege, setNewPrivilege] = useState({ permission_id: '', granted: true, remarks: '' });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
 
     // Filter and sort users
     const filteredUsers = useMemo(() => {
@@ -120,6 +122,10 @@ export default function UserMonitoring() {
 
         return result;
     }, [users, searchTerm, sortField, sortOrder, statusFilter, sessionFilter]);
+
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const paginatedUsers = useMemo(() => filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage), [filteredUsers, currentPage, itemsPerPage]);
+    useMemo(() => setCurrentPage(1), [searchTerm, statusFilter, sessionFilter]);
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
@@ -191,9 +197,9 @@ export default function UserMonitoring() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'approved':
-                return <Badge className="bg-green-500">Approved</Badge>;
+                return <Badge className="bg-emerald-600">Approved</Badge>;
             case 'pending':
-                return <Badge className="bg-yellow-500">Pending</Badge>;
+                return <Badge className="bg-amber-500">Pending</Badge>;
             case 'rejected':
                 return <Badge className="bg-red-500">Rejected</Badge>;
             default:
@@ -215,183 +221,255 @@ export default function UserMonitoring() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="User Monitoring" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="p-6">
-                        <h1 className="mb-2 text-3xl font-bold">User Monitoring</h1>
-                        <p className="text-muted-foreground">Review and manage user registrations and activities</p>
+
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+
+                {/* Page Header */}
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+                            <Users className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">User Monitoring</h1>
+                            <p className="text-sm text-muted-foreground">Review and manage user registrations and activities</p>
+                        </div>
                     </div>
+                </div>
 
-                    <div className="border-t p-6">
-                        {/* Filters */}
-                        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="relative flex-1 max-w-sm">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search users..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-9"
-                                />
-                            </div>
-
-                            <div className="flex gap-2">
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Filter by status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="approved">Approved</SelectItem>
-                                        <SelectItem value="rejected">Rejected</SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                <Select value={sessionFilter} onValueChange={setSessionFilter}>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Filter by session" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Sessions</SelectItem>
-                                        <SelectItem value="active">Active Now</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {[
+                        { label: 'Total Users', value: users.length, accent: 'border-l-emerald-500' },
+                        { label: 'Approved', value: users.filter((u) => u.registration_status === 'approved').length, accent: 'border-l-blue-400' },
+                        { label: 'Pending', value: users.filter((u) => u.registration_status === 'pending').length, accent: 'border-l-amber-400' },
+                        { label: 'Active Now', value: users.filter((u) => u.is_active_session).length, accent: 'border-l-purple-400' },
+                    ].map((stat) => (
+                        <div
+                            key={stat.label}
+                            className={`rounded-lg border bg-card p-4 shadow-sm border-l-4 ${stat.accent}`}
+                        >
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                            <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
                         </div>
+                    ))}
+                </div>
 
-                        {/* Results count */}
-                        <div className="mb-4 text-sm text-muted-foreground">
-                            Showing {filteredUsers.length} of {users.length} users
+                {/* Table Card */}
+                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-3 border-b px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="relative w-full max-w-xs">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Search users..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-9 h-9 text-sm"
+                            />
                         </div>
-
-                        {/* Table */}
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
+                        <div className="flex gap-2">
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="approved">Approved</SelectItem>
+                                    <SelectItem value="rejected">Rejected</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select value={sessionFilter} onValueChange={setSessionFilter}>
+                                <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Session" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Sessions</SelectItem>
+                                    <SelectItem value="active">Active Now</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {filteredUsers.length === users.length
+                                ? `${users.length} users`
+                                : `${filteredUsers.length} of ${users.length} users`}
+                        </span>
+                    </div>
+            
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                    <TableHead className="w-16 text-xs font-semibold uppercase tracking-wide text-muted-foreground">ID</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">User</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <Button variant="ghost" size="sm" className="h-auto p-0 text-xs font-semibold uppercase tracking-wide" onClick={() => handleSort('email')}>
+                                            Email <ArrowUpDown className="ml-1 h-3 w-3" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Role</TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <Button variant="ghost" size="sm" className="h-auto p-0 text-xs font-semibold uppercase tracking-wide" onClick={() => handleSort('registration_status')}>
+                                            Status <ArrowUpDown className="ml-1 h-3 w-3" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <Button variant="ghost" size="sm" className="h-auto p-0 text-xs font-semibold uppercase tracking-wide" onClick={() => handleSort('is_active_session')}>
+                                            Session <ArrowUpDown className="ml-1 h-3 w-3" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <Button variant="ghost" size="sm" className="h-auto p-0 text-xs font-semibold uppercase tracking-wide" onClick={() => handleSort('created_at')}>
+                                            Registered <ArrowUpDown className="ml-1 h-3 w-3" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead className="w-16 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedUsers.length === 0 ? (
                                     <TableRow>
-                                        <TableHead className="w-[100px]">ID</TableHead>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('email')} className="-ml-4">
-                                                Email
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('registration_status')} className="-ml-4">
-                                                Registration Status
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('is_active_session')} className="-ml-4">
-                                                Session
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead>
-                                            <Button variant="ghost" onClick={() => handleSort('created_at')} className="-ml-4">
-                                                Registered
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableCell colSpan={8} className="h-40 text-center">
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <Users className="h-8 w-8 opacity-30" />
+                                                <p className="text-sm font-medium">No users found</p>
+                                                <p className="text-xs">
+                                                    {searchTerm || statusFilter !== 'all' || sessionFilter !== 'all'
+                                                        ? 'Try adjusting your filters.'
+                                                        : 'No users registered yet.'}
+                                                </p>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredUsers.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={8} className="h-24 text-center">
-                                                No users found.
+                                ) : (
+                                    paginatedUsers.map((user) => (
+                                        <TableRow
+                                            key={user.id}
+                                            className="cursor-pointer hover:bg-muted/30 transition-colors"
+                                            onClick={() => router.visit(route('super-admin.users.show', user.id))}
+                                        >
+                                            <TableCell className="text-xs text-muted-foreground font-mono">{user.id}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-9 w-9">
+                                                        <AvatarImage src={user.avatar || undefined} alt={user.full_name} />
+                                                        <AvatarFallback className="text-xs">
+                                                            {user.first_name[0]}{user.last_name[0]}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="font-medium text-sm">{getFullName(user)}</div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary" className="text-xs">{user.role?.name || 'No Role'}</Badge>
+                                            </TableCell>
+                                            <TableCell>{getStatusBadge(user.registration_status || 'pending')}</TableCell>
+                                            <TableCell>{getSessionBadge(user.is_active_session || false)}</TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {new Date(user.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-44">
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewDetails(user); }} className="cursor-pointer">
+                                                            <Eye className="mr-2 h-3.5 w-3.5" />
+                                                            View Details
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleUpdate(user); }} className="cursor-pointer">
+                                                            <Pencil className="mr-2 h-3.5 w-3.5" />
+                                                            Update
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewPrivileges(user); }} className="cursor-pointer">
+                                                            <Key className="mr-2 h-3.5 w-3.5" />
+                                                            View Privileges
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        {user.registration_status !== 'approved' && (
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleQuickApprove(user.id); }} className="cursor-pointer">
+                                                                <Check className="mr-2 h-3.5 w-3.5 text-emerald-600" />
+                                                                Quick Approve
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        {user.registration_status !== 'rejected' && (
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleQuickReject(user.id); }} className="cursor-pointer">
+                                                                <X className="mr-2 h-3.5 w-3.5 text-red-600" />
+                                                                Quick Reject
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(user); }}
+                                                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                        >
+                                                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                                            Delete User
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
-                                    ) : (
-                                        filteredUsers.map((user) => (
-                                            <TableRow 
-                                                key={user.id}
-                                                className="cursor-pointer hover:bg-muted/50"
-                                                onClick={() => router.visit(route('super-admin.users.show', user.id))}
-                                            >
-                                                <TableCell className="font-medium">{user.id}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-10 w-10">
-                                                            <AvatarImage src={user.avatar || undefined} alt={user.full_name} />
-                                                            <AvatarFallback>
-                                                                {user.first_name[0]}{user.last_name[0]}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="font-medium">{getFullName(user)}</div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{user.email}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant="secondary">{user.role?.name || 'No Role'}</Badge>
-                                                </TableCell>
-                                                <TableCell>{getStatusBadge(user.registration_status || 'pending')}</TableCell>
-                                                <TableCell>{getSessionBadge(user.is_active_session || false)}</TableCell>
-                                                <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm" 
-                                                                className="h-8 w-8 p-0"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="w-[200px]">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewDetails(user); }}>
-                                                                <Eye className="mr-2 h-4 w-4" />
-                                                                <span>View Details</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleUpdate(user); }}>
-                                                                <Pencil className="mr-2 h-4 w-4" />
-                                                                <span>Update</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewPrivileges(user); }}>
-                                                                <Key className="mr-2 h-4 w-4" />
-                                                                <span>View Privileges</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            {user.registration_status !== 'approved' && (
-                                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleQuickApprove(user.id); }}>
-                                                                    <Check className="mr-2 h-4 w-4 text-green-600" />
-                                                                    <span>Quick Approve</span>
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            {user.registration_status !== 'rejected' && (
-                                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleQuickReject(user.id); }}>
-                                                                    <X className="mr-2 h-4 w-4 text-red-600" />
-                                                                    <span>Quick Reject</span>
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem 
-                                                                onClick={(e) => { e.stopPropagation(); handleDelete(user); }}
-                                                                className="text-red-600 focus:text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                <span>Delete User</span>
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
+            
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between border-t px-6 py-4">
+                            <p className="text-xs text-muted-foreground">
+                                Page {currentPage} of {totalPages}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum: number;
+                                    if (totalPages <= 5) pageNum = i + 1;
+                                    else if (currentPage <= 3) pageNum = i + 1;
+                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                    else pageNum = currentPage - 2 + i;
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                                            size="sm"
+                                            className={`h-8 w-8 p-0 text-xs ${currentPage === pageNum ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600' : ''}`}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    );
+                                })}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
