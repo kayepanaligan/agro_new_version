@@ -1,28 +1,28 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSidebar } from '@/components/ui/sidebar';
 import { useInitials } from '@/hooks/use-initials';
 import { type User, getFullName } from '@/types';
 
 export function UserInfo({ user, showEmail = false }: { user: User; showEmail?: boolean }) {
     const getInitials = useInitials();
-    const { state } = useSidebar();
-    const isCollapsed = state === 'collapsed' || state === 'hidden';
     const fullName = getFullName(user);
 
     return (
         <>
-            <Avatar className="h-8 w-8 overflow-hidden rounded-full">
+            <Avatar className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
                 <AvatarImage src={user.avatar} alt={fullName} />
                 <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
                     {getInitials(fullName)}
                 </AvatarFallback>
             </Avatar>
-            {!isCollapsed && (
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{fullName}</span>
-                    {showEmail && <span className="text-muted-foreground truncate text-xs">{user.email}</span>}
-                </div>
-            )}
+            {/* Collapsing is handled by the sidebar's data attribute, so the same component keeps
+                showing the name and email when rendered inside a portalled dropdown.
+                `flex-1` (basis 0) makes this width a pure function of the button's animating width,
+                so it shrinks smoothly. Forcing `w-0 flex-none` instead switched flex-basis from 0%
+                to auto, which cannot interpolate, so the text snapped shut on the first frame. */}
+            <div className="grid min-w-0 flex-1 overflow-hidden text-left text-sm leading-tight transition-opacity duration-[250ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none">
+                <span className="truncate font-medium">{fullName}</span>
+                {showEmail && <span className="text-muted-foreground truncate text-xs">{user.email}</span>}
+            </div>
         </>
     );
 }

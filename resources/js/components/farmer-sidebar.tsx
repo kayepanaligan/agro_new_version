@@ -2,7 +2,7 @@ import { LayoutGrid, User, Sprout, AlertTriangle, Package, CheckCircle, Megaphon
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import OfflineStatusIndicator from '@/components/offline-status-indicator';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarResizeHandle } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
@@ -82,7 +82,7 @@ export function FarmerSidebar() {
             </SidebarHeader>
 
             <SidebarContent className="overflow-hidden">
-                <ScrollArea className="h-full px-2 py-0">
+                <ScrollArea className="h-full">
                     {navGroups.map((group) => (
                         <NavMain key={group.title} title={group.title} items={group.items} />
                     ))}
@@ -90,11 +90,17 @@ export function FarmerSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <div className="px-4 py-2 border-t">
-                    <OfflineStatusIndicator />
+                {/* Matches app-sidebar: animated grid row instead of `display:none`, and the strip is
+                    dropped entirely while OfflineStatusIndicator renders nothing. */}
+                <div className="grid grid-rows-[1fr] transition-[grid-template-rows,opacity] duration-[250ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[collapsible=icon]:grid-rows-[0fr] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none [&:has(>div:empty)]:hidden">
+                    <div className="min-h-0 overflow-hidden border-t px-4 py-2">
+                        <OfflineStatusIndicator />
+                    </div>
                 </div>
                 <NavUser />
             </SidebarFooter>
+
+            <SidebarResizeHandle />
         </Sidebar>
     );
 }

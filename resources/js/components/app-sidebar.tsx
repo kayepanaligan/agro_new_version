@@ -2,7 +2,7 @@ import { BookOpen, Folder, LayoutGrid, Users, Tags, Sprout, Leaf, UserRound, Gra
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import OfflineStatusIndicator from '@/components/offline-status-indicator';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarResizeHandle, useSidebar } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarResizeHandle } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage, router } from '@inertiajs/react';
@@ -18,8 +18,6 @@ export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
     const isSuperAdmin = auth.user.role?.name === 'super admin';
     const isAdmin = auth.user.role?.name === 'admin';
-    const { state } = useSidebar();
-    const isCollapsed = state === 'collapsed' || state === 'hidden';
     const scrollAreaContainerRef = useRef<HTMLDivElement>(null);
     const SCROLL_STORAGE_KEY = 'sidebar_scroll_position';
 
@@ -464,7 +462,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch className="flex items-center justify-center">
+                            <Link href="/dashboard" prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -472,33 +470,30 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
-                {isCollapsed ? (
-                    <div className="h-full py-0" ref={scrollAreaContainerRef as any}>
-                        {navGroups.map((group) => (
-                            <NavMain key={group.title} title={group.title} items={group.items} />
-                        ))}
-                    </div>
-                ) : (
-                    <ScrollArea className="h-full px-2 py-0" ref={scrollAreaContainerRef}>
-                        {navGroups.map((group) => (
-                            <NavMain key={group.title} title={group.title} items={group.items} />
-                        ))}
-                    </ScrollArea>
-                )}
+            {/* The same ScrollArea is used in every state: swapping containers on collapse
+                remounted every nav item and threw away the restored scroll position. */}
+            <SidebarContent className="overflow-hidden">
+                <ScrollArea className="h-full" ref={scrollAreaContainerRef}>
+                    {navGroups.map((group) => (
+                        <NavMain key={group.title} title={group.title} items={group.items} />
+                    ))}
+                </ScrollArea>
             </SidebarContent>
 
             <SidebarFooter>
-                {!isCollapsed && (
-                    <div className="px-4 py-2 border-t">
+                {/* Collapses with an animated grid row rather than `display:none`, which used to drop
+                    the footer's height in a single frame. `:has(>div:empty)` also removes the strip
+                    entirely while OfflineStatusIndicator renders nothing (online and fully synced),
+                    instead of leaving a bare border and padding above the user row. */}
+                <div className="grid grid-rows-[1fr] transition-[grid-template-rows,opacity] duration-[250ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[collapsible=icon]:grid-rows-[0fr] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none [&:has(>div:empty)]:hidden">
+                    <div className="min-h-0 overflow-hidden border-t px-4 py-2">
                         <OfflineStatusIndicator />
                     </div>
-                )}
+                </div>
                 <NavUser />
             </SidebarFooter>
 
-            {/* Resize handle only visible in expanded mode */}
-            {state === 'expanded' && <SidebarResizeHandle />}
+            <SidebarResizeHandle />
         </Sidebar>
     );
 }

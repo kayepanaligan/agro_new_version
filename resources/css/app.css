@@ -70,6 +70,7 @@
 /*
   Compatibility layer for Tailwind CSS v4 border-color defaults.
 */
+
 @layer base {
     *,
     ::after,
